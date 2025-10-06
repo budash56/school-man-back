@@ -11,7 +11,7 @@ import {
 import { Attendance } from '../attendance/attendance.entity';
 import { Classrooms } from '../classrooms/classrooms.entity';
 import { Courses } from '../courses/courses.entity';
-import { TimetableSlots } from '../timetable_slots/timetable_slots.entity';
+import { TimetableSlot } from '../timetable_slots/timetable_slots.entity';
 
 @Index('timetable_assignments_pkey', ['assignmentId'], { unique: true })
 @Index('uniq_classgroup_slot', ['classGroupId', 'slotId'], { unique: true })
@@ -27,8 +27,8 @@ export class TimetableAssignments {
   @Column('bigint', { name: 'course_id', unique: true })
   courseId: string;
 
-  @Column('bigint', { name: 'slot_id', unique: true })
-  slotId: string;
+  @Column('bigint', { name: 'slot_id', unique: true, nullable: true })
+  slotId: string | null;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
@@ -61,10 +61,10 @@ export class TimetableAssignments {
   course: Courses;
 
   @ManyToOne(
-    () => TimetableSlots,
+    () => TimetableSlot,
     (timetableSlots) => timetableSlots.timetableAssignments,
     { onDelete: 'CASCADE' }
   )
   @JoinColumn([{ name: 'slot_id', referencedColumnName: 'slotId' }])
-  slot: TimetableSlots;
+  slot: TimetableSlot;
 }

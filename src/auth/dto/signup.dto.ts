@@ -1,8 +1,8 @@
 // Describes the minimum data needed to register a new platform user.
 export class SignupDto {
   nationalId: string;
-  username: string;
   password: string;
+  username?: string;
   role?: 'admin' | 'registrar' | 'teacher' | 'coordinator';
   firstName?: string;
   lastName?: string;

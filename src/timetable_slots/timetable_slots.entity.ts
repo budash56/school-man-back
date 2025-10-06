@@ -1,36 +1,19 @@
-// ORM mapping for the timetable_slots table generated from the current database schema.
-import {
-  Column,
-  Entity,
-  Index,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { TimetableAssignments } from '../timetable_assignments/timetable_assignments.entity';
+import { Entity, PrimaryGeneratedColumn, Column, Unique, Check } from 'typeorm';
 
-@Index(
-  'timetable_slots_day_of_week_start_time_end_time_key',
-  ['dayOfWeek', 'endTime', 'startTime'],
-  { unique: true }
-)
-@Index('timetable_slots_pkey', ['slotId'], { unique: true })
-@Entity('timetable_slots', { schema: 'public' })
-export class TimetableSlots {
-  @PrimaryGeneratedColumn({ type: 'bigint', name: 'slot_id' })
-  slotId: string;
+@Entity('timetable_slots')
+@Unique('uniq_timetable_slot', ['dayOfWeek', 'startTime', 'endTime'])
+@Check('chk_slot_time', '"start_time" < "end_time"')
+export class TimetableSlot {
+  @PrimaryGeneratedColumn({ name: 'slot_id' })
+  slotId: number;
 
-  @Column('smallint', { name: 'day_of_week', unique: true })
-  dayOfWeek: number;
+  @Column({ type: 'smallint', name: 'day_of_week' })
+  dayOfWeek: number; // 1..7
 
-  @Column('time without time zone', { name: 'start_time', unique: true })
-  startTime: string;
+  @Column({ type: 'time', name: 'start_time' })
+  startTime: string; // '08:00:00'
 
-  @Column('time without time zone', { name: 'end_time', unique: true })
-  endTime: string;
-
-  @OneToMany(
-    () => TimetableAssignments,
-    (timetableAssignments) => timetableAssignments.slot
-  )
-  timetableAssignments: TimetableAssignments[];
+  @Column({ type: 'time', name: 'end_time' })
+  endTime: string;   // '08:45:00'
+  timetableAssignments: any;
 }

@@ -37,7 +37,7 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = await this.validateUser(dto.username, dto.password);
+    const user = await this.validateUser(dto.nationalId, dto.password);
     return this.buildAuthResponse(user);
   }
 
@@ -52,7 +52,7 @@ export class AuthService {
     const entity = this.usersRepo.create({
       ...defaults,
       nationalId: dto.nationalId,
-      username: dto.username,
+      username: dto.username ?? dto.nationalId,
       passwordHash,
       role: dto.role ?? 'teacher',
       firstName: dto.firstName ?? null,
@@ -66,10 +66,10 @@ export class AuthService {
   }
 
   private async validateUser(
-    username: string,
+    nationalId: string,
     password: string,
   ): Promise<Users> {
-    const user = await this.usersRepo.findOne({ where: { username } });
+    const user = await this.usersRepo.findOne({ where: { nationalId } });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -89,8 +89,8 @@ export class AuthService {
   private async assertNewUserIsUnique(dto: SignupDto): Promise<void> {
     const existingUser = await this.usersRepo.findOne({
       where: [
-        { username: dto.username },
         { nationalId: dto.nationalId },
+        ...(dto.username ? [{ username: dto.username }] : []),
       ],
     });
 

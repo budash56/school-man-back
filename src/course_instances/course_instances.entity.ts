@@ -28,10 +28,10 @@ export class CourseInstances {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'course_instance_id' })
   courseInstanceId: string;
 
-  @Column('bigint', { name: 'subject_id', unique: true })
+  @Column('bigint', { name: 'subject_id' })
   subjectId: string;
 
-  @Column('smallint', { name: 'grade_level', unique: true })
+  @Column('smallint', { name: 'grade_level' })
   gradeLevel: number;
 
   @Column('bigint', { name: 'school_year_id' })

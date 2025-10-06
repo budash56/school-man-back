@@ -21,7 +21,7 @@ import { SubjectAreas } from './subject_areas/subject_areas.entity';
 import { Subjects } from './subjects/subjects.entity';
 import { Terms } from './terms/terms.entity';
 import { TimetableAssignments } from './timetable_assignments/timetable_assignments.entity';
-import { TimetableSlots } from './timetable_slots/timetable_slots.entity';
+import { TimetableSlot } from './timetable_slots/timetable_slots.entity';
 import { Users } from './users/users.entity';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AuditLogsController } from './audit_logs/audit_logs.controller';
@@ -54,7 +54,7 @@ import { UsersController } from './users/users.controller';
       password: '1234',
       database: 'SchoolManBeta',
       autoLoadEntities: true,
-      synchronize: true, // change in production
+      synchronize: false, 
     }),
     TypeOrmModule.forFeature([
       Attendance,
@@ -75,7 +75,7 @@ import { UsersController } from './users/users.controller';
       Subjects,
       Terms,
       TimetableAssignments,
-      TimetableSlots,
+      TimetableSlot,
       Users,
     ]),
     AuthModule,
