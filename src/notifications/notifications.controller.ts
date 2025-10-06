@@ -1,4 +1,4 @@
-// Provides CRUD endpoints for enrollments using the generated Enrollments entity.
+// Provides CRUD endpoints for notifications using the generated Notifications entity.
 import {
   Body,
   Controller,
@@ -12,13 +12,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import type { DeepPartial } from 'typeorm';
-import { Enrollments } from './enrollments.entity';
+import { Notifications } from './notifications.entity';
 
-@Controller('enrollments')
-export class EnrollmentsController {
+@Controller('notifications')
+export class NotificationsController {
   constructor(
-    @InjectRepository(Enrollments)
-    private readonly repository: Repository<Enrollments>,
+    @InjectRepository(Notifications)
+    private readonly repository: Repository<Notifications>,
   ) {}
 
   @Get()
@@ -29,24 +29,24 @@ export class EnrollmentsController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const entity = await this.repository.findOne({
-      where: { enrollmentId: id },
+      where: { notificationId: id },
     });
 
     if (!entity) {
-      throw new NotFoundException('Enrollments record not found');
+      throw new NotFoundException('Notifications record not found');
     }
 
     return entity;
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Enrollments>) {
+  create(@Body() payload: DeepPartial<Notifications>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Enrollments>) {
+  async update(@Param('id') id: string, @Body() payload: DeepPartial<Notifications>) {
     const entity = await this.findOne(id);
     this.repository.merge(entity, payload);
     return this.repository.save(entity);

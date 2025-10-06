@@ -1,5 +1,12 @@
 // Exposes authentication endpoints for login, signup, and profile retrieval.
-import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import type { AuthResponse, SanitizedUser } from './auth.service';

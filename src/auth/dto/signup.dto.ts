@@ -3,7 +3,7 @@ export class SignupDto {
   nationalId: string;
   username: string;
   password: string;
-  role?: 'teacher' | 'coordinator' | 'management';
+  role?: 'admin' | 'registrar' | 'teacher' | 'coordinator';
   firstName?: string;
   lastName?: string;
   email?: string;

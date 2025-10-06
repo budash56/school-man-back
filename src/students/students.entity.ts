@@ -1,85 +1,81 @@
+// ORM mapping for the students table generated from the current database schema.
 import {
   Column,
   Entity,
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { Attendance } from "../attendance/Attendance.entity";
-import { DisciplinaryRecords } from "../disciplinary_records/DisciplinaryRecords.entity";
-import { Enrollments } from "../enrollments/Enrollments.entity";
-import { Grades } from "../grades/Grades.entity";
-import { Observations } from "../observations/Observations.entity";
+} from 'typeorm';
+import { Attendance } from '../attendance/attendance.entity';
+import { DisciplinaryRecords } from '../disciplinary_records/disciplinary_records.entity';
+import { Enrollments } from '../enrollments/enrollments.entity';
+import { Grades } from '../grades/grades.entity';
 
-@Index("students_national_id_key", ["nationalId"], { unique: true })
-@Index("students_pkey", ["studentId"], { unique: true })
-@Entity("students", { schema: "public" })
+@Index('students_national_id_key', ['nationalId'], { unique: true })
+@Index('students_pkey', ['studentId'], { unique: true })
+@Entity('students', { schema: 'public' })
 export class Students {
-  @PrimaryGeneratedColumn({ type: "bigint", name: "student_id" })
+  @PrimaryGeneratedColumn({ type: 'bigint', name: 'student_id' })
   studentId: string;
 
-  @Column("character varying", {
-    name: "national_id",
+  @Column('character varying', {
+    name: 'national_id',
     unique: true,
     length: 50,
   })
   nationalId: string;
 
-  @Column("character varying", { name: "first_name", length: 80 })
+  @Column('character varying', { name: 'first_name', length: 80 })
   firstName: string;
 
-  @Column("character varying", { name: "last_name", length: 80 })
+  @Column('character varying', { name: 'last_name', length: 80 })
   lastName: string;
 
-  @Column("date", { name: "dob", nullable: true })
+  @Column('date', { name: 'dob', nullable: true })
   dob: string | null;
 
-  @Column("text", { name: "address", nullable: true })
+  @Column('text', { name: 'address', nullable: true })
   address: string | null;
 
-  @Column("character varying", {
-    name: "guardian_phone",
+  @Column('character varying', {
+    name: 'guardian_name',
     nullable: true,
-    length: 50,
+    length: 120,
   })
-  guardianPhone: string | null;
+  guardianName: string | null;
 
-  @Column("boolean", {
-    name: "uses_bus",
+  @Column('character varying', {
+    name: 'guardian_relationship',
     nullable: true,
-    default: () => "false",
+    length: 60,
   })
-  usesBus: boolean | null;
+  guardianRelationship: string | null;
 
-  @Column("boolean", {
-    name: "has_venereal_police_process",
-    nullable: true,
-    default: () => "false",
-  })
-  hasVenerealPoliceProcess: boolean | null;
+  @Column('character varying', { name: 'guardian_phone', length: 50 })
+  guardianPhone: string;
 
-  @Column("boolean", {
-    name: "is_active",
+  @Column('boolean', {
+    name: 'is_active',
     nullable: true,
-    default: () => "true",
+    default: () => 'true',
   })
   isActive: boolean | null;
 
-  @Column("timestamp with time zone", {
-    name: "created_at",
+  @Column('timestamp with time zone', {
+    name: 'created_at',
     nullable: true,
-    default: () => "now()",
+    default: () => 'now()',
   })
   createdAt: Date | null;
 
-  @Column("timestamp with time zone", {
-    name: "updated_at",
+  @Column('timestamp with time zone', {
+    name: 'updated_at',
     nullable: true,
-    default: () => "now()",
+    default: () => 'now()',
   })
   updatedAt: Date | null;
 
-  @Column("timestamp with time zone", { name: "deleted_at", nullable: true })
+  @Column('timestamp with time zone', { name: 'deleted_at', nullable: true })
   deletedAt: Date | null;
 
   @OneToMany(() => Attendance, (attendance) => attendance.student)
@@ -96,7 +92,4 @@ export class Students {
 
   @OneToMany(() => Grades, (grades) => grades.student)
   grades: Grades[];
-
-  @OneToMany(() => Observations, (observations) => observations.student)
-  observations: Observations[];
 }

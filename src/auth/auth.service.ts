@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { Users } from '../users/Users.entity';
+import { Users } from '../users/users.entity';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 
@@ -37,7 +37,7 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = await this.validateUser(dto.nationalId, dto.password);
+    const user = await this.validateUser(dto.username, dto.password);
     return this.buildAuthResponse(user);
   }
 

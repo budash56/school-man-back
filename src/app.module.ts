@@ -1,25 +1,49 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { UsersController } from './users/users.controller';
-import { StudentsController } from './students/students.controller';
+import { Attendance } from './attendance/attendance.entity';
+import { AuditLogs } from './audit_logs/audit_logs.entity';
+import { ClassGroups } from './class_groups/class_groups.entity';
+import { Classrooms } from './classrooms/classrooms.entity';
+import { CourseInstances } from './course_instances/course_instances.entity';
+import { Courses } from './courses/courses.entity';
+import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records.entity';
+import { Enrollments } from './enrollments/enrollments.entity';
+import { Grades } from './grades/grades.entity';
+import { GradeSchemes } from './grade_schemes/grade_schemes.entity';
+import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.entity';
+import { Notifications } from './notifications/notifications.entity';
+import { SchoolYears } from './school_years/school_years.entity';
+import { Students } from './students/students.entity';
+import { SubjectAreas } from './subject_areas/subject_areas.entity';
+import { Subjects } from './subjects/subjects.entity';
+import { Terms } from './terms/terms.entity';
+import { TimetableAssignments } from './timetable_assignments/timetable_assignments.entity';
+import { TimetableSlots } from './timetable_slots/timetable_slots.entity';
+import { Users } from './users/users.entity';
 import { AttendanceController } from './attendance/attendance.controller';
+import { AuditLogsController } from './audit_logs/audit_logs.controller';
+import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
+import { CourseInstancesController } from './course_instances/course_instances.controller';
 import { CoursesController } from './courses/courses.controller';
-import { SubjectsController } from './subjects/subjects.controller';
+import { DisciplinaryRecordsController } from './disciplinary_records/disciplinary_records.controller';
 import { EnrollmentsController } from './enrollments/enrollments.controller';
 import { GradesController } from './grades/grades.controller';
-import { CourseInstancesController } from './course_instances/course_instances.controller';
-import { DisciplinaryRecordsController } from './disciplinary_records/disciplinary_records.controller';
-import { ClassGroupsController } from './class_groups/class_groups.controller';
-import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
+import { GradeSchemesController } from './grade_schemes/grade_schemes.controller';
+import { GradeSchemeValuesController } from './grade_scheme_values/grade_scheme_values.controller';
+import { NotificationsController } from './notifications/notifications.controller';
+import { SchoolYearsController } from './school_years/school_years.controller';
+import { StudentsController } from './students/students.controller';
+import { SubjectAreasController } from './subject_areas/subject_areas.controller';
+import { SubjectsController } from './subjects/subjects.controller';
+import { TermsController } from './terms/terms.controller';
 import { TimetableAssignmentsController } from './timetable_assignments/timetable_assignments.controller';
-import { SchoolPeriodsController } from './school_periods/school_periods.controller';
-import { ReportTemplatesController } from './report_templates/report_templates.controller';
-import { ObservationsController } from './observations/observations.controller';
-import { AuditLogsController } from './audit_logs/audit_logs.controller';
+import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
+import { UsersController } from './users/users.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -28,14 +52,57 @@ import { AuditLogsController } from './audit_logs/audit_logs.controller';
       port: 5432,
       username: 'postgres',
       password: '1234',
-      database: 'TestDB',
-      // entities: [],
+      database: 'SchoolManBeta',
       autoLoadEntities: true,
       synchronize: true, // change in production
     }),
+    TypeOrmModule.forFeature([
+      Attendance,
+      AuditLogs,
+      ClassGroups,
+      Classrooms,
+      CourseInstances,
+      Courses,
+      DisciplinaryRecords,
+      Enrollments,
+      Grades,
+      GradeSchemes,
+      GradeSchemeValues,
+      Notifications,
+      SchoolYears,
+      Students,
+      SubjectAreas,
+      Subjects,
+      Terms,
+      TimetableAssignments,
+      TimetableSlots,
+      Users,
+    ]),
     AuthModule,
   ],
-  controllers: [AppController, UsersController, StudentsController, AttendanceController, ClassroomsController, CoursesController, SubjectsController, EnrollmentsController, GradesController, CourseInstancesController, DisciplinaryRecordsController, ClassGroupsController, TimetableSlotsController, TimetableAssignmentsController, SchoolPeriodsController, ReportTemplatesController, ObservationsController, AuditLogsController],
+  controllers: [
+    AppController,
+    AttendanceController,
+    AuditLogsController,
+    ClassGroupsController,
+    ClassroomsController,
+    CourseInstancesController,
+    CoursesController,
+    DisciplinaryRecordsController,
+    EnrollmentsController,
+    GradesController,
+    GradeSchemesController,
+    GradeSchemeValuesController,
+    NotificationsController,
+    SchoolYearsController,
+    StudentsController,
+    SubjectAreasController,
+    SubjectsController,
+    TermsController,
+    TimetableAssignmentsController,
+    TimetableSlotsController,
+    UsersController,
+  ],
   providers: [AppService],
 })
 export class AppModule {}

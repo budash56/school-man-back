@@ -1,32 +1,34 @@
+// ORM mapping for the classrooms table generated from the current database schema.
 import {
   Column,
   Entity,
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { ClassGroups } from "../class_groups/ClassGroups.entity";
-import { TimetableAssignments } from "../timetable_assignments/TimetableAssignments.entity";
+} from 'typeorm';
+import { ClassGroups } from '../class_groups/class_groups.entity';
+import { TimetableAssignments } from '../timetable_assignments/timetable_assignments.entity';
 
-@Index("classrooms_pkey", ["classroomId"], { unique: true })
-@Entity("classrooms", { schema: "public" })
+@Index('classrooms_pkey', ['classroomId'], { unique: true })
+@Index('classrooms_name_key', ['name'], { unique: true })
+@Entity('classrooms', { schema: 'public' })
 export class Classrooms {
-  @PrimaryGeneratedColumn({ type: "bigint", name: "classroom_id" })
+  @PrimaryGeneratedColumn({ type: 'bigint', name: 'classroom_id' })
   classroomId: string;
 
-  @Column("character varying", { name: "code", length: 20 })
-  code: string;
+  @Column('character varying', { name: 'name', unique: true, length: 80 })
+  name: string;
 
-  @Column("character varying", { name: "building", nullable: true, length: 80 })
+  @Column('character varying', { name: 'building', nullable: true, length: 80 })
   building: string | null;
 
-  @Column("integer", { name: "capacity", nullable: true })
-  capacity: number | null;
+  @Column('integer', { name: 'capacity', default: () => '0' })
+  capacity: number;
 
-  @Column("timestamp with time zone", {
-    name: "created_at",
+  @Column('timestamp with time zone', {
+    name: 'created_at',
     nullable: true,
-    default: () => "now()",
+    default: () => 'now()',
   })
   createdAt: Date | null;
 
