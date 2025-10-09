@@ -9,17 +9,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import type { DeepPartial } from 'typeorm';
 import { GradeSchemeValues } from './grade_scheme_values.entity';
+import { GradeSchemeValuesRepository } from './grade_scheme_values.repository';
 
 @Controller('grade-scheme-values')
 export class GradeSchemeValuesController {
-  constructor(
-    @InjectRepository(GradeSchemeValues)
-    private readonly repository: Repository<GradeSchemeValues>,
-  ) {}
+  constructor(private readonly repository: GradeSchemeValuesRepository) {}
 
   @Get()
   findAll() {

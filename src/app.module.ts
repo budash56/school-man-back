@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { RepositoriesModule } from './repositories/repositories.module';
 import { Attendance } from './attendance/attendance.entity';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
@@ -79,6 +80,7 @@ import { UsersController } from './users/users.controller';
       Users,
     ]),
     AuthModule,
+    RepositoriesModule,
   ],
   controllers: [
     AppController,

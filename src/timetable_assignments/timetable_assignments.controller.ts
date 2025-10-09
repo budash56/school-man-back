@@ -9,17 +9,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import type { DeepPartial } from 'typeorm';
 import { TimetableAssignments } from './timetable_assignments.entity';
+import { TimetableAssignmentsRepository } from './timetable_assignments.repository';
 
 @Controller('timetable-assignments')
 export class TimetableAssignmentsController {
-  constructor(
-    @InjectRepository(TimetableAssignments)
-    private readonly repository: Repository<TimetableAssignments>,
-  ) {}
+  constructor(private readonly repository: TimetableAssignmentsRepository) {}
 
   @Get()
   findAll() {

@@ -11,17 +11,13 @@ import {
   ParseIntPipe,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import type { DeepPartial } from 'typeorm';
 import { TimetableSlot } from './timetable_slots.entity';
+import { TimetableSlotRepository } from './timetable_slots.repository';
 
 @Controller('timetable-slots')
 export class TimetableSlotsController {
-  constructor(
-    @InjectRepository(TimetableSlot)
-    private readonly repository: Repository<TimetableSlot>,
-  ) {}
+  constructor(private readonly repository: TimetableSlotRepository) {}
 
   @Get()
   findAll() {

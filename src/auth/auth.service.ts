@@ -5,11 +5,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Users } from '../users/users.entity';
+import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 
@@ -32,8 +31,7 @@ export interface AuthResponse {
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectRepository(Users)
-    private readonly usersRepo: Repository<Users>,
+    private readonly usersRepo: UsersRepository,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponse> {

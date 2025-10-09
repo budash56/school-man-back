@@ -9,17 +9,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import type { DeepPartial } from 'typeorm';
 import { Users } from './users.entity';
+import { UsersRepository } from './users.repository';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    @InjectRepository(Users)
-    private readonly repository: Repository<Users>,
-  ) {}
+  constructor(private readonly repository: UsersRepository) {}
 
   @Get()
   findAll() {
