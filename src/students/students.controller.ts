@@ -4,54 +4,61 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Students } from './students.entity';
-import { StudentsRepository } from './students.repository';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CreateStudentDto } from './dto/create-student.dto';
+import { StudentsQueryDto } from './dto/students-query.dto';
+import { UpdateStudentDto } from './dto/update-student.dto';
+import { StudentsService } from './students.service';
 
+@ApiTags('students')
 @Controller('students')
 export class StudentsController {
-  constructor(private readonly repository: StudentsRepository) {}
+  constructor(private readonly studentsService: StudentsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'pageSize', required: false, example: 25 })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    description: 'Search keyword applied to nationalId, firstName, and lastName',
+  })
+  @ApiQuery({
+    name: 'year',
+    required: false,
+    description: 'Filters students enrolled in the provided school year ID',
+    example: 2025,
+  })
+  findAll(@Query() query: StudentsQueryDto) {
+    return this.studentsService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { studentId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Students record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Students>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateStudentDto) {
+    return this.studentsService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Students>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateStudentDto,
+  ) {
+    return this.studentsService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.remove(id);
   }
 }

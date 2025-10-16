@@ -18,6 +18,7 @@ import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.ent
 import { Notifications } from './notifications/notifications.entity';
 import { SchoolYears } from './school_years/school_years.entity';
 import { Students } from './students/students.entity';
+import { StudentsService } from './students/students.service';
 import { SubjectAreas } from './subject_areas/subject_areas.entity';
 import { Subjects } from './subjects/subjects.entity';
 import { Terms } from './terms/terms.entity';
@@ -105,6 +106,6 @@ import { UsersController } from './users/users.controller';
     TimetableSlotsController,
     UsersController,
   ],
-  providers: [AppService],
+  providers: [AppService, StudentsService],
 })
 export class AppModule {}
