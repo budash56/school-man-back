@@ -4,54 +4,48 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Terms } from './terms.entity';
-import { TermsRepository } from './terms.repository';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CreateTermDto } from './dto/create-term.dto';
+import { UpdateTermDto } from './dto/update-term.dto';
+import { TermsQueryDto } from './dto/terms-query.dto';
+import { TermsService } from './terms.service';
 
+@ApiTags('terms')
 @Controller('terms')
 export class TermsController {
-  constructor(private readonly repository: TermsRepository) {}
+  constructor(private readonly termsService: TermsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  @ApiQuery({ name: 'active', required: false, example: true })
+  @ApiQuery({ name: 'name', required: false, example: 'P1' })
+  @ApiQuery({ name: 'schoolYearId', required: false, example: 1 })
+  findAll(@Query() query: TermsQueryDto) {
+    return this.termsService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { termId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Terms record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.termsService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Terms>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateTermDto) {
+    return this.termsService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Terms>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTermDto) {
+    return this.termsService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.termsService.remove(id);
   }
 }

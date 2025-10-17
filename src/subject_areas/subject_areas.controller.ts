@@ -4,54 +4,55 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { SubjectAreas } from './subject_areas.entity';
-import { SubjectAreasRepository } from './subject_areas.repository';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
+import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
+import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
+import { SubjectAreasService } from './subject_areas.service';
 
+@ApiTags('subject-areas')
 @Controller('subject-areas')
 export class SubjectAreasController {
-  constructor(private readonly repository: SubjectAreasRepository) {}
+  constructor(private readonly subjectAreasService: SubjectAreasService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'pageSize', required: false, example: 25 })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    description: 'Search keyword applied to area code and name',
+  })
+  findAll(@Query() query: SubjectAreasQueryDto) {
+    return this.subjectAreasService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { areaId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('SubjectAreas record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectAreasService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<SubjectAreas>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateSubjectAreaDto) {
+    return this.subjectAreasService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<SubjectAreas>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSubjectAreaDto,
+  ) {
+    return this.subjectAreasService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.subjectAreasService.remove(id);
   }
 }
