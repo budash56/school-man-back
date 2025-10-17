@@ -9,6 +9,7 @@ import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { Classrooms } from './classrooms/classrooms.entity';
 import { CourseInstances } from './course_instances/course_instances.entity';
+import { CourseInstancesService } from './course_instances/course_instances.service';
 import { Courses } from './courses/courses.entity';
 import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records.entity';
 import { Enrollments } from './enrollments/enrollments.entity';
@@ -17,11 +18,15 @@ import { GradeSchemes } from './grade_schemes/grade_schemes.entity';
 import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.entity';
 import { Notifications } from './notifications/notifications.entity';
 import { SchoolYears } from './school_years/school_years.entity';
+import { SchoolYearsService } from './school_years/school_years.service';
 import { Students } from './students/students.entity';
 import { StudentsService } from './students/students.service';
 import { SubjectAreas } from './subject_areas/subject_areas.entity';
+import { SubjectAreasService } from './subject_areas/subject_areas.service';
 import { Subjects } from './subjects/subjects.entity';
+import { SubjectsService } from './subjects/subjects.service';
 import { Terms } from './terms/terms.entity';
+import { TermsService } from './terms/terms.service';
 import { TimetableAssignments } from './timetable_assignments/timetable_assignments.entity';
 import { TimetableSlot } from './timetable_slots/timetable_slots.entity';
 import { Users } from './users/users.entity';
@@ -106,6 +111,14 @@ import { UsersController } from './users/users.controller';
     TimetableSlotsController,
     UsersController,
   ],
-  providers: [AppService, StudentsService],
+  providers: [
+    AppService,
+    StudentsService,
+    SubjectAreasService,
+    SubjectsService,
+    SchoolYearsService,
+    TermsService,
+    CourseInstancesService,
+  ],
 })
 export class AppModule {}
