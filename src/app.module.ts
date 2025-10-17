@@ -21,6 +21,7 @@ import { SchoolYears } from './school_years/school_years.entity';
 import { SchoolYearsService } from './school_years/school_years.service';
 import { Students } from './students/students.entity';
 import { StudentsService } from './students/students.service';
+import { SubjectAreasService } from './subject_areas/subject_areas.service';
 import { SubjectAreas } from './subject_areas/subject_areas.entity';
 import { SubjectAreasService } from './subject_areas/subject_areas.service';
 import { Subjects } from './subjects/subjects.entity';
@@ -118,7 +119,6 @@ import { UsersController } from './users/users.controller';
     SubjectsService,
     SchoolYearsService,
     TermsService,
-    CourseInstancesService,
   ],
 })
 export class AppModule {}

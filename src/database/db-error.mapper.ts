@@ -8,8 +8,8 @@ export class DbErrorMapper {
     if (error instanceof QueryFailedError) {
       const driverError = (error as QueryFailedError).driverError as {
         code?: string;
+        detail?: string;
       };
-
       if (driverError?.code === UNIQUE_VIOLATION) {
         throw new ConflictException(message);
       }

@@ -4,54 +4,50 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { SchoolYears } from './school_years.entity';
-import { SchoolYearsRepository } from './school_years.repository';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CreateSchoolYearDto } from './dto/create-school-year.dto';
+import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
+import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
+import { SchoolYearsService } from './school_years.service';
 
+@ApiTags('school-years')
 @Controller('school-years')
 export class SchoolYearsController {
-  constructor(private readonly repository: SchoolYearsRepository) {}
+  constructor(private readonly schoolYearsService: SchoolYearsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  @ApiQuery({ name: 'active', required: false, example: true })
+  @ApiQuery({ name: 'name', required: false, example: '2025' })
+  findAll(@Query() query: SchoolYearsQueryDto) {
+    return this.schoolYearsService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { schoolYearId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('SchoolYears record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.schoolYearsService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<SchoolYears>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateSchoolYearDto) {
+    return this.schoolYearsService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<SchoolYears>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSchoolYearDto,
+  ) {
+    return this.schoolYearsService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.schoolYearsService.remove(id);
   }
 }
