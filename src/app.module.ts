@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { RepositoriesModule } from './repositories/repositories.module';
 import { Attendance } from './attendance/attendance.entity';
+import { AttendanceService } from './attendance/attendance.service';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { ClassGroupsService } from './class_groups/class_groups.service';
@@ -116,6 +117,7 @@ import { UsersController } from './users/users.controller';
   ],
   providers: [
     AppService,
+    AttendanceService,
     ClassGroupsService,
     CourseInstancesService,
     CoursesService,

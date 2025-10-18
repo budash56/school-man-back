@@ -1,57 +1,35 @@
-// Provides CRUD endpoints for attendance using the generated Attendance entity.
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Attendance } from './attendance.entity';
-import { AttendanceRepository } from './attendance.repository';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { AttendanceService } from './attendance.service';
+import { AttendanceQueryDto } from './dto/attendance-query.dto';
+import { CreateAttendanceDto } from './dto/create-attendance.dto';
+import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 
 @Controller('attendance')
 export class AttendanceController {
-  constructor(private readonly repository: AttendanceRepository) {}
+  constructor(private readonly attendanceService: AttendanceService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: AttendanceQueryDto) {
+    return this.attendanceService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { attendanceId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Attendance record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.attendanceService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Attendance>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateAttendanceDto) {
+    return this.attendanceService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Attendance>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAttendanceDto) {
+    return this.attendanceService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.attendanceService.remove(id);
   }
 }
