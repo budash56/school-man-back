@@ -1,0 +1,230 @@
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
+import { DbErrorMapper } from '../database/db-error.mapper';
+import { SchoolYearsRepository } from '../school_years/school_years.repository';
+import { StudentsRepository } from '../students/students.repository';
+import { Enrollments } from './enrollments.entity';
+import { EnrollmentsRepository } from './enrollments.repository';
+import {
+  EnrollmentsQueryDto,
+  ENROLLMENTS_DEFAULT_PAGE_SIZE,
+  ENROLLMENTS_MAX_PAGE_SIZE,
+} from './dto/enrollments-query.dto';
+import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
+
+type PaginationResult<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type EnrollmentResponse = {
+  enrollmentId: number;
+  studentId: number;
+  classGroupId: number;
+  schoolYearId: number;
+  active: boolean;
+  enrolledAt: Date | null;
+};
+
+@Injectable()
+export class EnrollmentsService {
+  constructor(
+    private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly studentsRepository: StudentsRepository,
+    private readonly classGroupsRepository: ClassGroupsRepository,
+    private readonly schoolYearsRepository: SchoolYearsRepository,
+  ) {}
+
+  async findAll(query: EnrollmentsQueryDto): Promise<PaginationResult<EnrollmentResponse>> {
+    const page = this.resolvePage(query.page);
+    const pageSize = this.resolvePageSize(query.pageSize);
+
+    const qb = this.enrollmentsRepository
+      .createQueryBuilder('enrollment')
+      .leftJoinAndSelect('enrollment.student', 'student')
+      .leftJoinAndSelect('enrollment.classGroup', 'classGroup')
+      .leftJoinAndSelect('enrollment.schoolYear', 'schoolYear')
+      .orderBy('enrollment.enrolledAt', 'DESC')
+      .addOrderBy('enrollment.enrollmentId', 'DESC');
+
+    if (query.studentId !== undefined) {
+      qb.andWhere('enrollment.studentId = :studentId', {
+        studentId: query.studentId.toString(),
+      });
+    }
+
+    if (query.classGroupId !== undefined) {
+      qb.andWhere('enrollment.classGroupId = :classGroupId', {
+        classGroupId: query.classGroupId.toString(),
+      });
+    }
+
+    if (query.schoolYearId !== undefined) {
+      qb.andWhere('enrollment.schoolYearId = :schoolYearId', {
+        schoolYearId: query.schoolYearId.toString(),
+      });
+    }
+
+    qb.skip((page - 1) * pageSize);
+    qb.take(pageSize);
+
+    const [entities, total] = await qb.getManyAndCount();
+    return {
+      data: entities.map((entity) => this.toResponse(entity)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async findOne(id: number): Promise<EnrollmentResponse> {
+    const enrollment = await this.enrollmentsRepository.findOne({
+      where: { enrollmentId: id.toString() },
+      relations: {
+        student: true,
+        classGroup: true,
+        schoolYear: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    return this.toResponse(enrollment);
+  }
+
+  async create(dto: CreateEnrollmentDto): Promise<EnrollmentResponse> {
+    const student = await this.resolveStudent(dto.studentId);
+    const classGroup = await this.resolveClassGroup(dto.classGroupId);
+    const schoolYear = await this.resolveSchoolYear(dto.schoolYearId);
+
+    this.assertClassGroupMatchesSchoolYear(classGroup.schoolYearId, schoolYear.schoolYearId);
+
+    const entity = this.enrollmentsRepository.create({
+      studentId: student.studentId,
+      classGroupId: classGroup.classGroupId,
+      schoolYearId: schoolYear.schoolYearId,
+      active: true,
+    });
+
+    try {
+      const saved = await this.enrollmentsRepository.save(entity);
+      return this.findOne(Number(saved.enrollmentId));
+    } catch (error) {
+      DbErrorMapper.throwConflict(
+        error,
+        'Student already has an active enrollment for this school year',
+      );
+    }
+  }
+
+  async deactivate(id: number): Promise<EnrollmentResponse> {
+    const enrollment = await this.getEnrollmentEntity(id);
+
+    if (enrollment.active === false) {
+      return this.toResponse(enrollment);
+    }
+
+    enrollment.active = false;
+
+    const saved = await this.enrollmentsRepository.save(enrollment);
+    return this.toResponse(saved);
+  }
+
+  async remove(id: number): Promise<{ deleted: true }> {
+    const enrollment = await this.getEnrollmentEntity(id);
+    await this.enrollmentsRepository.remove(enrollment);
+    return { deleted: true };
+  }
+
+  private async getEnrollmentEntity(id: number): Promise<Enrollments> {
+    const enrollment = await this.enrollmentsRepository.findOne({
+      where: { enrollmentId: id.toString() },
+      relations: {
+        student: true,
+        classGroup: true,
+        schoolYear: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    return enrollment;
+  }
+
+  private async resolveStudent(id: number) {
+    const student = await this.studentsRepository.findOne({
+      where: { studentId: id.toString() },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    return student;
+  }
+
+  private async resolveClassGroup(id: number) {
+    const classGroup = await this.classGroupsRepository.findOne({
+      where: { classGroupId: id.toString() },
+    });
+
+    if (!classGroup) {
+      throw new NotFoundException('Class group not found');
+    }
+
+    return classGroup;
+  }
+
+  private async resolveSchoolYear(id: number) {
+    const schoolYear = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: id.toString() },
+    });
+
+    if (!schoolYear) {
+      throw new NotFoundException('School year not found');
+    }
+
+    return schoolYear;
+  }
+
+  private assertClassGroupMatchesSchoolYear(
+    classGroupSchoolYearId: string,
+    schoolYearId: string,
+  ): void {
+    if (classGroupSchoolYearId !== schoolYearId) {
+      throw new ConflictException('Class group belongs to a different school year');
+    }
+  }
+
+  private resolvePage(rawPage?: number): number {
+    if (!rawPage || rawPage < 1) {
+      return 1;
+    }
+    return rawPage;
+  }
+
+  private resolvePageSize(rawPageSize?: number): number {
+    if (!rawPageSize || rawPageSize < 1) {
+      return ENROLLMENTS_DEFAULT_PAGE_SIZE;
+    }
+
+    return Math.min(rawPageSize, ENROLLMENTS_MAX_PAGE_SIZE);
+  }
+
+  private toResponse(enrollment: Enrollments): EnrollmentResponse {
+    return {
+      enrollmentId: Number(enrollment.enrollmentId),
+      studentId: Number(enrollment.studentId),
+      classGroupId: Number(enrollment.classGroupId),
+      schoolYearId: Number(enrollment.schoolYearId),
+      active: enrollment.active ?? false,
+      enrolledAt: enrollment.enrolledAt ?? null,
+    };
+  }
+}

@@ -1,57 +1,34 @@
-// Provides CRUD endpoints for enrollments using the generated Enrollments entity.
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Enrollments } from './enrollments.entity';
-import { EnrollmentsRepository } from './enrollments.repository';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { EnrollmentsService } from './enrollments.service';
+import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
+import { EnrollmentsQueryDto } from './dto/enrollments-query.dto';
 
 @Controller('enrollments')
 export class EnrollmentsController {
-  constructor(private readonly repository: EnrollmentsRepository) {}
+  constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: EnrollmentsQueryDto) {
+    return this.enrollmentsService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { enrollmentId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Enrollments record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.enrollmentsService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Enrollments>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateEnrollmentDto) {
+    return this.enrollmentsService.create(dto);
   }
 
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Enrollments>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @Patch(':id/deactivate')
+  deactivate(@Param('id', ParseIntPipe) id: number) {
+    return this.enrollmentsService.deactivate(id);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.enrollmentsService.remove(id);
   }
 }
