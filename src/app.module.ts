@@ -7,10 +7,12 @@ import { RepositoriesModule } from './repositories/repositories.module';
 import { Attendance } from './attendance/attendance.entity';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
+import { ClassGroupsService } from './class_groups/class_groups.service';
 import { Classrooms } from './classrooms/classrooms.entity';
 import { CourseInstances } from './course_instances/course_instances.entity';
 import { CourseInstancesService } from './course_instances/course_instances.service';
 import { Courses } from './courses/courses.entity';
+import { CoursesService } from './courses/courses.service';
 import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records.entity';
 import { Enrollments } from './enrollments/enrollments.entity';
 import { Grades } from './grades/grades.entity';
@@ -21,7 +23,6 @@ import { SchoolYears } from './school_years/school_years.entity';
 import { SchoolYearsService } from './school_years/school_years.service';
 import { Students } from './students/students.entity';
 import { StudentsService } from './students/students.service';
-import { SubjectAreasService } from './subject_areas/subject_areas.service';
 import { SubjectAreas } from './subject_areas/subject_areas.entity';
 import { SubjectAreasService } from './subject_areas/subject_areas.service';
 import { Subjects } from './subjects/subjects.entity';
@@ -114,6 +115,9 @@ import { UsersController } from './users/users.controller';
   ],
   providers: [
     AppService,
+    ClassGroupsService,
+    CourseInstancesService,
+    CoursesService,
     StudentsService,
     SubjectAreasService,
     SubjectsService,

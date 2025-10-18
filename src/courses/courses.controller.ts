@@ -1,57 +1,35 @@
-// Provides CRUD endpoints for courses using the generated Courses entity.
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Courses } from './courses.entity';
-import { CoursesRepository } from './courses.repository';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { CoursesService } from './courses.service';
+import { CoursesQueryDto } from './dto/courses-query.dto';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 
 @Controller('courses')
 export class CoursesController {
-  constructor(private readonly repository: CoursesRepository) {}
+  constructor(private readonly coursesService: CoursesService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: CoursesQueryDto) {
+    return this.coursesService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { courseId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Courses record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.coursesService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Courses>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateCourseDto) {
+    return this.coursesService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Courses>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCourseDto) {
+    return this.coursesService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.coursesService.remove(id);
   }
 }
