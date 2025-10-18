@@ -6,22 +6,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AttendanceRepository } from './attendance.repository';
-import { AttendanceQueryDto, ATTENDANCE_DEFAULT_PAGE_SIZE, ATTENDANCE_MAX_PAGE_SIZE } from './dto/attendance-query.dto';
+import { AttendanceQueryDto } from './dto/attendance-query.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { StudentsRepository } from '../students/students.repository';
 import { CoursesRepository } from '../courses/courses.repository';
 import { TimetableSlotRepository } from '../timetable_slots/timetable_slots.repository';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Attendance } from './attendance.entity';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 export type AttendanceResponse = {
   attendanceId: number;
@@ -45,9 +39,8 @@ export class AttendanceService {
     private readonly enrollmentsRepository: EnrollmentsRepository,
   ) {}
 
-  async findAll(query: AttendanceQueryDto): Promise<PaginationResult<AttendanceResponse>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: AttendanceQueryDto): Promise<PaginatedResult<AttendanceResponse>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.attendanceRepository
       .createQueryBuilder('attendance')
@@ -83,12 +76,12 @@ export class AttendanceService {
     qb.take(pageSize);
 
     const [records, total] = await qb.getManyAndCount();
-    return {
-      data: records.map((record) => this.toResponse(record)),
+    return buildPaginationResult(
+      records.map((record) => this.toResponse(record)),
       total,
       page,
       pageSize,
-    };
+    );
   }
 
   async findOne(id: number): Promise<AttendanceResponse> {
@@ -244,20 +237,6 @@ export class AttendanceService {
       throw new BadRequestException('Invalid date value');
     }
     return parsed;
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return ATTENDANCE_DEFAULT_PAGE_SIZE;
-    }
-    return Math.min(rawPageSize, ATTENDANCE_MAX_PAGE_SIZE);
   }
 
   private toResponse(record: Attendance): AttendanceResponse {

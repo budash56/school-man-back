@@ -1,8 +1,5 @@
 import { IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 
-export const CLASS_GROUPS_DEFAULT_PAGE_SIZE = 25;
-export const CLASS_GROUPS_MAX_PAGE_SIZE = 100;
-
 export class ClassGroupsQueryDto {
   @IsOptional()
   @IsInt()

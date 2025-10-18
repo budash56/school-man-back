@@ -33,6 +33,3 @@ export class SubjectAreasQueryDto {
   @IsString()
   q?: string;
 }
-
-export const SUBJECT_AREAS_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE;
-export const SUBJECT_AREAS_MAX_PAGE_SIZE = MAX_PAGE_SIZE;

@@ -1,8 +1,5 @@
 import { IsDateString, IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
-export const ATTENDANCE_DEFAULT_PAGE_SIZE = 25;
-export const ATTENDANCE_MAX_PAGE_SIZE = 100;
-
 export class AttendanceQueryDto {
   @IsOptional()
   @IsInt()

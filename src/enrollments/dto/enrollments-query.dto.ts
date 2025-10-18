@@ -1,8 +1,5 @@
 import { IsInt, IsOptional, Min } from 'class-validator';
 
-export const ENROLLMENTS_DEFAULT_PAGE_SIZE = 25;
-export const ENROLLMENTS_MAX_PAGE_SIZE = 100;
-
 export class EnrollmentsQueryDto {
   @IsOptional()
   @IsInt()

@@ -1,23 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SubjectAreasRepository } from '../subject_areas/subject_areas.repository';
 import { Subjects } from './subjects.entity';
 import { SubjectsRepository } from './subjects.repository';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
-import {
-  SubjectsQueryDto,
-  SUBJECTS_DEFAULT_PAGE_SIZE,
-  SUBJECTS_MAX_PAGE_SIZE,
-} from './dto/subjects-query.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { SubjectsQueryDto } from './dto/subjects-query.dto';
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 @Injectable()
 export class SubjectsService {
@@ -26,9 +16,8 @@ export class SubjectsService {
     private readonly subjectAreasRepository: SubjectAreasRepository,
   ) {}
 
-  async findAll(query: SubjectsQueryDto): Promise<PaginationResult<Subjects>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: SubjectsQueryDto): Promise<PaginatedResult<Subjects>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
     const qb = this.repository.createQueryBuilder('subjects');
     qb.where('1=1');
 
@@ -52,7 +41,7 @@ export class SubjectsService {
     qb.take(pageSize);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, pageSize };
+    return buildPaginationResult(data, total, page, pageSize);
   }
 
   async findOne(id: number): Promise<Subjects> {
@@ -130,20 +119,6 @@ export class SubjectsService {
     const subject = await this.findOne(id);
     await this.repository.remove(subject);
     return { deleted: true };
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return SUBJECTS_DEFAULT_PAGE_SIZE;
-    }
-    return Math.min(rawPageSize, SUBJECTS_MAX_PAGE_SIZE);
   }
 
   private buildSearchKeyword(raw: string): string {

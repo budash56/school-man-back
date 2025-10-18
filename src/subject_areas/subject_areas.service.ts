@@ -1,30 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SubjectAreas } from './subject_areas.entity';
 import { SubjectAreasRepository } from './subject_areas.repository';
 import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
-import {
-  SubjectAreasQueryDto,
-  SUBJECT_AREAS_DEFAULT_PAGE_SIZE,
-  SUBJECT_AREAS_MAX_PAGE_SIZE,
-} from './dto/subject-areas-query.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 @Injectable()
 export class SubjectAreasService {
   constructor(private readonly repository: SubjectAreasRepository) {}
 
-  async findAll(query: SubjectAreasQueryDto): Promise<PaginationResult<SubjectAreas>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: SubjectAreasQueryDto): Promise<PaginatedResult<SubjectAreas>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
     const qb = this.repository.createQueryBuilder('subjectAreas');
 
     qb.orderBy('subjectAreas.name', 'ASC');
@@ -44,7 +33,7 @@ export class SubjectAreasService {
     qb.take(pageSize);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, pageSize };
+    return buildPaginationResult(data, total, page, pageSize);
   }
 
   async findOne(id: number): Promise<SubjectAreas> {
@@ -87,20 +76,6 @@ export class SubjectAreasService {
     const area = await this.findOne(id);
     await this.repository.remove(area);
     return { deleted: true };
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return SUBJECT_AREAS_DEFAULT_PAGE_SIZE;
-    }
-    return Math.min(rawPageSize, SUBJECT_AREAS_MAX_PAGE_SIZE);
   }
 
   private buildSearchKeyword(raw: string): string {

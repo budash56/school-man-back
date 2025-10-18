@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { CourseInstancesRepository } from '../course_instances/course_instances.repository';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { UsersRepository } from '../users/users.repository';
 import { Courses } from './courses.entity';
 import { CoursesRepository } from './courses.repository';

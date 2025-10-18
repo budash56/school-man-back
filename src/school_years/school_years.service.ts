@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYears } from './school_years.entity';
 import { SchoolYearsRepository } from './school_years.repository';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';

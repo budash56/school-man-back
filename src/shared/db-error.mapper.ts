@@ -8,9 +8,13 @@ export class DbErrorMapper {
     if (error instanceof QueryFailedError) {
       const driverError = (error as QueryFailedError).driverError as {
         code?: string;
-        detail?: string;
+        constraint?: string;
       };
-      if (driverError?.code === UNIQUE_VIOLATION) {
+
+      const code = driverError?.code;
+      const constraint = driverError?.constraint?.toLowerCase() ?? '';
+
+      if (code === UNIQUE_VIOLATION || constraint.startsWith('uniq_')) {
         throw new ConflictException(message);
       }
     }

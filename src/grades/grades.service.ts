@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { CoursesRepository } from '../courses/courses.repository';
 import { StudentsRepository } from '../students/students.repository';
@@ -8,18 +8,8 @@ import { Grades } from './grades.entity';
 import { GradesRepository } from './grades.repository';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
-import {
-  GradesQueryDto,
-  GRADES_DEFAULT_PAGE_SIZE,
-  GRADES_MAX_PAGE_SIZE,
-} from './dto/grades-query.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { GradesQueryDto } from './dto/grades-query.dto';
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 export type GradeResponse = {
   gradeId: number;
@@ -41,9 +31,8 @@ export class GradesService {
     private readonly enrollmentsRepository: EnrollmentsRepository,
   ) {}
 
-  async findAll(query: GradesQueryDto): Promise<PaginationResult<GradeResponse>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: GradesQueryDto): Promise<PaginatedResult<GradeResponse>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.gradesRepository
       .createQueryBuilder('grade')
@@ -75,12 +64,12 @@ export class GradesService {
     qb.take(pageSize);
 
     const [grades, total] = await qb.getManyAndCount();
-    return {
-      data: grades.map((grade) => this.toResponse(grade)),
+    return buildPaginationResult(
+      grades.map((grade) => this.toResponse(grade)),
       total,
       page,
       pageSize,
-    };
+    );
   }
 
   async findOne(id: number): Promise<GradeResponse> {
@@ -202,21 +191,6 @@ export class GradesService {
 
     await this.gradesRepository.remove(grade);
     return { deleted: true };
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return GRADES_DEFAULT_PAGE_SIZE;
-    }
-
-    return Math.min(rawPageSize, GRADES_MAX_PAGE_SIZE);
   }
 
   private toResponse(grade: Grades): GradeResponse {

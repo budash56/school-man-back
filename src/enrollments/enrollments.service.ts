@@ -1,23 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { Enrollments } from './enrollments.entity';
 import { EnrollmentsRepository } from './enrollments.repository';
-import {
-  EnrollmentsQueryDto,
-  ENROLLMENTS_DEFAULT_PAGE_SIZE,
-  ENROLLMENTS_MAX_PAGE_SIZE,
-} from './dto/enrollments-query.dto';
+import { EnrollmentsQueryDto } from './dto/enrollments-query.dto';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 export type EnrollmentResponse = {
   enrollmentId: number;
@@ -37,9 +27,8 @@ export class EnrollmentsService {
     private readonly schoolYearsRepository: SchoolYearsRepository,
   ) {}
 
-  async findAll(query: EnrollmentsQueryDto): Promise<PaginationResult<EnrollmentResponse>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: EnrollmentsQueryDto): Promise<PaginatedResult<EnrollmentResponse>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.enrollmentsRepository
       .createQueryBuilder('enrollment')
@@ -71,12 +60,12 @@ export class EnrollmentsService {
     qb.take(pageSize);
 
     const [entities, total] = await qb.getManyAndCount();
-    return {
-      data: entities.map((entity) => this.toResponse(entity)),
+    return buildPaginationResult(
+      entities.map((entity) => this.toResponse(entity)),
       total,
       page,
       pageSize,
-    };
+    );
   }
 
   async findOne(id: number): Promise<EnrollmentResponse> {
@@ -200,21 +189,6 @@ export class EnrollmentsService {
     if (classGroupSchoolYearId !== schoolYearId) {
       throw new ConflictException('Class group belongs to a different school year');
     }
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return ENROLLMENTS_DEFAULT_PAGE_SIZE;
-    }
-
-    return Math.min(rawPageSize, ENROLLMENTS_MAX_PAGE_SIZE);
   }
 
   private toResponse(enrollment: Enrollments): EnrollmentResponse {

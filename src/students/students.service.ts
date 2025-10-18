@@ -4,26 +4,15 @@ import { Students } from './students.entity';
 import { StudentsRepository } from './students.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import {
-  StudentsQueryDto,
-  STUDENTS_DEFAULT_PAGE_SIZE,
-  STUDENTS_MAX_PAGE_SIZE,
-} from './dto/students-query.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { StudentsQueryDto } from './dto/students-query.dto';
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 @Injectable()
 export class StudentsService {
   constructor(private readonly repository: StudentsRepository) {}
 
-  async findAll(query: StudentsQueryDto): Promise<PaginationResult<Students>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: StudentsQueryDto): Promise<PaginatedResult<Students>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
     const qb = this.repository.createQueryBuilder('students');
 
     qb.where('students.deleted_at IS NULL');
@@ -57,7 +46,7 @@ export class StudentsService {
     qb.take(pageSize);
 
     const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, pageSize };
+    return buildPaginationResult(data, total, page, pageSize);
   }
 
   async findOne(id: number): Promise<Students> {
@@ -110,20 +99,6 @@ export class StudentsService {
     const student = await this.findOne(id);
     await this.repository.remove(student);
     return { deleted: true };
-  }
-
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return STUDENTS_DEFAULT_PAGE_SIZE;
-    }
-    return Math.min(rawPageSize, STUDENTS_MAX_PAGE_SIZE);
   }
 
   private buildSearchKeyword(raw: string): string {

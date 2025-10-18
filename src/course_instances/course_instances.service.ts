@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Brackets } from 'typeorm';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYears } from '../school_years/school_years.entity';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { Subjects } from '../subjects/subjects.entity';

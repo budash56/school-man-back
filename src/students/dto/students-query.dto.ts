@@ -44,6 +44,3 @@ export class StudentsQueryDto {
   @Min(1)
   year?: number;
 }
-
-export const STUDENTS_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE;
-export const STUDENTS_MAX_PAGE_SIZE = MAX_PAGE_SIZE;

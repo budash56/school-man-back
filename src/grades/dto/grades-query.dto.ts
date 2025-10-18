@@ -1,8 +1,5 @@
 import { IsInt, IsOptional, Min } from 'class-validator';
 
-export const GRADES_DEFAULT_PAGE_SIZE = 25;
-export const GRADES_MAX_PAGE_SIZE = 100;
-
 export class GradesQueryDto {
   @IsOptional()
   @IsInt()

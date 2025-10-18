@@ -50,6 +50,3 @@ export class SubjectsQueryDto {
   @Min(1)
   areaId?: number;
 }
-
-export const SUBJECTS_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE;
-export const SUBJECTS_MAX_PAGE_SIZE = MAX_PAGE_SIZE;

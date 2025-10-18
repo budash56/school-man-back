@@ -1,21 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Classrooms } from '../classrooms/classrooms.entity';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
-import { DbErrorMapper } from '../database/db-error.mapper';
+import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYears } from '../school_years/school_years.entity';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { ClassGroups } from './class_groups.entity';
 import { ClassGroupsRepository } from './class_groups.repository';
-import { ClassGroupsQueryDto, CLASS_GROUPS_DEFAULT_PAGE_SIZE, CLASS_GROUPS_MAX_PAGE_SIZE } from './dto/class-groups-query.dto';
+import { ClassGroupsQueryDto } from './dto/class-groups-query.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
-
-type PaginationResult<T> = {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
+import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 
 export type ClassGroupResponse = {
   classGroupId: number;
@@ -35,9 +29,8 @@ export class ClassGroupsService {
     private readonly classroomsRepository: ClassroomsRepository,
   ) {}
 
-  async findAll(query: ClassGroupsQueryDto): Promise<PaginationResult<ClassGroupResponse>> {
-    const page = this.resolvePage(query.page);
-    const pageSize = this.resolvePageSize(query.pageSize);
+  async findAll(query: ClassGroupsQueryDto): Promise<PaginatedResult<ClassGroupResponse>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.classGroupsRepository
       .createQueryBuilder('classGroups')
@@ -68,12 +61,12 @@ export class ClassGroupsService {
 
     const [entities, total] = await qb.getManyAndCount();
 
-    return {
-      data: entities.map((entity) => this.toResponse(entity)),
+    return buildPaginationResult(
+      entities.map((entity) => this.toResponse(entity)),
       total,
       page,
       pageSize,
-    };
+    );
   }
 
   async findOne(id: number): Promise<ClassGroupResponse> {
@@ -206,18 +199,4 @@ export class ClassGroupsService {
     };
   }
 
-  private resolvePage(rawPage?: number): number {
-    if (!rawPage || rawPage < 1) {
-      return 1;
-    }
-    return rawPage;
-  }
-
-  private resolvePageSize(rawPageSize?: number): number {
-    if (!rawPageSize || rawPageSize < 1) {
-      return CLASS_GROUPS_DEFAULT_PAGE_SIZE;
-    }
-
-    return Math.min(rawPageSize, CLASS_GROUPS_MAX_PAGE_SIZE);
-  }
 }
