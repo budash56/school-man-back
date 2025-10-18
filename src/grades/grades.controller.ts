@@ -1,57 +1,35 @@
-// Provides CRUD endpoints for grades using the generated Grades entity.
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Grades } from './grades.entity';
-import { GradesRepository } from './grades.repository';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
+import { GradesService } from './grades.service';
+import { CreateGradeDto } from './dto/create-grade.dto';
+import { UpdateGradeDto } from './dto/update-grade.dto';
+import { GradesQueryDto } from './dto/grades-query.dto';
 
 @Controller('grades')
 export class GradesController {
-  constructor(private readonly repository: GradesRepository) {}
+  constructor(private readonly gradesService: GradesService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: GradesQueryDto) {
+    return this.gradesService.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { gradeId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Grades record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.gradesService.findOne(id);
   }
 
   @Post()
-  create(@Body() payload: DeepPartial<Grades>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() dto: CreateGradeDto) {
+    return this.gradesService.create(dto);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Grades>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateGradeDto) {
+    return this.gradesService.update(id, dto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.gradesService.remove(id);
   }
 }

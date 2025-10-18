@@ -40,6 +40,12 @@ export class Grades {
   })
   createdAt: Date | null;
 
+  @Column('enum', { name: 'mark', enum: ['S', 'A', 'B', 'J'] })
+  mark: 'S' | 'A' | 'B' | 'J';
+
+  @Column('text', { name: 'comment', nullable: true })
+  comment: string | null;
+
   @ManyToOne(() => Courses, (courses) => courses.grades, {
     onDelete: 'CASCADE',
   })

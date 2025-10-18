@@ -18,6 +18,7 @@ import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records
 import { Enrollments } from './enrollments/enrollments.entity';
 import { EnrollmentsService } from './enrollments/enrollments.service';
 import { Grades } from './grades/grades.entity';
+import { GradesService } from './grades/grades.service';
 import { GradeSchemes } from './grade_schemes/grade_schemes.entity';
 import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.entity';
 import { Notifications } from './notifications/notifications.entity';
@@ -122,6 +123,7 @@ import { UsersController } from './users/users.controller';
     CourseInstancesService,
     CoursesService,
     EnrollmentsService,
+    GradesService,
     StudentsService,
     SubjectAreasService,
     SubjectsService,

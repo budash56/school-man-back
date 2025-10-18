@@ -1,0 +1,233 @@
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DbErrorMapper } from '../database/db-error.mapper';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { CoursesRepository } from '../courses/courses.repository';
+import { StudentsRepository } from '../students/students.repository';
+import { TermsRepository } from '../terms/terms.repository';
+import { Grades } from './grades.entity';
+import { GradesRepository } from './grades.repository';
+import { CreateGradeDto } from './dto/create-grade.dto';
+import { UpdateGradeDto } from './dto/update-grade.dto';
+import {
+  GradesQueryDto,
+  GRADES_DEFAULT_PAGE_SIZE,
+  GRADES_MAX_PAGE_SIZE,
+} from './dto/grades-query.dto';
+
+type PaginationResult<T> = {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type GradeResponse = {
+  gradeId: number;
+  studentId: number;
+  courseId: number;
+  termId: number;
+  schoolYearId: number | null;
+  mark: 'S' | 'A' | 'B' | 'J';
+  comment: string | null;
+};
+
+@Injectable()
+export class GradesService {
+  constructor(
+    private readonly gradesRepository: GradesRepository,
+    private readonly studentsRepository: StudentsRepository,
+    private readonly coursesRepository: CoursesRepository,
+    private readonly termsRepository: TermsRepository,
+    private readonly enrollmentsRepository: EnrollmentsRepository,
+  ) {}
+
+  async findAll(query: GradesQueryDto): Promise<PaginationResult<GradeResponse>> {
+    const page = this.resolvePage(query.page);
+    const pageSize = this.resolvePageSize(query.pageSize);
+
+    const qb = this.gradesRepository
+      .createQueryBuilder('grade')
+      .leftJoinAndSelect('grade.term', 'term')
+      .leftJoinAndSelect('grade.course', 'course')
+      .leftJoinAndSelect('course.courseInstance', 'courseInstance')
+      .orderBy('grade.createdAt', 'DESC')
+      .addOrderBy('grade.gradeId', 'DESC');
+
+    if (query.studentId !== undefined) {
+      qb.andWhere('grade.studentId = :studentId', { studentId: query.studentId.toString() });
+    }
+
+    if (query.courseId !== undefined) {
+      qb.andWhere('grade.courseId = :courseId', { courseId: query.courseId.toString() });
+    }
+
+    if (query.termId !== undefined) {
+      qb.andWhere('grade.termId = :termId', { termId: query.termId.toString() });
+    }
+
+    if (query.schoolYearId !== undefined) {
+      qb.andWhere('term.schoolYearId = :schoolYearId', {
+        schoolYearId: query.schoolYearId.toString(),
+      });
+    }
+
+    qb.skip((page - 1) * pageSize);
+    qb.take(pageSize);
+
+    const [grades, total] = await qb.getManyAndCount();
+    return {
+      data: grades.map((grade) => this.toResponse(grade)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async findOne(id: number): Promise<GradeResponse> {
+    const grade = await this.gradesRepository.findOne({
+      where: { gradeId: id.toString() },
+      relations: { term: true },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found');
+    }
+
+    return this.toResponse(grade);
+  }
+
+  async create(dto: CreateGradeDto): Promise<GradeResponse> {
+    const student = await this.studentsRepository.findOne({
+      where: { studentId: dto.studentId.toString() },
+    });
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    const course = await this.coursesRepository.findOne({
+      where: { courseId: dto.courseId.toString() },
+      relations: { classGroup: true, courseInstance: true },
+    });
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const term = await this.termsRepository.findOne({
+      where: { termId: dto.termId.toString() },
+    });
+    if (!term) {
+      throw new NotFoundException('Term not found');
+    }
+
+    const courseSchoolYear = course.courseInstance?.schoolYearId;
+    const courseClassGroupId = course.classGroup?.classGroupId;
+
+    if (!courseSchoolYear || !courseClassGroupId) {
+      throw new ConflictException('Course schedule is incomplete');
+    }
+
+    if (courseSchoolYear !== term.schoolYearId) {
+      throw new ConflictException('Course and term belong to different school years');
+    }
+
+    const enrollment = await this.enrollmentsRepository.findOne({
+      where: {
+        studentId: student.studentId,
+        classGroupId: courseClassGroupId,
+        schoolYearId: term.schoolYearId,
+        active: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new ConflictException('Student is not actively enrolled in this class group for the term school year');
+    }
+
+    const entity = this.gradesRepository.create({
+      studentId: student.studentId,
+      courseId: course.courseId,
+      termId: term.termId,
+      mark: dto.mark,
+      comment: dto.comment ?? null,
+    });
+
+    try {
+      const saved = await this.gradesRepository.save(entity);
+      return this.toResponse({ ...saved, term } as Grades);
+    } catch (error) {
+      DbErrorMapper.throwConflict(
+        error,
+        'A grade for this student, course, and term already exists',
+      );
+    }
+  }
+
+  async update(id: number, dto: UpdateGradeDto): Promise<GradeResponse> {
+    const grade = await this.gradesRepository.findOne({
+      where: { gradeId: id.toString() },
+      relations: { term: true },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found');
+    }
+
+    if (dto.mark !== undefined) {
+      grade.mark = dto.mark;
+    }
+
+    if (dto.comment !== undefined) {
+      grade.comment = dto.comment ?? null;
+    }
+
+    try {
+      const saved = await this.gradesRepository.save(grade);
+      return this.toResponse(saved);
+    } catch (error) {
+      DbErrorMapper.throwConflict(
+        error,
+        'A grade for this student, course, and term already exists',
+      );
+    }
+  }
+
+  async remove(id: number): Promise<{ deleted: true }> {
+    const grade = await this.gradesRepository.findOne({
+      where: { gradeId: id.toString() },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found');
+    }
+
+    await this.gradesRepository.remove(grade);
+    return { deleted: true };
+  }
+
+  private resolvePage(rawPage?: number): number {
+    if (!rawPage || rawPage < 1) {
+      return 1;
+    }
+    return rawPage;
+  }
+
+  private resolvePageSize(rawPageSize?: number): number {
+    if (!rawPageSize || rawPageSize < 1) {
+      return GRADES_DEFAULT_PAGE_SIZE;
+    }
+
+    return Math.min(rawPageSize, GRADES_MAX_PAGE_SIZE);
+  }
+
+  private toResponse(grade: Grades): GradeResponse {
+    return {
+      gradeId: Number(grade.gradeId),
+      studentId: Number(grade.studentId),
+      courseId: Number(grade.courseId),
+      termId: Number(grade.termId),
+      schoolYearId: grade.term?.schoolYearId ? Number(grade.term.schoolYearId) : null,
+      mark: grade.mark,
+      comment: grade.comment ?? null,
+    };
+  }
+}
