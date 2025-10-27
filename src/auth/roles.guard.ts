@@ -1,42 +1,40 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { SanitizedUser, Role } from './auth.types';
-import { IS_PUBLIC_KEY } from './public.decorator';
-import { ROLES_KEY } from './roles.decorator';
+import { ROLES_KEY, AppRole } from './roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
-      return true;
-    }
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles =
+      this.reflector.getAllAndOverride<AppRole[]>(ROLES_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? [];
 
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const request = context.switchToHttp().getRequest<{
+      user?: { role?: AppRole };
+    }>();
+    const role = request.user?.role;
 
-    if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
-    }
-
-    const request = context.switchToHttp().getRequest<{ user?: SanitizedUser }>();
-    const user = request.user;
-
-    if (!user) {
+    if (!role) {
       throw new ForbiddenException('Access denied');
     }
 
-    if (requiredRoles.includes(user.role)) {
+    if (role === 'admin') {
       return true;
     }
 
-    throw new ForbiddenException('Insufficient permissions');
+    if (requiredRoles.length === 0 || requiredRoles.includes(role)) {
+      return true;
+    }
+
+    throw new ForbiddenException('Access denied');
   }
 }
