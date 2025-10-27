@@ -15,8 +15,10 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { StudentsQueryDto } from './dto/students-query.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentsService } from './students.service';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @ApiTags('students')
+@Roles(...READ_ROLES)
 @Controller('students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
@@ -44,11 +46,13 @@ export class StudentsController {
     return this.studentsService.findOne(id);
   }
 
+  @Roles(...WRITE_ROLES)
   @Post()
   create(@Body() dto: CreateStudentDto) {
     return this.studentsService.create(dto);
   }
 
+  @Roles(...WRITE_ROLES)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -57,6 +61,7 @@ export class StudentsController {
     return this.studentsService.update(id, dto);
   }
 
+  @Roles(...WRITE_ROLES)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.studentsService.remove(id);

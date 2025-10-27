@@ -12,7 +12,9 @@ import {
 import type { DeepPartial } from 'typeorm';
 import { Classrooms } from './classrooms.entity';
 import { ClassroomsRepository } from './classrooms.repository';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
+@Roles(...READ_ROLES)
 @Controller('classrooms')
 export class ClassroomsController {
   constructor(private readonly repository: ClassroomsRepository) {}
@@ -35,12 +37,14 @@ export class ClassroomsController {
     return entity;
   }
 
+  @Roles(...WRITE_ROLES)
   @Post()
   create(@Body() payload: DeepPartial<Classrooms>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() payload: DeepPartial<Classrooms>) {
     const entity = await this.findOne(id);
@@ -48,6 +52,7 @@ export class ClassroomsController {
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);

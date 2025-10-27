@@ -14,7 +14,9 @@ import {
 import type { DeepPartial } from 'typeorm';
 import { TimetableSlot } from './timetable_slots.entity';
 import { TimetableSlotRepository } from './timetable_slots.repository';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
+@Roles(...READ_ROLES)
 @Controller('timetable-slots')
 export class TimetableSlotsController {
   constructor(private readonly repository: TimetableSlotRepository) {}
@@ -35,6 +37,7 @@ export class TimetableSlotsController {
     return entity;
   }
 
+  @Roles(...WRITE_ROLES)
   @Post()
   async create(@Body() payload: DeepPartial<TimetableSlot>) {
     // optional guard: prevent client from sending slotId
@@ -45,6 +48,7 @@ export class TimetableSlotsController {
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -55,6 +59,7 @@ export class TimetableSlotsController {
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     const entity = await this.findOne(id);

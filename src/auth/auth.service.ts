@@ -11,21 +11,8 @@ import { Users } from '../users/users.entity';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
-
-export type SanitizedUser = {
-  nationalId: string;
-  username: string;
-  role: Users['role'];
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  phone: string | null;
-};
-
-export interface AuthResponse {
-  accessToken: string;
-  user: SanitizedUser;
-}
+import type { AuthResponse, SanitizedUser } from './auth.types';
+export type { AuthResponse, SanitizedUser } from './auth.types';
 
 @Injectable()
 export class AuthService {

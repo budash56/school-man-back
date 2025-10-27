@@ -16,6 +16,8 @@ import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Attendance } from './attendance.entity';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import type { SanitizedUser } from '../auth/auth.types';
+import { Courses } from '../courses/courses.entity';
 
 export type AttendanceResponse = {
   attendanceId: number;
@@ -39,12 +41,17 @@ export class AttendanceService {
     private readonly enrollmentsRepository: EnrollmentsRepository,
   ) {}
 
-  async findAll(query: AttendanceQueryDto): Promise<PaginatedResult<AttendanceResponse>> {
+  async findAll(
+    query: AttendanceQueryDto,
+    currentUser: SanitizedUser,
+  ): Promise<PaginatedResult<AttendanceResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
+    const scope = query.scope ?? 'own';
 
     const qb = this.attendanceRepository
       .createQueryBuilder('attendance')
       .leftJoinAndSelect('attendance.recordedBy', 'recordedBy')
+      .leftJoin('attendance.course', 'course')
       .orderBy('attendance.date', 'DESC')
       .addOrderBy('attendance.attendanceId', 'DESC');
 
@@ -72,6 +79,25 @@ export class AttendanceService {
       qb.andWhere('attendance.date <= :to', { to: query.to });
     }
 
+    if (currentUser.role === 'teacher') {
+      const { courseIds, classGroupIds } = await this.getTeacherCourseScope(currentUser);
+      if (scope === 'group') {
+        if (classGroupIds.length === 0) {
+          return buildPaginationResult([], 0, page, pageSize);
+        }
+        qb.andWhere('course.classGroupId IN (:...allowedClassGroupIds)', {
+          allowedClassGroupIds: classGroupIds,
+        });
+      } else {
+        if (courseIds.length === 0) {
+          return buildPaginationResult([], 0, page, pageSize);
+        }
+        qb.andWhere('attendance.courseId IN (:...allowedCourseIds)', {
+          allowedCourseIds: courseIds,
+        });
+      }
+    }
+
     qb.skip((page - 1) * pageSize);
     qb.take(pageSize);
 
@@ -84,20 +110,25 @@ export class AttendanceService {
     );
   }
 
-  async findOne(id: number): Promise<AttendanceResponse> {
+  async findOne(id: number, currentUser: SanitizedUser): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
-      relations: { recordedBy: true },
+      relations: { recordedBy: true, course: true },
     });
 
     if (!attendance) {
       throw new NotFoundException('Attendance record not found');
     }
 
+    await this.assertTeacherCanReadCourse(currentUser, attendance.course);
+
     return this.toResponse(attendance);
   }
 
-  async create(dto: CreateAttendanceDto): Promise<AttendanceResponse> {
+  async create(
+    dto: CreateAttendanceDto,
+    currentUser: SanitizedUser,
+  ): Promise<AttendanceResponse> {
     const student = await this.studentsRepository.findOne({
       where: { studentId: dto.studentId.toString() },
     });
@@ -145,6 +176,8 @@ export class AttendanceService {
       throw new ConflictException('Student is not actively enrolled in this class group for the school year');
     }
 
+    await this.assertTeacherCanMutateCourse(currentUser, course);
+
     const recordedBy = course.teacher ?? null;
 
     const entity = this.attendanceRepository.create({
@@ -158,7 +191,7 @@ export class AttendanceService {
 
     try {
       const saved = await this.attendanceRepository.save(entity);
-      return this.findOne(Number(saved.attendanceId));
+      return this.findOne(Number(saved.attendanceId), currentUser);
     } catch (error) {
       DbErrorMapper.throwConflict(
         error,
@@ -167,20 +200,27 @@ export class AttendanceService {
     }
   }
 
-  async update(id: number, dto: UpdateAttendanceDto): Promise<AttendanceResponse> {
+  async update(
+    id: number,
+    dto: UpdateAttendanceDto,
+    currentUser: SanitizedUser,
+  ): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
-      relations: { recordedBy: true },
+      relations: { recordedBy: true, course: true },
     });
 
     if (!attendance) {
       throw new NotFoundException('Attendance record not found');
     }
 
+    await this.assertTeacherCanMutateCourse(currentUser, attendance.course);
+
     if (dto.status !== undefined && dto.status !== attendance.status) {
       if (attendance.status === 'A' && dto.status === 'AE') {
         const recordedById = attendance.recordedBy?.nationalId;
-        if (!dto.requestingUserId || !recordedById || recordedById !== dto.requestingUserId) {
+        const canOverride = currentUser.role === 'admin' || currentUser.role === 'coordinator';
+        if (!recordedById || (recordedById !== currentUser.nationalId && !canOverride)) {
           throw new ForbiddenException('Only the recording teacher can excuse an absence');
         }
         attendance.excusedAt = dto.excusedAt ? this.parseDate(dto.excusedAt) : new Date();
@@ -237,6 +277,65 @@ export class AttendanceService {
       throw new BadRequestException('Invalid date value');
     }
     return parsed;
+  }
+
+  private async getTeacherCourseScope(user: SanitizedUser): Promise<{
+    courseIds: string[];
+    classGroupIds: string[];
+  }> {
+    const courses = await this.coursesRepository.find({
+      where: { teacherId: user.nationalId },
+      select: ['courseId', 'classGroupId'],
+    });
+
+    const courseIds = Array.from(new Set(courses.map((course) => course.courseId)));
+    const classGroupIds = Array.from(
+      new Set(
+        courses
+          .map((course) => course.classGroupId)
+          .filter((value): value is string => value !== null && value !== undefined),
+      ),
+    );
+
+    return { courseIds, classGroupIds };
+  }
+
+  private async assertTeacherCanMutateCourse(
+    user: SanitizedUser,
+    course: Courses | null,
+  ): Promise<void> {
+    if (user.role !== 'teacher') {
+      return;
+    }
+
+    if (!course || course.teacherId !== user.nationalId) {
+      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+    }
+  }
+
+  private async assertTeacherCanReadCourse(
+    user: SanitizedUser,
+    course: Courses | null,
+  ): Promise<void> {
+    if (user.role !== 'teacher') {
+      return;
+    }
+
+    if (!course) {
+      throw new ForbiddenException('You are not allowed to access this attendance record');
+    }
+
+    if (course.teacherId === user.nationalId) {
+      return;
+    }
+
+    const teachesClassGroup = await this.coursesRepository.exist({
+      where: { teacherId: user.nationalId, classGroupId: course.classGroupId },
+    });
+
+    if (!teachesClassGroup) {
+      throw new ForbiddenException('You are not allowed to access this attendance record');
+    }
   }
 
   private toResponse(record: Attendance): AttendanceResponse {

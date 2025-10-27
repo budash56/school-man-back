@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -55,6 +56,8 @@ import { TermsController } from './terms/terms.controller';
 import { TimetableAssignmentsController } from './timetable_assignments/timetable_assignments.controller';
 import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
 import { UsersController } from './users/users.controller';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { RolesGuard } from './auth/roles.guard';
 
 @Module({
   imports: [
@@ -117,6 +120,14 @@ import { UsersController } from './users/users.controller';
     UsersController,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
     AppService,
     AttendanceService,
     ClassGroupsService,

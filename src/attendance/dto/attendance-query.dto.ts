@@ -24,6 +24,10 @@ export class AttendanceQueryDto {
   to?: string;
 
   @IsOptional()
+  @IsIn(['own', 'group'])
+  scope?: 'own' | 'group';
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   page?: number;

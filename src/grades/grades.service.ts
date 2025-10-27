@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { CoursesRepository } from '../courses/courses.repository';
@@ -10,6 +10,7 @@ import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { GradesQueryDto } from './dto/grades-query.dto';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import type { SanitizedUser } from '../auth/auth.types';
 
 export type GradeResponse = {
   gradeId: number;
@@ -85,7 +86,7 @@ export class GradesService {
     return this.toResponse(grade);
   }
 
-  async create(dto: CreateGradeDto): Promise<GradeResponse> {
+  async create(dto: CreateGradeDto, currentUser: SanitizedUser): Promise<GradeResponse> {
     const student = await this.studentsRepository.findOne({
       where: { studentId: dto.studentId.toString() },
     });
@@ -99,6 +100,10 @@ export class GradesService {
     });
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    if (currentUser.role === 'teacher' && course.teacherId !== currentUser.nationalId) {
+      throw new ForbiddenException('You are not allowed to record grades for this course');
     }
 
     const term = await this.termsRepository.findOne({
@@ -151,14 +156,23 @@ export class GradesService {
     }
   }
 
-  async update(id: number, dto: UpdateGradeDto): Promise<GradeResponse> {
+  async update(id: number, dto: UpdateGradeDto, currentUser: SanitizedUser): Promise<GradeResponse> {
     const grade = await this.gradesRepository.findOne({
       where: { gradeId: id.toString() },
-      relations: { term: true },
+      relations: { term: true, course: true },
     });
 
     if (!grade) {
       throw new NotFoundException('Grade not found');
+    }
+
+    if (currentUser.role === 'teacher') {
+      const course = grade.course ?? (await this.coursesRepository.findOne({
+        where: { courseId: grade.courseId },
+      }));
+      if (!course || course.teacherId !== currentUser.nationalId) {
+        throw new ForbiddenException('You are not allowed to modify grades for this course');
+      }
     }
 
     if (dto.mark !== undefined) {

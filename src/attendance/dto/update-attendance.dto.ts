@@ -12,8 +12,4 @@ export class UpdateAttendanceDto {
   @IsOptional()
   @IsDateString()
   excusedAt?: string;
-
-  @IsOptional()
-  @IsString()
-  requestingUserId?: string;
 }

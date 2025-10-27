@@ -15,8 +15,10 @@ import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
 import { SubjectAreasService } from './subject_areas.service';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @ApiTags('subject-areas')
+@Roles(...READ_ROLES)
 @Controller('subject-areas')
 export class SubjectAreasController {
   constructor(private readonly subjectAreasService: SubjectAreasService) {}
@@ -38,11 +40,13 @@ export class SubjectAreasController {
     return this.subjectAreasService.findOne(id);
   }
 
+  @Roles(...WRITE_ROLES)
   @Post()
   create(@Body() dto: CreateSubjectAreaDto) {
     return this.subjectAreasService.create(dto);
   }
 
+  @Roles(...WRITE_ROLES)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -51,6 +55,7 @@ export class SubjectAreasController {
     return this.subjectAreasService.update(id, dto);
   }
 
+  @Roles(...WRITE_ROLES)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.subjectAreasService.remove(id);

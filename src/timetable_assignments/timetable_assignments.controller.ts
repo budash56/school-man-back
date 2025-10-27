@@ -12,7 +12,9 @@ import {
 import type { DeepPartial } from 'typeorm';
 import { TimetableAssignments } from './timetable_assignments.entity';
 import { TimetableAssignmentsRepository } from './timetable_assignments.repository';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
+@Roles(...READ_ROLES)
 @Controller('timetable-assignments')
 export class TimetableAssignmentsController {
   constructor(private readonly repository: TimetableAssignmentsRepository) {}
@@ -35,12 +37,14 @@ export class TimetableAssignmentsController {
     return entity;
   }
 
+  @Roles(...WRITE_ROLES)
   @Post()
   create(@Body() payload: DeepPartial<TimetableAssignments>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() payload: DeepPartial<TimetableAssignments>) {
     const entity = await this.findOne(id);
@@ -48,6 +52,7 @@ export class TimetableAssignmentsController {
     return this.repository.save(entity);
   }
 
+  @Roles(...WRITE_ROLES)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);
