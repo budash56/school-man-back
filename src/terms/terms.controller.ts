@@ -9,16 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateTermDto } from './dto/create-term.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { TermsQueryDto } from './dto/terms-query.dto';
 import { TermsService } from './terms.service';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('terms')
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('terms')
 export class TermsController {
   constructor(private readonly termsService: TermsService) {}
@@ -36,19 +41,19 @@ export class TermsController {
     return this.termsService.findOne(id);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() dto: CreateTermDto) {
     return this.termsService.create(dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTermDto) {
     return this.termsService.update(id, dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.termsService.remove(id);

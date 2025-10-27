@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 // Provides CRUD endpoints for timetable-assignments using the generated TimetableAssignments entity.
 import {
   Body,
@@ -15,6 +16,7 @@ import { TimetableAssignmentsRepository } from './timetable_assignments.reposito
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
 @Controller('timetable-assignments')
 export class TimetableAssignmentsController {
   constructor(private readonly repository: TimetableAssignmentsRepository) {}

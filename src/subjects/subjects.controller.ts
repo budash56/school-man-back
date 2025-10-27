@@ -9,16 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { SubjectsQueryDto } from './dto/subjects-query.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 import { SubjectsService } from './subjects.service';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('subjects')
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('subjects')
 export class SubjectsController {
   constructor(private readonly subjectsService: SubjectsService) {}
@@ -46,13 +51,13 @@ export class SubjectsController {
     return this.subjectsService.findOne(id);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() dto: CreateSubjectDto) {
     return this.subjectsService.create(dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -61,7 +66,7 @@ export class SubjectsController {
     return this.subjectsService.update(id, dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.subjectsService.remove(id);

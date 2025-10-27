@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 // src/timetable_slots/timetable_slots.controller.ts
 import {
   Body,
@@ -17,6 +18,7 @@ import { TimetableSlotRepository } from './timetable_slots.repository';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
 @Controller('timetable-slots')
 export class TimetableSlotsController {
   constructor(private readonly repository: TimetableSlotRepository) {}

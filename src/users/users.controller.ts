@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 // Provides CRUD endpoints for users using the generated Users entity.
 import {
   Body,
@@ -15,6 +16,7 @@ import { UsersRepository } from './users.repository';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly repository: UsersRepository) {}

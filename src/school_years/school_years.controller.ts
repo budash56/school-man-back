@@ -9,16 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYearsService } from './school_years.service';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('school-years')
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('school-years')
 export class SchoolYearsController {
   constructor(private readonly schoolYearsService: SchoolYearsService) {}
@@ -35,13 +40,13 @@ export class SchoolYearsController {
     return this.schoolYearsService.findOne(id);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() dto: CreateSchoolYearDto) {
     return this.schoolYearsService.create(dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -50,7 +55,7 @@ export class SchoolYearsController {
     return this.schoolYearsService.update(id, dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.schoolYearsService.remove(id);

@@ -8,13 +8,19 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import type { DeepPartial } from 'typeorm';
 import { AuditLogs } from './audit_logs.entity';
 import { AuditLogsRepository } from './audit_logs.repository';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('audit-logs')
 export class AuditLogsController {
   constructor(private readonly repository: AuditLogsRepository) {}
@@ -37,14 +43,14 @@ export class AuditLogsController {
     return entity;
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() payload: DeepPartial<AuditLogs>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() payload: DeepPartial<AuditLogs>) {
     const entity = await this.findOne(id);
@@ -52,7 +58,7 @@ export class AuditLogsController {
     return this.repository.save(entity);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);

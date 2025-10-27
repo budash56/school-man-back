@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 // Provides CRUD endpoints for grade-scheme-values using the generated GradeSchemeValues entity.
 import {
   Body,
@@ -15,6 +16,7 @@ import { GradeSchemeValuesRepository } from './grade_scheme_values.repository';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
 @Controller('grade-scheme-values')
 export class GradeSchemeValuesController {
   constructor(private readonly repository: GradeSchemeValuesRepository) {}

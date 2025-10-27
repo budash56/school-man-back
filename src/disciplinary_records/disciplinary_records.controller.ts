@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 // Provides CRUD endpoints for disciplinary-records using the generated DisciplinaryRecords entity.
 import {
   Body,
@@ -15,6 +16,7 @@ import { DisciplinaryRecordsRepository } from './disciplinary_records.repository
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
 @Controller('disciplinary-records')
 export class DisciplinaryRecordsController {
   constructor(private readonly repository: DisciplinaryRecordsRepository) {}

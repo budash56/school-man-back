@@ -8,13 +8,19 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import type { DeepPartial } from 'typeorm';
 import { ClassGroups } from './class_groups.entity';
 import { ClassGroupsRepository } from './class_groups.repository';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('class-groups')
 export class ClassGroupsController {
   constructor(private readonly repository: ClassGroupsRepository) {}
@@ -37,14 +43,14 @@ export class ClassGroupsController {
     return entity;
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() payload: DeepPartial<ClassGroups>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() payload: DeepPartial<ClassGroups>) {
     const entity = await this.findOne(id);
@@ -52,7 +58,7 @@ export class ClassGroupsController {
     return this.repository.save(entity);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);

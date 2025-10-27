@@ -9,16 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
 import { SubjectAreasService } from './subject_areas.service';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('subject-areas')
 @Roles(...READ_ROLES)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('subject-areas')
 export class SubjectAreasController {
   constructor(private readonly subjectAreasService: SubjectAreasService) {}
@@ -40,13 +45,13 @@ export class SubjectAreasController {
     return this.subjectAreasService.findOne(id);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
   create(@Body() dto: CreateSubjectAreaDto) {
     return this.subjectAreasService.create(dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -55,7 +60,7 @@ export class SubjectAreasController {
     return this.subjectAreasService.update(id, dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.subjectAreasService.remove(id);
