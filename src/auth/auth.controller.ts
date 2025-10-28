@@ -21,8 +21,11 @@ export class AuthController {
 
   @Public()
   @Post('signup')
-  async signup(@Body() signupDto: SignupDto): Promise<AuthResponse> {
-    return this.authService.signup(signupDto);
+  async signup(
+    @Body() signupDto: SignupDto,
+    @CurrentUser() user?: SanitizedUser,
+  ): Promise<AuthResponse> {
+    return this.authService.signup(signupDto, user);
   }
 
   @Get('me')

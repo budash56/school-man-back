@@ -16,8 +16,8 @@ import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Attendance } from './attendance.entity';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
-import type { SanitizedUser } from '../auth/auth.types';
 import { Courses } from '../courses/courses.entity';
+import { AccessService } from '../auth/access.service';
 
 export type AttendanceResponse = {
   attendanceId: number;
@@ -29,6 +29,12 @@ export type AttendanceResponse = {
   recordedById: string | null;
   reasonNote: string | null;
   excusedAt: Date | null;
+};
+
+type ActingUser = {
+  userId: number;
+  nationalId: string;
+  role: string;
 };
 
 @Injectable()
@@ -43,10 +49,10 @@ export class AttendanceService {
 
   async findAll(
     query: AttendanceQueryDto,
-    currentUser: SanitizedUser,
+    currentUser: ActingUser,
   ): Promise<PaginatedResult<AttendanceResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
-    const scope = query.scope ?? 'own';
+    const scope = currentUser.role === 'teacher' ? query.scope ?? 'own' : query.scope;
 
     const qb = this.attendanceRepository
       .createQueryBuilder('attendance')
@@ -80,20 +86,29 @@ export class AttendanceService {
     }
 
     if (currentUser.role === 'teacher') {
-      const { courseIds, classGroupIds } = await this.getTeacherCourseScope(currentUser);
-      if (scope === 'group') {
+      const accessService = this.createAccessHelper();
+      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+
+      if (query.courseId !== undefined) {
+        if (!teacherCourseIds.includes(Number(query.courseId))) {
+          return buildPaginationResult([], 0, page, pageSize);
+        }
+      }
+
+      if ((scope ?? 'own') === 'group') {
+        const classGroupIds = await accessService.classGroupIdsForTeacher(currentUser.userId);
         if (classGroupIds.length === 0) {
           return buildPaginationResult([], 0, page, pageSize);
         }
         qb.andWhere('course.classGroupId IN (:...allowedClassGroupIds)', {
-          allowedClassGroupIds: classGroupIds,
+          allowedClassGroupIds: classGroupIds.map((id) => id.toString()),
         });
       } else {
-        if (courseIds.length === 0) {
+        if (teacherCourseIds.length === 0) {
           return buildPaginationResult([], 0, page, pageSize);
         }
         qb.andWhere('attendance.courseId IN (:...allowedCourseIds)', {
-          allowedCourseIds: courseIds,
+          allowedCourseIds: teacherCourseIds.map((id) => id.toString()),
         });
       }
     }
@@ -110,7 +125,7 @@ export class AttendanceService {
     );
   }
 
-  async findOne(id: number, currentUser: SanitizedUser): Promise<AttendanceResponse> {
+  async findOne(id: number, currentUser: ActingUser): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
       relations: { recordedBy: true, course: true },
@@ -127,7 +142,7 @@ export class AttendanceService {
 
   async create(
     dto: CreateAttendanceDto,
-    currentUser: SanitizedUser,
+    currentUser: ActingUser,
   ): Promise<AttendanceResponse> {
     const student = await this.studentsRepository.findOne({
       where: { studentId: dto.studentId.toString() },
@@ -147,6 +162,8 @@ export class AttendanceService {
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+
+    await this.assertTeacherCanMutateCourse(currentUser, course, Number(dto.courseId));
 
     const slot = await this.timetableSlotRepository.findOne({
       where: { slotId: dto.slotId },
@@ -176,8 +193,6 @@ export class AttendanceService {
       throw new ConflictException('Student is not actively enrolled in this class group for the school year');
     }
 
-    await this.assertTeacherCanMutateCourse(currentUser, course);
-
     const recordedBy = course.teacher ?? null;
 
     const entity = this.attendanceRepository.create({
@@ -203,7 +218,7 @@ export class AttendanceService {
   async update(
     id: number,
     dto: UpdateAttendanceDto,
-    currentUser: SanitizedUser,
+    currentUser: ActingUser,
   ): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
@@ -279,42 +294,34 @@ export class AttendanceService {
     return parsed;
   }
 
-  private async getTeacherCourseScope(user: SanitizedUser): Promise<{
-    courseIds: string[];
-    classGroupIds: string[];
-  }> {
-    const courses = await this.coursesRepository.find({
-      where: { teacherId: user.nationalId },
-      select: ['courseId', 'classGroupId'],
-    });
-
-    const courseIds = Array.from(new Set(courses.map((course) => course.courseId)));
-    const classGroupIds = Array.from(
-      new Set(
-        courses
-          .map((course) => course.classGroupId)
-          .filter((value): value is string => value !== null && value !== undefined),
-      ),
-    );
-
-    return { courseIds, classGroupIds };
-  }
-
   private async assertTeacherCanMutateCourse(
-    user: SanitizedUser,
+    user: ActingUser,
     course: Courses | null,
+    courseIdOverride?: number,
   ): Promise<void> {
     if (user.role !== 'teacher') {
       return;
     }
 
-    if (!course || course.teacherId !== user.nationalId) {
+    if (!course && courseIdOverride === undefined) {
+      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+    }
+
+    const courseId =
+      courseIdOverride ?? (course?.courseId ? Number(course.courseId) : Number.NaN);
+
+    if (!Number.isFinite(courseId)) {
+      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+    }
+
+    const canModify = await this.createAccessHelper().isTeacherOfCourse(user.userId, courseId);
+    if (!canModify) {
       throw new ForbiddenException('You are not allowed to modify attendance for this course');
     }
   }
 
   private async assertTeacherCanReadCourse(
-    user: SanitizedUser,
+    user: ActingUser,
     course: Courses | null,
   ): Promise<void> {
     if (user.role !== 'teacher') {
@@ -325,17 +332,22 @@ export class AttendanceService {
       throw new ForbiddenException('You are not allowed to access this attendance record');
     }
 
-    if (course.teacherId === user.nationalId) {
+    const accessService = this.createAccessHelper();
+    const [teachesCourse, classGroupIds] = await Promise.all([
+      accessService.isTeacherOfCourse(user.userId, Number(course.courseId)),
+      accessService.classGroupIdsForTeacher(user.userId),
+    ]);
+
+    if (teachesCourse) {
       return;
     }
 
-    const teachesClassGroup = await this.coursesRepository.exist({
-      where: { teacherId: user.nationalId, classGroupId: course.classGroupId },
-    });
-
-    if (!teachesClassGroup) {
-      throw new ForbiddenException('You are not allowed to access this attendance record');
+    const classGroupId = course.classGroupId ? Number(course.classGroupId) : undefined;
+    if (classGroupId !== undefined && classGroupIds.includes(classGroupId)) {
+      return;
     }
+
+    throw new ForbiddenException('You are not allowed to access this attendance record');
   }
 
   private toResponse(record: Attendance): AttendanceResponse {
@@ -350,5 +362,9 @@ export class AttendanceService {
       reasonNote: record.reasonNote ?? null,
       excusedAt: record.excusedAt ?? null,
     };
+  }
+
+  private createAccessHelper(): AccessService {
+    return new AccessService(this.coursesRepository);
   }
 }

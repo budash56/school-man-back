@@ -10,7 +10,12 @@ import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { GradesQueryDto } from './dto/grades-query.dto';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
-import type { SanitizedUser } from '../auth/auth.types';
+import { AccessService } from '../auth/access.service';
+
+type ActingUser = {
+  userId: number;
+  role: string;
+};
 
 export type GradeResponse = {
   gradeId: number;
@@ -32,7 +37,7 @@ export class GradesService {
     private readonly enrollmentsRepository: EnrollmentsRepository,
   ) {}
 
-  async findAll(query: GradesQueryDto): Promise<PaginatedResult<GradeResponse>> {
+  async findAll(query: GradesQueryDto, currentUser: ActingUser): Promise<PaginatedResult<GradeResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.gradesRepository
@@ -61,6 +66,25 @@ export class GradesService {
       });
     }
 
+    if (currentUser.role === 'teacher') {
+      const accessService = new AccessService(this.coursesRepository);
+      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+
+      if (query.courseId !== undefined) {
+        if (!teacherCourseIds.includes(Number(query.courseId))) {
+          return buildPaginationResult([], 0, page, pageSize);
+        }
+      } else {
+        if (teacherCourseIds.length === 0) {
+          return buildPaginationResult([], 0, page, pageSize);
+        }
+
+        qb.andWhere('grade.courseId IN (:...allowedCourseIds)', {
+          allowedCourseIds: teacherCourseIds.map((id) => id.toString()),
+        });
+      }
+    }
+
     qb.skip((page - 1) * pageSize);
     qb.take(pageSize);
 
@@ -86,7 +110,11 @@ export class GradesService {
     return this.toResponse(grade);
   }
 
-  async create(dto: CreateGradeDto, currentUser: SanitizedUser): Promise<GradeResponse> {
+  async create(dto: CreateGradeDto, currentUser: ActingUser): Promise<GradeResponse> {
+    if (currentUser.role === 'coordinator') {
+      throw new ForbiddenException('Coordinators cannot modify grades');
+    }
+
     const student = await this.studentsRepository.findOne({
       where: { studentId: dto.studentId.toString() },
     });
@@ -102,8 +130,12 @@ export class GradesService {
       throw new NotFoundException('Course not found');
     }
 
-    if (currentUser.role === 'teacher' && course.teacherId !== currentUser.nationalId) {
-      throw new ForbiddenException('You are not allowed to record grades for this course');
+    if (currentUser.role === 'teacher') {
+      const accessService = new AccessService(this.coursesRepository);
+      const canModify = await accessService.isTeacherOfCourse(currentUser.userId, Number(course.courseId));
+      if (!canModify) {
+        throw new ForbiddenException('You are not allowed to record grades for this course');
+      }
     }
 
     const term = await this.termsRepository.findOne({
@@ -156,7 +188,11 @@ export class GradesService {
     }
   }
 
-  async update(id: number, dto: UpdateGradeDto, currentUser: SanitizedUser): Promise<GradeResponse> {
+  async update(id: number, dto: UpdateGradeDto, currentUser: ActingUser): Promise<GradeResponse> {
+    if (currentUser.role === 'coordinator') {
+      throw new ForbiddenException('Coordinators cannot modify grades');
+    }
+
     const grade = await this.gradesRepository.findOne({
       where: { gradeId: id.toString() },
       relations: { term: true, course: true },
@@ -167,10 +203,9 @@ export class GradesService {
     }
 
     if (currentUser.role === 'teacher') {
-      const course = grade.course ?? (await this.coursesRepository.findOne({
-        where: { courseId: grade.courseId },
-      }));
-      if (!course || course.teacherId !== currentUser.nationalId) {
+      const accessService = new AccessService(this.coursesRepository);
+      const canModify = await accessService.isTeacherOfCourse(currentUser.userId, Number(grade.courseId));
+      if (!canModify) {
         throw new ForbiddenException('You are not allowed to modify grades for this course');
       }
     }

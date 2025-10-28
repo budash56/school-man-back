@@ -8,6 +8,12 @@ import { CoursesRepository } from './courses.repository';
 import { CoursesQueryDto } from './dto/courses-query.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { AccessService } from '../auth/access.service';
+
+type ActingUser = {
+  userId: number;
+  role: string;
+};
 
 export type CourseSummary = {
   courseId: number;
@@ -33,7 +39,7 @@ export class CoursesService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  async findAll(query: CoursesQueryDto): Promise<CourseSummary[]> {
+  async findAll(query: CoursesQueryDto, currentUser?: ActingUser): Promise<CourseSummary[]> {
     const qb = this.coursesRepository
       .createQueryBuilder('course')
       .innerJoinAndSelect('course.courseInstance', 'courseInstance')
@@ -62,6 +68,19 @@ export class CoursesService {
     if (query.teacherId !== undefined) {
       qb.andWhere('course.teacherId = :teacherId', {
         teacherId: query.teacherId.toString(),
+      });
+    }
+
+    if (currentUser?.role === 'teacher') {
+      const accessService = new AccessService(this.coursesRepository);
+      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+
+      if (teacherCourseIds.length === 0) {
+        return [];
+      }
+
+      qb.andWhere('course.courseId IN (:...allowedCourseIds)', {
+        allowedCourseIds: teacherCourseIds.map((id) => id.toString()),
       });
     }
 

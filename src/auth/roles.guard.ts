@@ -18,6 +18,10 @@ export class RolesGuard implements CanActivate {
         context.getClass(),
       ]) ?? [];
 
+    if (requiredRoles.length === 0) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<{
       user?: { role?: AppRole };
     }>();
@@ -31,7 +35,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    if (requiredRoles.length === 0 || requiredRoles.includes(role)) {
+    if (requiredRoles.includes(role)) {
       return true;
     }
 

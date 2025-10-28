@@ -26,7 +26,7 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
-  async signup(dto: SignupDto): Promise<AuthResponse> {
+  async signup(dto: SignupDto, requestingUser?: SanitizedUser): Promise<AuthResponse> {
     await this.assertNewUserIsUnique(dto);
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -34,12 +34,14 @@ export class AuthService {
       isActive: true,
     };
 
+    const role = await this.resolveSignupRole(dto.role, requestingUser);
+
     const entity = this.usersRepo.create({
       ...defaults,
       nationalId: dto.nationalId,
       username: dto.username ?? dto.nationalId,
       passwordHash,
-      role: dto.role ?? 'teacher',
+      role,
       firstName: dto.firstName ?? null,
       lastName: dto.lastName ?? null,
       email: dto.email ?? null,
@@ -82,6 +84,22 @@ export class AuthService {
     if (existingUser) {
       throw new ConflictException('A user with the provided identifiers already exists');
     }
+  }
+
+  private async resolveSignupRole(
+    requestedRole: SignupDto['role'],
+    requestingUser?: SanitizedUser,
+  ): Promise<Users['role']> {
+    if (requestingUser?.role === 'admin') {
+      return requestedRole ?? 'teacher';
+    }
+    if (requestedRole === 'admin') {
+      const admins = await this.usersRepo.count({ where: { role: 'admin' } });
+      if (admins === 0) {
+        return 'admin';
+      }
+    }
+    return 'teacher';
   }
 
   private buildAuthResponse(user: Users): AuthResponse {

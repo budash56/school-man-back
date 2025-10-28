@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CourseInstancesService } from './course_instances.service';
 import { CourseInstancesQueryDto } from './dto/course-instances-query.dto';
 import { CreateCourseInstanceDto } from './dto/create-course-instance.dto';
@@ -49,12 +49,42 @@ export class CourseInstancesController {
 
   @Roles('admin', 'coordinator')
   @Post()
+  @ApiBody({
+    type: CreateCourseInstanceDto,
+    examples: {
+      default: {
+        summary: 'Create course instance for school year',
+        value: {
+          subjectId: 5,
+          gradeLevel: 9,
+          schoolYearId: 2,
+          weeklyHours: 5,
+          courseCode: 'SCI-2025',
+          courseName: 'Science Fundamentals',
+          description: 'Core science curriculum',
+          isActive: true,
+        },
+      },
+    },
+  })
   create(@Body() dto: CreateCourseInstanceDto) {
     return this.courseInstancesService.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
+  @ApiBody({
+    type: UpdateCourseInstanceDto,
+    examples: {
+      default: {
+        summary: 'Update course name',
+        value: {
+          courseName: 'Advanced Science Fundamentals',
+          weeklyHours: 6,
+        },
+      },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCourseInstanceDto,

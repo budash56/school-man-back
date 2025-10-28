@@ -3,11 +3,18 @@ import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { StudentsRepository } from '../students/students.repository';
+import { CoursesRepository } from '../courses/courses.repository';
 import { Enrollments } from './enrollments.entity';
 import { EnrollmentsRepository } from './enrollments.repository';
 import { EnrollmentsQueryDto } from './dto/enrollments-query.dto';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import { AccessService } from '../auth/access.service';
+
+type ActingUser = {
+  userId: number;
+  role: string;
+};
 
 export type EnrollmentResponse = {
   enrollmentId: number;
@@ -25,9 +32,13 @@ export class EnrollmentsService {
     private readonly studentsRepository: StudentsRepository,
     private readonly classGroupsRepository: ClassGroupsRepository,
     private readonly schoolYearsRepository: SchoolYearsRepository,
+    private readonly coursesRepository: CoursesRepository,
   ) {}
 
-  async findAll(query: EnrollmentsQueryDto): Promise<PaginatedResult<EnrollmentResponse>> {
+  async findAll(
+    query: EnrollmentsQueryDto,
+    currentUser?: ActingUser,
+  ): Promise<PaginatedResult<EnrollmentResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.enrollmentsRepository
@@ -53,6 +64,19 @@ export class EnrollmentsService {
     if (query.schoolYearId !== undefined) {
       qb.andWhere('enrollment.schoolYearId = :schoolYearId', {
         schoolYearId: query.schoolYearId.toString(),
+      });
+    }
+
+    if (currentUser?.role === 'teacher') {
+      const accessService = new AccessService(this.coursesRepository);
+      const classGroupIds = await accessService.classGroupIdsForTeacher(currentUser.userId);
+
+      if (classGroupIds.length === 0) {
+        return buildPaginationResult([], 0, page, pageSize);
+      }
+
+      qb.andWhere('enrollment.classGroupId IN (:...allowedClassGroupIds)', {
+        allowedClassGroupIds: classGroupIds.map((id) => id.toString()),
       });
     }
 

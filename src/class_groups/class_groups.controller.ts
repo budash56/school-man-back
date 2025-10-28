@@ -4,65 +4,77 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import type { DeepPartial } from 'typeorm';
-import { ClassGroups } from './class_groups.entity';
-import { ClassGroupsRepository } from './class_groups.repository';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { CreateClassGroupDto } from './dto/create-class-group.dto';
+import { UpdateClassGroupDto } from './dto/update-class-group.dto';
+import { ClassGroupsService } from './class_groups.service';
 
 @Roles(...READ_ROLES)
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('class-groups')
 export class ClassGroupsController {
-  constructor(private readonly repository: ClassGroupsRepository) {}
+  constructor(private readonly service: ClassGroupsService) {}
 
   @Get()
   findAll() {
-    return this.repository.find();
+    return this.service.findAll({});
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { classGroupId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('ClassGroups record not found');
-    }
-
-    return entity;
+    return this.service.findOne(Number(id));
   }
 
   @Roles('admin', 'coordinator')
   @Post()
-  create(@Body() payload: DeepPartial<ClassGroups>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: CreateClassGroupDto,
+    examples: {
+      default: {
+        summary: 'Create class group',
+        value: {
+          schoolYearId: 1,
+          gradeLevel: 10,
+          section: 'A1',
+          defaultClassroomId: 3,
+        },
+      },
+    },
+  })
+  create(@Body() dto: CreateClassGroupDto) {
+    return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<ClassGroups>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: UpdateClassGroupDto,
+    examples: {
+      default: {
+        summary: 'Update class group section',
+        value: {
+          section: 'A2',
+        },
+      },
+    },
+  })
+  update(@Param('id') id: string, @Body() dto: UpdateClassGroupDto) {
+    return this.service.update(Number(id), dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
+    await this.service.remove(Number(id));
     return { deleted: true };
   }
 }

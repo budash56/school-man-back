@@ -54,6 +54,7 @@ import { SubjectAreasController } from './subject_areas/subject_areas.controller
 import { SubjectsController } from './subjects/subjects.controller';
 import { TermsController } from './terms/terms.controller';
 import { TimetableAssignmentsController } from './timetable_assignments/timetable_assignments.controller';
+import { TimetableAssignmentsService } from './timetable_assignments/timetable_assignments.service';
 import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
 import { UsersController } from './users/users.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -135,6 +136,7 @@ import { RolesGuard } from './auth/roles.guard';
     CoursesService,
     EnrollmentsService,
     GradesService,
+    TimetableAssignmentsService,
     StudentsService,
     SubjectAreasService,
     SubjectsService,
