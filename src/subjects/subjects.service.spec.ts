@@ -44,6 +44,31 @@ describe('SubjectsService', () => {
     await expect(service.create(createDto)).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('creates a subject successfully', async () => {
+    const area = { areaId: '99', name: 'Sciences' };
+    const entity = {
+      subjectId: '7',
+      subjectCode: createDto.code,
+      name: createDto.name,
+      description: createDto.description,
+      area,
+    };
+
+    (subjectAreasRepository.findOne as jest.Mock).mockResolvedValue(area);
+    (subjectsRepository.create as jest.Mock).mockReturnValue(entity);
+    (subjectsRepository.save as jest.Mock).mockResolvedValue(entity);
+
+    const result = await service.create(createDto);
+
+    expect(subjectsRepository.create as jest.Mock).toHaveBeenCalledWith({
+      subjectCode: createDto.code,
+      name: createDto.name,
+      description: createDto.description,
+      area,
+    });
+    expect(result).toBe(entity);
+  });
+
   it('paginates list results with q filter', async () => {
     const mockQueryBuilder = {
       where: jest.fn().mockReturnThis(),

@@ -38,4 +38,18 @@ describe('SubjectAreasService', () => {
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
   });
+
+  it('creates a subject area successfully', async () => {
+    const entity = { areaId: '12', code: 'MATH', name: 'Mathematics' };
+    (repository.create as jest.Mock).mockReturnValue(entity);
+    (repository.save as jest.Mock).mockResolvedValue(entity);
+
+    const result = await service.create(createDto);
+
+    expect(repository.create as jest.Mock).toHaveBeenCalledWith({
+      code: createDto.code,
+      name: createDto.name,
+    });
+    expect(result).toEqual(entity);
+  });
 });

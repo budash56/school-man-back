@@ -111,4 +111,57 @@ describe('CoursesService', () => {
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
   });
+
+  it('creates a course and returns summary', async () => {
+    const courseInstance = {
+      courseInstanceId: '10',
+      gradeLevel: 5,
+      schoolYearId: '3',
+      courseName: 'Mathematics Grade 5',
+      subject: { subjectCode: 'MATH', name: 'Mathematics' },
+    };
+    const classGroup = {
+      classGroupId: '20',
+      gradeLevel: 5,
+      section: '01',
+    };
+    const teacher = {
+      nationalId: '30',
+      role: 'teacher',
+      firstName: 'Alice',
+      lastName: 'Teacher',
+    };
+
+    (courseInstancesRepository.findOne as jest.Mock).mockResolvedValue(courseInstance);
+    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(classGroup);
+    (usersRepository.findOne as jest.Mock).mockResolvedValue(teacher);
+    (coursesRepository.create as jest.Mock).mockReturnValue({});
+    (coursesRepository.save as jest.Mock).mockResolvedValue({ courseId: '55' });
+    (coursesRepository.findOne as jest.Mock).mockResolvedValue({
+      ...courseInstance,
+      ...classGroup,
+      ...teacher,
+      courseId: '55',
+      courseInstanceId: courseInstance.courseInstanceId,
+      classGroupId: classGroup.classGroupId,
+      teacherId: teacher.nationalId,
+      courseInstance,
+      classGroup,
+      teacher,
+    });
+
+    const result = await service.create(createDto);
+
+    expect(result).toMatchObject({
+      courseId: 55,
+      courseInstanceId: Number(courseInstance.courseInstanceId),
+      classGroupId: Number(classGroup.classGroupId),
+      teacherId: Number(teacher.nationalId),
+      gradeLevel: classGroup.gradeLevel,
+      section: classGroup.section,
+      subjectCode: courseInstance.subject.subjectCode,
+      subjectName: courseInstance.subject.name,
+      teacherName: 'Alice Teacher',
+    });
+  });
 });

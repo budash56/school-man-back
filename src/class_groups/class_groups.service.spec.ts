@@ -69,4 +69,46 @@ describe('ClassGroupsService', () => {
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
   });
+
+  it('creates a class group and returns hydrated response', async () => {
+    const classroom = { classroomId: '3' };
+    const created = { classGroupId: undefined };
+    const persisted = { classGroupId: '42' };
+    const hydrated = {
+      classGroupId: '42',
+      schoolYearId: '1',
+      gradeLevel: 5,
+      section: '02',
+      classroom,
+      createdAt: new Date('2024-01-01'),
+    };
+
+    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({ schoolYearId: '1' });
+    (classroomsRepository.findOne as jest.Mock).mockResolvedValue(classroom);
+    (classGroupsRepository.create as jest.Mock).mockReturnValue(created);
+    (classGroupsRepository.save as jest.Mock).mockResolvedValue(persisted);
+    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(hydrated);
+
+    const result = await service.create(createDto);
+
+    expect(classGroupsRepository.create as jest.Mock).toHaveBeenCalledWith({
+      schoolYearId: '1',
+      gradeLevel: createDto.gradeLevel,
+      section: createDto.section,
+    });
+    expect(classGroupsRepository.save as jest.Mock).toHaveBeenCalledWith(created);
+    expect(classGroupsRepository.findOne as jest.Mock).toHaveBeenCalledWith({
+      where: { classGroupId: persisted.classGroupId },
+      relations: { classroom: true },
+    });
+    expect(result).toEqual({
+      classGroupId: 42,
+      schoolYearId: 1,
+      gradeLevel: hydrated.gradeLevel,
+      section: hydrated.section,
+      code: `${hydrated.gradeLevel}${hydrated.section}`,
+      defaultClassroomId: Number(classroom.classroomId),
+      createdAt: hydrated.createdAt,
+    });
+  });
 });
