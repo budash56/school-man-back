@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Brackets } from 'typeorm';
 import { Classrooms } from '../classrooms/classrooms.entity';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
@@ -6,7 +7,7 @@ import { SchoolYears } from '../school_years/school_years.entity';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { ClassGroups } from './class_groups.entity';
 import { ClassGroupsRepository } from './class_groups.repository';
-import { ClassGroupsQueryDto } from './dto/class-groups-query.dto';
+import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
@@ -29,7 +30,7 @@ export class ClassGroupsService {
     private readonly classroomsRepository: ClassroomsRepository,
   ) {}
 
-  async findAll(query: ClassGroupsQueryDto): Promise<PaginatedResult<ClassGroupResponse>> {
+  async findAll(query: QueryClassGroupDto): Promise<PaginatedResult<ClassGroupResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.classGroupsRepository
@@ -54,6 +55,15 @@ export class ClassGroupsService {
       qb.andWhere('classGroups.section = :section', {
         section: query.section,
       });
+    }
+
+    if (query.q?.trim()) {
+      const keyword = `%${query.q.trim().replace(/[%_]/g, (match) => `\\${match}`)}%`;
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub.where('classGroups.section ILIKE :keyword ESCAPE \\\'', { keyword });
+        }),
+      );
     }
 
     qb.skip((page - 1) * pageSize);
@@ -105,7 +115,7 @@ export class ClassGroupsService {
     } catch (error) {
       DbErrorMapper.throwConflict(
         error,
-        'A class group with this school year, grade, and section already exists',
+        'Class group already exists for year/grade/section',
       );
     }
   }
@@ -127,8 +137,7 @@ export class ClassGroupsService {
     }
 
     if (dto.defaultClassroomId !== undefined) {
-      const classroom = await this.getClassroomOrThrow(dto.defaultClassroomId);
-      entity.classroom = classroom;
+      entity.classroom = await this.getClassroomOrThrow(dto.defaultClassroomId);
     }
 
     try {
@@ -137,7 +146,7 @@ export class ClassGroupsService {
     } catch (error) {
       DbErrorMapper.throwConflict(
         error,
-        'A class group with this school year, grade, and section already exists',
+        'Class group already exists for year/grade/section',
       );
     }
   }
@@ -198,5 +207,4 @@ export class ClassGroupsService {
       createdAt: entity.createdAt,
     };
   }
-
 }

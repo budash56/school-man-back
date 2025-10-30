@@ -26,13 +26,13 @@ export class Courses {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'course_id' })
   courseId: string;
 
-  @Column('bigint', { name: 'course_instance_id', unique: true })
+  @Column('bigint', { name: 'course_instance_id' })
   courseInstanceId: string;
 
-  @Column('bigint', { name: 'class_group_id', unique: true })
+  @Column('bigint', { name: 'class_group_id' })
   classGroupId: string;
 
-  @Column('character varying', { name: 'teacher_id', unique: true, length: 50 })
+  @Column('character varying', { name: 'teacher_id', length: 50 })
   teacherId: string;
 
   @Column('timestamp with time zone', {

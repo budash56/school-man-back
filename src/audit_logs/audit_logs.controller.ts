@@ -4,65 +4,83 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import type { DeepPartial } from 'typeorm';
-import { AuditLogs } from './audit_logs.entity';
-import { AuditLogsRepository } from './audit_logs.repository';
-import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { AuditLogsService } from './audit_logs.service';
+import { QueryAuditLogDto } from './dto/query-audit-log.dto';
+import { CreateAuditLogDto } from './dto/create-audit-log.dto';
+import { UpdateAuditLogDto } from './dto/update-audit-log.dto';
 
-@Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiTags('audit-logs')
+@Roles('admin', 'coordinator')
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('audit-logs')
 export class AuditLogsController {
-  constructor(private readonly repository: AuditLogsRepository) {}
+  constructor(private readonly service: AuditLogsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: QueryAuditLogDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { auditId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('AuditLogs record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
   @Roles('admin', 'coordinator')
   @Post()
-  create(@Body() payload: DeepPartial<AuditLogs>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: CreateAuditLogDto,
+    examples: {
+      default: {
+        summary: 'Record audit log entry',
+        value: {
+          entityName: 'students',
+          entityId: 42,
+          action: 'UPDATE',
+          payload: { before: { isActive: false }, after: { isActive: true } },
+          performedBy: '900001',
+          performedAt: '2025-01-15T14:30:00.000Z',
+        },
+      },
+    },
+  })
+  create(@Body() dto: CreateAuditLogDto) {
+    return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<AuditLogs>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: UpdateAuditLogDto,
+    examples: {
+      default: {
+        summary: 'Update audit log entry',
+        value: {
+          payload: { after: { isActive: false } },
+        },
+      },
+    },
+  })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAuditLogDto) {
+    return this.service.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.service.remove(id);
     return { deleted: true };
   }
 }

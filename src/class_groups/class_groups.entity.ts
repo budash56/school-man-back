@@ -26,13 +26,13 @@ export class ClassGroups {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'class_group_id' })
   classGroupId: string;
 
-  @Column('bigint', { name: 'school_year_id', unique: true })
+  @Column('bigint', { name: 'school_year_id' })
   schoolYearId: string;
 
-  @Column('smallint', { name: 'grade_level', unique: true })
+  @Column('smallint', { name: 'grade_level' })
   gradeLevel: number;
 
-  @Column('character varying', { name: 'section', unique: true, length: 10 })
+  @Column('character varying', { name: 'section', length: 10 })
   section: string;
 
   @Column('timestamp with time zone', {

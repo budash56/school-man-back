@@ -24,13 +24,13 @@ export class Grades {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'grade_id' })
   gradeId: string;
 
-  @Column('bigint', { name: 'student_id', unique: true })
+  @Column('bigint', { name: 'student_id' })
   studentId: string;
 
-  @Column('bigint', { name: 'course_id', unique: true })
+  @Column('bigint', { name: 'course_id' })
   courseId: string;
 
-  @Column('bigint', { name: 'term_id', unique: true })
+  @Column('bigint', { name: 'term_id' })
   termId: string;
 
   @Column('timestamp with time zone', {

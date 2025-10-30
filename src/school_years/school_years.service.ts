@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYears } from './school_years.entity';
 import { SchoolYearsRepository } from './school_years.repository';
@@ -91,6 +97,70 @@ export class SchoolYearsService {
     return { deleted: true };
   }
 
+  async rollover(
+    dto: { name?: string; startDate: string; endDate: string },
+    user: { role: string },
+  ): Promise<{ previous: SchoolYears | null; current: SchoolYears }> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Only administrators can rollover school years');
+    }
+
+    this.assertChronologicalOrder(dto.startDate, dto.endDate, 'startDate', 'endDate');
+
+    return this.repository.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(SchoolYears);
+
+      const previous = await repo.findOne({
+        where: { isActive: true },
+        order: { yearStart: 'DESC' },
+      });
+
+      if (previous) {
+        previous.isActive = false;
+        await repo.save(previous);
+      }
+
+      const nextName = dto.name?.trim() || this.deriveName(dto.startDate, dto.endDate);
+      const nextYear = repo.create({
+        name: nextName,
+        yearStart: dto.startDate,
+        yearEnd: dto.endDate,
+        isActive: true,
+      });
+
+      let current: SchoolYears | null = null;
+      try {
+        current = await repo.save(nextYear);
+      } catch (error) {
+        DbErrorMapper.throwConflict(error, 'A school year with this name already exists');
+      }
+
+      const activeCount = await repo.count({ where: { isActive: true } });
+      if (activeCount !== 1) {
+        throw new ConflictException('Exactly one active school year must exist after rollover');
+      }
+
+      if (!current) {
+        throw new ConflictException('Failed to create the new active school year');
+      }
+
+      return {
+        previous: previous ?? null,
+        current,
+      };
+    });
+  }
+
+  async lock(id: number, user: { role: string }): Promise<SchoolYears> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Only administrators can lock school years');
+    }
+
+    const schoolYear = await this.findOne(id);
+    schoolYear.isActive = false;
+    return this.repository.save(schoolYear);
+  }
+
   private assertChronologicalOrder(
     startDate: string,
     endDate: string,
@@ -117,5 +187,19 @@ export class SchoolYearsService {
 
     const escaped = trimmed.replace(/[%_]/g, (match) => `\\${match}`);
     return `%${escaped}%`;
+  }
+
+  private deriveName(startDate: string, endDate: string): string {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return `${startDate}-${endDate}`;
+    }
+
+    const startYear = start.getUTCFullYear();
+    const endYear = end.getUTCFullYear();
+
+    return startYear === endYear ? `${startYear}` : `${startYear}-${endYear}`;
   }
 }

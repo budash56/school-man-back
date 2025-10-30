@@ -1,0 +1,4172 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getHello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "App"
+        ]
+      }
+    },
+    "/attendance": {
+      "get": {
+        "operationId": "AttendanceController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "post": {
+        "operationId": "AttendanceController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendanceDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Record attendance for a student",
+                  "value": {
+                    "studentId": 101,
+                    "courseId": 12,
+                    "slotId": 5,
+                    "date": "2024-09-02",
+                    "status": "P"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/attendance/{id}": {
+      "get": {
+        "operationId": "AttendanceController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "patch": {
+        "operationId": "AttendanceController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttendanceDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update attendance status",
+                  "value": {
+                    "status": "AE",
+                    "excusedAt": "2024-09-03T10:00:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      },
+      "delete": {
+        "operationId": "AttendanceController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
+    "/audit-logs": {
+      "get": {
+        "operationId": "AuditLogsController_findAll",
+        "parameters": [
+          {
+            "name": "entityName",
+            "required": false,
+            "in": "query",
+            "description": "Filter by entity name",
+            "schema": {
+              "example": "students",
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Filter by action",
+            "schema": {
+              "example": "UPDATE",
+              "type": "string"
+            }
+          },
+          {
+            "name": "performedBy",
+            "required": false,
+            "in": "query",
+            "description": "Filter by performer national ID",
+            "schema": {
+              "example": "900001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Filter from timestamp (inclusive)",
+            "schema": {
+              "example": "2025-01-01T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Filter to timestamp (inclusive)",
+            "schema": {
+              "example": "2025-01-31T23:59:59.999Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1+)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size (1-100)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit-logs"
+        ]
+      },
+      "post": {
+        "operationId": "AuditLogsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuditLogDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Record audit log entry",
+                  "value": {
+                    "entityName": "students",
+                    "entityId": 42,
+                    "action": "UPDATE",
+                    "payload": {
+                      "before": {
+                        "isActive": false
+                      },
+                      "after": {
+                        "isActive": true
+                      }
+                    },
+                    "performedBy": "900001",
+                    "performedAt": "2025-01-15T14:30:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit-logs"
+        ]
+      }
+    },
+    "/audit-logs/{id}": {
+      "get": {
+        "operationId": "AuditLogsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit-logs"
+        ]
+      },
+      "patch": {
+        "operationId": "AuditLogsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAuditLogDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update audit log entry",
+                  "value": {
+                    "payload": {
+                      "after": {
+                        "isActive": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit-logs"
+        ]
+      },
+      "delete": {
+        "operationId": "AuditLogsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit-logs"
+        ]
+      }
+    },
+    "/class-groups": {
+      "get": {
+        "operationId": "ClassGroupsController_findAll",
+        "parameters": [
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by school year id",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "gradeLevel",
+            "required": false,
+            "in": "query",
+            "description": "Filter by grade level (1-11)",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "section",
+            "required": false,
+            "in": "query",
+            "description": "Filter by two-digit section code",
+            "schema": {
+              "example": "01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Full-text search term",
+            "schema": {
+              "example": "algebra",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1+)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size (1-100)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-groups"
+        ]
+      },
+      "post": {
+        "operationId": "ClassGroupsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassGroupDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create class group",
+                  "value": {
+                    "schoolYearId": 1,
+                    "gradeLevel": 10,
+                    "section": "01",
+                    "defaultClassroomId": 3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-groups"
+        ]
+      }
+    },
+    "/class-groups/{id}": {
+      "get": {
+        "operationId": "ClassGroupsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-groups"
+        ]
+      },
+      "patch": {
+        "operationId": "ClassGroupsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassGroupDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update class group",
+                  "value": {
+                    "gradeLevel": 11,
+                    "section": "02"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-groups"
+        ]
+      },
+      "delete": {
+        "operationId": "ClassGroupsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-groups"
+        ]
+      }
+    },
+    "/classrooms": {
+      "get": {
+        "operationId": "ClassroomsController_findAll",
+        "parameters": [
+          {
+            "name": "building",
+            "required": false,
+            "in": "query",
+            "description": "Filter by building name",
+            "schema": {
+              "example": "Main Building",
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Keyword search within name",
+            "schema": {
+              "example": "Room",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1+)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size (1-100)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "classrooms"
+        ]
+      },
+      "post": {
+        "operationId": "ClassroomsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassroomDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create classroom",
+                  "value": {
+                    "name": "Room 101",
+                    "building": "Main Building",
+                    "capacity": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "classrooms"
+        ]
+      }
+    },
+    "/classrooms/{id}": {
+      "get": {
+        "operationId": "ClassroomsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "classrooms"
+        ]
+      },
+      "patch": {
+        "operationId": "ClassroomsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassroomDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update classroom capacity",
+                  "value": {
+                    "capacity": 28
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "classrooms"
+        ]
+      },
+      "delete": {
+        "operationId": "ClassroomsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "classrooms"
+        ]
+      }
+    },
+    "/course-instances": {
+      "get": {
+        "operationId": "CourseInstancesController_findAll",
+        "parameters": [
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "Filters course instances by school year identifier",
+            "schema": {
+              "example": 3,
+              "type": "number"
+            }
+          },
+          {
+            "name": "gradeLevel",
+            "required": false,
+            "in": "query",
+            "description": "Filters course instances by grade level",
+            "schema": {
+              "minimum": 1,
+              "maximum": 11,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "subjectId",
+            "required": false,
+            "in": "query",
+            "description": "Filters course instances by subject identifier",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Keyword applied to course code and name",
+            "schema": {
+              "example": "MATH",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "course-instances"
+        ]
+      },
+      "post": {
+        "operationId": "CourseInstancesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseInstanceDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create course instance for school year",
+                  "value": {
+                    "subjectId": 5,
+                    "gradeLevel": 9,
+                    "schoolYearId": 2,
+                    "weeklyHours": 5,
+                    "courseCode": "SCI-2025",
+                    "courseName": "Science Fundamentals",
+                    "description": "Core science curriculum",
+                    "isActive": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "course-instances"
+        ]
+      }
+    },
+    "/course-instances/{id}": {
+      "get": {
+        "operationId": "CourseInstancesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "course-instances"
+        ]
+      },
+      "patch": {
+        "operationId": "CourseInstancesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseInstanceDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update course name",
+                  "value": {
+                    "courseName": "Advanced Science Fundamentals",
+                    "weeklyHours": 6
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "course-instances"
+        ]
+      },
+      "delete": {
+        "operationId": "CourseInstancesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "course-instances"
+        ]
+      }
+    },
+    "/courses": {
+      "get": {
+        "operationId": "CoursesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Courses"
+        ]
+      },
+      "post": {
+        "operationId": "CoursesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Assign teacher to class group",
+                  "value": {
+                    "courseInstanceId": 4,
+                    "classGroupId": 10,
+                    "teacherId": "teacher-001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/courses/{id}": {
+      "get": {
+        "operationId": "CoursesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Courses"
+        ]
+      },
+      "patch": {
+        "operationId": "CoursesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Reassign teacher",
+                  "value": {
+                    "teacherId": "teacher-007"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Courses"
+        ]
+      },
+      "delete": {
+        "operationId": "CoursesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/disciplinary-records": {
+      "get": {
+        "operationId": "DisciplinaryRecordsController_findAll",
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by student id",
+            "schema": {
+              "example": 1234,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recordedBy",
+            "required": false,
+            "in": "query",
+            "description": "Filter by recordedBy national id",
+            "schema": {
+              "example": "PRINCIPAL01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "yellow",
+              "type": "string",
+              "enum": [
+                "green",
+                "yellow",
+                "red",
+                "last_notice"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Start date (inclusive)",
+            "schema": {
+              "example": "2025-01-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "End date (inclusive)",
+            "schema": {
+              "example": "2025-01-31",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "disciplinary-records"
+        ]
+      },
+      "post": {
+        "operationId": "DisciplinaryRecordsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDisciplinaryRecordDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create disciplinary record",
+                  "value": {
+                    "studentId": 1234,
+                    "recordedBy": "PRINCIPAL01",
+                    "dateHappened": "2025-02-10",
+                    "category": "yellow",
+                    "description": "Late for class without excuse",
+                    "expiresAt": "2025-05-31"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "disciplinary-records"
+        ]
+      }
+    },
+    "/disciplinary-records/{id}": {
+      "get": {
+        "operationId": "DisciplinaryRecordsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "disciplinary-records"
+        ]
+      },
+      "patch": {
+        "operationId": "DisciplinaryRecordsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDisciplinaryRecordDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update disciplinary record",
+                  "value": {
+                    "category": "red",
+                    "description": "Escalated after review"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "disciplinary-records"
+        ]
+      },
+      "delete": {
+        "operationId": "DisciplinaryRecordsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "disciplinary-records"
+        ]
+      }
+    },
+    "/enrollments": {
+      "get": {
+        "operationId": "EnrollmentsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Enrollments"
+        ]
+      },
+      "post": {
+        "operationId": "EnrollmentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrollmentDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Enroll student into class group",
+                  "value": {
+                    "studentId": 501,
+                    "classGroupId": 10,
+                    "schoolYearId": 2
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/enrollments/{id}": {
+      "get": {
+        "operationId": "EnrollmentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Enrollments"
+        ]
+      },
+      "delete": {
+        "operationId": "EnrollmentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/enrollments/{id}/deactivate": {
+      "patch": {
+        "operationId": "EnrollmentsController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Enrollments"
+        ]
+      }
+    },
+    "/grades": {
+      "get": {
+        "operationId": "GradesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Grades"
+        ]
+      },
+      "post": {
+        "operationId": "GradesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGradeDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Record grade for student",
+                  "value": {
+                    "studentId": 2201,
+                    "courseId": 15,
+                    "termId": 3,
+                    "mark": "A",
+                    "comment": "Excellent performance"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Grades"
+        ]
+      }
+    },
+    "/grades/{id}": {
+      "get": {
+        "operationId": "GradesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Grades"
+        ]
+      },
+      "patch": {
+        "operationId": "GradesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGradeDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update grade comment",
+                  "value": {
+                    "comment": "Improved after retest"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Grades"
+        ]
+      },
+      "delete": {
+        "operationId": "GradesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Grades"
+        ]
+      }
+    },
+    "/grade-schemes": {
+      "get": {
+        "operationId": "GradeSchemesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-schemes"
+        ]
+      },
+      "post": {
+        "operationId": "GradeSchemesController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-schemes"
+        ]
+      }
+    },
+    "/grade-schemes/{id}": {
+      "get": {
+        "operationId": "GradeSchemesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-schemes"
+        ]
+      },
+      "patch": {
+        "operationId": "GradeSchemesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-schemes"
+        ]
+      },
+      "delete": {
+        "operationId": "GradeSchemesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-schemes"
+        ]
+      }
+    },
+    "/grade-scheme-values": {
+      "get": {
+        "operationId": "GradeSchemeValuesController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-scheme-values"
+        ]
+      },
+      "post": {
+        "operationId": "GradeSchemeValuesController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-scheme-values"
+        ]
+      }
+    },
+    "/grade-scheme-values/{id}": {
+      "get": {
+        "operationId": "GradeSchemeValuesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-scheme-values"
+        ]
+      },
+      "patch": {
+        "operationId": "GradeSchemeValuesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-scheme-values"
+        ]
+      },
+      "delete": {
+        "operationId": "GradeSchemeValuesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "grade-scheme-values"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "parameters": [
+          {
+            "name": "title",
+            "required": false,
+            "in": "query",
+            "description": "Filter by title keyword",
+            "schema": {
+              "example": "Attendance",
+              "type": "string"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter by active status",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1+)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size (1-100)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "post": {
+        "operationId": "NotificationsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNotificationDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create notification",
+                  "value": {
+                    "title": "Attendance Alert",
+                    "message": "Student John Doe absent today",
+                    "isActive": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{id}": {
+      "get": {
+        "operationId": "NotificationsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "patch": {
+        "operationId": "NotificationsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update notification status",
+                  "value": {
+                    "isActive": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "delete": {
+        "operationId": "NotificationsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/school-years": {
+      "get": {
+        "operationId": "SchoolYearsController_findAll",
+        "parameters": [
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "description": "Filters by active school years when provided",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filters by exact year name",
+            "schema": {
+              "example": "2025",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      },
+      "post": {
+        "operationId": "SchoolYearsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSchoolYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      }
+    },
+    "/school-years/{id}": {
+      "get": {
+        "operationId": "SchoolYearsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      },
+      "patch": {
+        "operationId": "SchoolYearsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSchoolYearDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      },
+      "delete": {
+        "operationId": "SchoolYearsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      }
+    },
+    "/school-years/rollover": {
+      "post": {
+        "operationId": "SchoolYearsController_rollover",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      }
+    },
+    "/school-years/{id}/lock": {
+      "post": {
+        "operationId": "SchoolYearsController_lock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "school-years"
+        ]
+      }
+    },
+    "/students": {
+      "get": {
+        "operationId": "StudentsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 25,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search keyword applied to nationalId, firstName, and lastName",
+            "schema": {
+              "example": "Juana",
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Filters students enrolled in the provided school year ID",
+            "schema": {
+              "minimum": 1,
+              "example": 2025,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      },
+      "post": {
+        "operationId": "StudentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      }
+    },
+    "/students/{id}": {
+      "get": {
+        "operationId": "StudentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      },
+      "patch": {
+        "operationId": "StudentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStudentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      },
+      "delete": {
+        "operationId": "StudentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      }
+    },
+    "/subject-areas": {
+      "get": {
+        "operationId": "SubjectAreasController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 25,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search keyword applied to area code and name",
+            "schema": {
+              "example": "math",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subject-areas"
+        ]
+      },
+      "post": {
+        "operationId": "SubjectAreasController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubjectAreaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subject-areas"
+        ]
+      }
+    },
+    "/subject-areas/{id}": {
+      "get": {
+        "operationId": "SubjectAreasController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subject-areas"
+        ]
+      },
+      "patch": {
+        "operationId": "SubjectAreasController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubjectAreaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subject-areas"
+        ]
+      },
+      "delete": {
+        "operationId": "SubjectAreasController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subject-areas"
+        ]
+      }
+    },
+    "/subjects": {
+      "get": {
+        "operationId": "SubjectsController_findAll",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "example": 25,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search keyword applied to subject code and name",
+            "schema": {
+              "example": "algebra",
+              "type": "string"
+            }
+          },
+          {
+            "name": "areaId",
+            "required": false,
+            "in": "query",
+            "description": "Restrict results to a specific subject area",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subjects"
+        ]
+      },
+      "post": {
+        "operationId": "SubjectsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subjects"
+        ]
+      }
+    },
+    "/subjects/{id}": {
+      "get": {
+        "operationId": "SubjectsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subjects"
+        ]
+      },
+      "patch": {
+        "operationId": "SubjectsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subjects"
+        ]
+      },
+      "delete": {
+        "operationId": "SubjectsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "subjects"
+        ]
+      }
+    },
+    "/terms": {
+      "get": {
+        "operationId": "TermsController_findAll",
+        "parameters": [
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "description": "Filters terms that belong to active or inactive school years",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Filters by the exact term name",
+            "schema": {
+              "example": "P1",
+              "type": "string",
+              "enum": [
+                "P1",
+                "P2",
+                "P3",
+                "P4",
+                "Final"
+              ]
+            }
+          },
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "Filters terms by their parent school year ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "terms"
+        ]
+      },
+      "post": {
+        "operationId": "TermsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "terms"
+        ]
+      }
+    },
+    "/terms/{id}": {
+      "get": {
+        "operationId": "TermsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "terms"
+        ]
+      },
+      "patch": {
+        "operationId": "TermsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTermDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "terms"
+        ]
+      },
+      "delete": {
+        "operationId": "TermsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "terms"
+        ]
+      }
+    },
+    "/timetable-assignments": {
+      "get": {
+        "operationId": "TimetableAssignmentsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "timetable-assignments"
+        ]
+      },
+      "post": {
+        "operationId": "TimetableAssignmentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "courseId": 15,
+                  "slotId": 3,
+                  "teacherId": "teacher-001",
+                  "classGroupId": 9,
+                  "classroomId": 2
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "timetable-assignments"
+        ]
+      }
+    },
+    "/timetable-assignments/{id}": {
+      "get": {
+        "operationId": "TimetableAssignmentsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "timetable-assignments"
+        ]
+      },
+      "patch": {
+        "operationId": "TimetableAssignmentsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "teacherId": "teacher-002",
+                  "classroomId": 4
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "timetable-assignments"
+        ]
+      },
+      "delete": {
+        "operationId": "TimetableAssignmentsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "timetable-assignments"
+        ]
+      }
+    },
+    "/timetable-slots": {
+      "get": {
+        "operationId": "TimetableSlotsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "TimetableSlots"
+        ]
+      },
+      "post": {
+        "operationId": "TimetableSlotsController_create",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "TimetableSlots"
+        ]
+      }
+    },
+    "/timetable-slots/{id}": {
+      "get": {
+        "operationId": "TimetableSlotsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "TimetableSlots"
+        ]
+      },
+      "patch": {
+        "operationId": "TimetableSlotsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "TimetableSlots"
+        ]
+      },
+      "delete": {
+        "operationId": "TimetableSlotsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "TimetableSlots"
+        ]
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "UsersController_findAll",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search keyword matched against username, name, or national ID",
+            "schema": {
+              "example": "john",
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "description": "Filter by user role",
+            "schema": {
+              "example": "teacher",
+              "type": "string",
+              "enum": [
+                "admin",
+                "registrar",
+                "teacher",
+                "coordinator"
+              ]
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter by active status",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1+)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size (1-100)",
+            "schema": {
+              "default": 25,
+              "example": 25,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUsersDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create user",
+                  "value": {
+                    "nationalId": "199001011234",
+                    "username": "jdoe",
+                    "passwordHash": "$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e",
+                    "role": "teacher",
+                    "firstName": "John",
+                    "lastName": "Doe",
+                    "email": "john.doe@example.edu",
+                    "phone": "+1-202-555-0199",
+                    "isActive": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUsersDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update user contact information",
+                  "value": {
+                    "email": "johnny.doe@example.edu",
+                    "phone": "+1-202-555-0100",
+                    "isActive": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "operationId": "AuthController_signup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "School Man API",
+    "description": "Generated OpenAPI specification for School Man backend",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CreateAttendanceDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateAttendanceDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateAuditLogDto": {
+        "type": "object",
+        "properties": {
+          "entityName": {
+            "type": "string",
+            "example": "students",
+            "description": "Entity impacted by the action"
+          },
+          "entityId": {
+            "type": "number",
+            "example": 42,
+            "description": "Primary key of the affected entity"
+          },
+          "action": {
+            "type": "string",
+            "example": "UPDATE",
+            "description": "Action performed (max 20 characters)"
+          },
+          "payload": {
+            "type": "object",
+            "example": {
+              "before": {
+                "isActive": false
+              },
+              "after": {
+                "isActive": true
+              }
+            },
+            "description": "Optional JSON payload describing the change"
+          },
+          "performedBy": {
+            "type": "string",
+            "example": "900001",
+            "description": "National ID of the user who performed the action"
+          },
+          "performedAt": {
+            "type": "string",
+            "example": "2025-01-15T14:30:00.000Z",
+            "description": "Timestamp of the action (ISO 8601)"
+          }
+        },
+        "required": [
+          "entityName",
+          "action",
+          "performedBy"
+        ]
+      },
+      "UpdateAuditLogDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateClassGroupDto": {
+        "type": "object",
+        "properties": {
+          "schoolYearId": {
+            "type": "number",
+            "example": 1,
+            "description": "Existing school year identifier"
+          },
+          "gradeLevel": {
+            "type": "number",
+            "example": 10,
+            "description": "Grade level (1-11)"
+          },
+          "section": {
+            "type": "string",
+            "example": "01",
+            "description": "Two-digit section code"
+          },
+          "defaultClassroomId": {
+            "type": "number",
+            "example": 3,
+            "description": "Optional default classroom id"
+          }
+        },
+        "required": [
+          "schoolYearId",
+          "gradeLevel",
+          "section"
+        ]
+      },
+      "UpdateClassGroupDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateClassroomDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Room 101",
+            "description": "Unique classroom name"
+          },
+          "building": {
+            "type": "string",
+            "example": "Main Building",
+            "description": "Building where the classroom is located"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 30,
+            "description": "Maximum capacity of the classroom"
+          }
+        },
+        "required": [
+          "name",
+          "capacity"
+        ]
+      },
+      "UpdateClassroomDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCourseInstanceDto": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "number",
+            "example": 12,
+            "description": "Identifier of the related subject"
+          },
+          "gradeLevel": {
+            "type": "number",
+            "example": 10,
+            "description": "Grade level served by this course instance (1-11)",
+            "minimum": 1,
+            "maximum": 11
+          },
+          "schoolYearId": {
+            "type": "number",
+            "example": 3,
+            "description": "School year identifier"
+          },
+          "courseCode": {
+            "type": "string",
+            "example": "MATH-10-Y2025",
+            "description": "Custom course code. When omitted, it is generated automatically",
+            "maxLength": 50
+          },
+          "courseName": {
+            "type": "string",
+            "example": "Mathematics Grade 10",
+            "maxLength": 120,
+            "description": "Human readable course instance name"
+          },
+          "weeklyHours": {
+            "type": "number",
+            "example": 4,
+            "default": 0,
+            "description": "Weekly teaching hours for this course instance",
+            "minimum": 0
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Flag to enable or disable the course instance without deleting it"
+          }
+        },
+        "required": [
+          "subjectId",
+          "gradeLevel",
+          "schoolYearId",
+          "courseName"
+        ]
+      },
+      "UpdateCourseInstanceDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCourseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateCourseDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateDisciplinaryRecordDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "number",
+            "example": 1234,
+            "description": "Student identifier"
+          },
+          "recordedBy": {
+            "type": "string",
+            "example": "PRINCIPAL01",
+            "description": "User national ID who recorded the event"
+          },
+          "dateHappened": {
+            "type": "string",
+            "example": "2025-02-10",
+            "description": "Date when the incident happened (ISO date)"
+          },
+          "category": {
+            "type": "string",
+            "example": "yellow",
+            "enum": [
+              "green",
+              "yellow",
+              "red",
+              "last_notice"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Late for class without excuse",
+            "description": "Optional description"
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2025-05-31",
+            "description": "Optional expiration date"
+          }
+        },
+        "required": [
+          "studentId",
+          "recordedBy",
+          "dateHappened",
+          "category"
+        ]
+      },
+      "UpdateDisciplinaryRecordDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateEnrollmentDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateGradeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateGradeDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateNotificationDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Attendance Alert",
+            "description": "Notification title"
+          },
+          "message": {
+            "type": "string",
+            "example": "Student John Doe has been absent.",
+            "description": "Notification message body"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the notification is active"
+          }
+        },
+        "required": [
+          "title",
+          "isActive"
+        ]
+      },
+      "UpdateNotificationDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateSchoolYearDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "2025",
+            "description": "Unique four-digit year identifier such as 2025"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2025-08-15",
+            "description": "First day of the school year"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-06-15",
+            "description": "Last day of the school year"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true,
+            "description": "Marks the school year as active for enrollment and scheduling"
+          }
+        },
+        "required": [
+          "name",
+          "startDate",
+          "endDate",
+          "active"
+        ]
+      },
+      "UpdateSchoolYearDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateStudentDto": {
+        "type": "object",
+        "properties": {
+          "nationalId": {
+            "type": "string",
+            "example": "CC-1234567",
+            "description": "Unique identifier used nationally for the student"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Juana",
+            "maxLength": 80
+          },
+          "lastName": {
+            "type": "string",
+            "example": "García",
+            "maxLength": 80
+          },
+          "dob": {
+            "type": "string",
+            "example": "2010-05-15",
+            "description": "ISO-8601 birth date (YYYY-MM-DD)"
+          },
+          "address": {
+            "type": "string",
+            "example": "Calle 123 #45-67"
+          },
+          "guardianName": {
+            "type": "string",
+            "example": "Marta Ramirez",
+            "description": "Full name of the legal guardian"
+          },
+          "guardianRelationship": {
+            "type": "string",
+            "example": "Mother",
+            "description": "Relationship between guardian and student"
+          },
+          "guardianPhone": {
+            "type": "string",
+            "example": "+57 3001234567",
+            "description": "Guardian contact phone number"
+          }
+        },
+        "required": [
+          "nationalId",
+          "firstName",
+          "lastName",
+          "guardianName",
+          "guardianRelationship",
+          "guardianPhone"
+        ]
+      },
+      "UpdateStudentDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateSubjectAreaDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "MATH",
+            "description": "Unique area code",
+            "maxLength": 16
+          },
+          "name": {
+            "type": "string",
+            "example": "Mathematics",
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      },
+      "UpdateSubjectAreaDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateSubjectDto": {
+        "type": "object",
+        "properties": {
+          "areaId": {
+            "type": "number",
+            "example": 1,
+            "description": "Identifier of the subject area"
+          },
+          "code": {
+            "type": "string",
+            "example": "MATH_ALG",
+            "description": "Unique subject code"
+          },
+          "name": {
+            "type": "string",
+            "example": "Algebra I",
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "example": "Introduction to algebraic expressions and equations"
+          }
+        },
+        "required": [
+          "areaId",
+          "code",
+          "name"
+        ]
+      },
+      "UpdateSubjectDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateTermDto": {
+        "type": "object",
+        "properties": {
+          "schoolYearId": {
+            "type": "number",
+            "example": 1,
+            "description": "Identifier of the parent school year"
+          },
+          "name": {
+            "type": "string",
+            "example": "P1",
+            "enum": [
+              "P1",
+              "P2",
+              "P3",
+              "P4",
+              "Final"
+            ],
+            "description": "Name of the term. Only predefined values are accepted"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2025-09-01",
+            "description": "First day of the term"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2025-10-31",
+            "description": "Last day of the term"
+          }
+        },
+        "required": [
+          "schoolYearId",
+          "name",
+          "startDate",
+          "endDate"
+        ]
+      },
+      "UpdateTermDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateUsersDto": {
+        "type": "object",
+        "properties": {
+          "nationalId": {
+            "type": "string",
+            "example": "199001011234",
+            "description": "Unique national identifier"
+          },
+          "username": {
+            "type": "string",
+            "example": "jdoe",
+            "description": "Unique username for login"
+          },
+          "passwordHash": {
+            "type": "string",
+            "example": "$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e",
+            "description": "BCrypt password hash"
+          },
+          "role": {
+            "type": "string",
+            "example": "teacher",
+            "enum": [
+              "admin",
+              "registrar",
+              "teacher",
+              "coordinator"
+            ],
+            "description": "Role assigned to the user"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John",
+            "description": "First name of the user"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Doe",
+            "description": "Last name of the user"
+          },
+          "email": {
+            "type": "string",
+            "example": "john.doe@example.edu",
+            "description": "Contact email address"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1-202-555-0199",
+            "description": "Contact phone number"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether the user is active"
+          }
+        },
+        "required": [
+          "nationalId",
+          "username",
+          "passwordHash",
+          "role"
+        ]
+      },
+      "UpdateUsersDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SignupDto": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}

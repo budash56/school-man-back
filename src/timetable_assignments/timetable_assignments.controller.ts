@@ -16,14 +16,15 @@ import { TimetableAssignmentsRepository } from './timetable_assignments.reposito
 import { TimetableAssignmentsService, TimetableAssignmentsQuery } from './timetable_assignments.service';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { Request } from 'express';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 
 type RequestWithUser = Request & {
   user?: { userId?: number; nationalId?: string; role?: string };
 };
 
+@ApiTags('timetable-assignments')
 @Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
 @Controller('timetable-assignments')
 export class TimetableAssignmentsController {
   constructor(
@@ -63,9 +64,8 @@ export class TimetableAssignmentsController {
       },
     },
   })
-  create(@Body() payload: DeepPartial<TimetableAssignments>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  create(@Body() payload: DeepPartial<TimetableAssignments>, @Req() req: RequestWithUser) {
+    return this.assignmentsService.create(payload, req.user);
   }
 
   @Roles(...WRITE_ROLES)
@@ -78,10 +78,12 @@ export class TimetableAssignmentsController {
       },
     },
   })
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<TimetableAssignments>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  update(
+    @Param('id') id: string,
+    @Body() payload: DeepPartial<TimetableAssignments>,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.assignmentsService.update(id, payload, req.user);
   }
 
   @Roles(...WRITE_ROLES)

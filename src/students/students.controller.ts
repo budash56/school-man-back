@@ -22,7 +22,7 @@ import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('students')
 @Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('students')
 export class StudentsController {

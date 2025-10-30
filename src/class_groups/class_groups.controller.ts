@@ -1,37 +1,39 @@
-// Provides CRUD endpoints for class-groups using the generated ClassGroups entity.
 import {
   Body,
   Controller,
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
 import { ClassGroupsService } from './class_groups.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
-@Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiTags('class-groups')
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('class-groups')
 export class ClassGroupsController {
   constructor(private readonly service: ClassGroupsService) {}
 
   @Get()
-  findAll() {
-    return this.service.findAll({});
+  async findAll(@Query() query: QueryClassGroupDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.service.findOne(Number(id));
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
   @Roles('admin', 'coordinator')
@@ -44,13 +46,13 @@ export class ClassGroupsController {
         value: {
           schoolYearId: 1,
           gradeLevel: 10,
-          section: 'A1',
+          section: '01',
           defaultClassroomId: 3,
         },
       },
     },
   })
-  create(@Body() dto: CreateClassGroupDto) {
+  async create(@Body() dto: CreateClassGroupDto) {
     return this.service.create(dto);
   }
 
@@ -60,21 +62,25 @@ export class ClassGroupsController {
     type: UpdateClassGroupDto,
     examples: {
       default: {
-        summary: 'Update class group section',
+        summary: 'Update class group',
         value: {
-          section: 'A2',
+          gradeLevel: 11,
+          section: '02',
         },
       },
     },
   })
-  update(@Param('id') id: string, @Body() dto: UpdateClassGroupDto) {
-    return this.service.update(Number(id), dto);
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateClassGroupDto,
+  ) {
+    return this.service.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.service.remove(Number(id));
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.service.remove(id);
     return { deleted: true };
   }
 }

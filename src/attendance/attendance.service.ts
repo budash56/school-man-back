@@ -18,6 +18,7 @@ import { Attendance } from './attendance.entity';
 import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
 import { Courses } from '../courses/courses.entity';
 import { AccessService } from '../auth/access.service';
+import { SchoolYearsRepository } from '../school_years/school_years.repository';
 
 export type AttendanceResponse = {
   attendanceId: number;
@@ -45,6 +46,7 @@ export class AttendanceService {
     private readonly coursesRepository: CoursesRepository,
     private readonly timetableSlotRepository: TimetableSlotRepository,
     private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly schoolYearsRepository: SchoolYearsRepository,
   ) {}
 
   async findAll(
@@ -180,6 +182,13 @@ export class AttendanceService {
       throw new ConflictException('Course is missing schedule information');
     }
 
+    const schoolYearId = Number(requiredSchoolYearId);
+    if (!Number.isFinite(schoolYearId)) {
+      throw new ConflictException('Course is missing schedule information');
+    }
+
+    await this.assertYearWritable(schoolYearId, currentUser);
+
     const enrollment = await this.enrollmentsRepository.findOne({
       where: {
         studentId: student.studentId,
@@ -253,6 +262,22 @@ export class AttendanceService {
       attendance.excusedAt = this.parseDate(dto.excusedAt);
     }
 
+    const course = await this.coursesRepository.findOne({
+      where: { courseId: attendance.courseId },
+      relations: { courseInstance: true },
+    });
+
+    if (!course || !course.courseInstance?.schoolYearId) {
+      throw new ConflictException('Course is missing schedule information');
+    }
+
+    const schoolYearId = Number(course.courseInstance.schoolYearId);
+    if (!Number.isFinite(schoolYearId)) {
+      throw new ConflictException('Course is missing schedule information');
+    }
+
+    await this.assertYearWritable(schoolYearId, currentUser);
+
     const saved = await this.attendanceRepository.save(attendance);
     return this.toResponse(saved);
   }
@@ -292,6 +317,27 @@ export class AttendanceService {
       throw new BadRequestException('Invalid date value');
     }
     return parsed;
+  }
+
+  private async assertYearWritable(
+    schoolYearId: number,
+    user: { role: string },
+  ): Promise<void> {
+    const year = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: schoolYearId.toString() },
+    });
+
+    if (!year) {
+      throw new NotFoundException('School year not found');
+    }
+
+    if (year.isActive) {
+      return;
+    }
+
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Past years are read-only');
+    }
   }
 
   private async assertTeacherCanMutateCourse(

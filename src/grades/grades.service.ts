@@ -4,6 +4,7 @@ import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { CoursesRepository } from '../courses/courses.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { TermsRepository } from '../terms/terms.repository';
+import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { Grades } from './grades.entity';
 import { GradesRepository } from './grades.repository';
 import { CreateGradeDto } from './dto/create-grade.dto';
@@ -35,6 +36,8 @@ export class GradesService {
     private readonly coursesRepository: CoursesRepository,
     private readonly termsRepository: TermsRepository,
     private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly schoolYearsRepository: SchoolYearsRepository,
+    private readonly access: AccessService,
   ) {}
 
   async findAll(query: GradesQueryDto, currentUser: ActingUser): Promise<PaginatedResult<GradeResponse>> {
@@ -67,8 +70,7 @@ export class GradesService {
     }
 
     if (currentUser.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+      const teacherCourseIds = await this.access.courseIdsForTeacher(currentUser.userId);
 
       if (query.courseId !== undefined) {
         if (!teacherCourseIds.includes(Number(query.courseId))) {
@@ -131,8 +133,10 @@ export class GradesService {
     }
 
     if (currentUser.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const canModify = await accessService.isTeacherOfCourse(currentUser.userId, Number(course.courseId));
+      const canModify = await this.access.isTeacherOfCourse(
+        currentUser.userId,
+        Number(course.courseId),
+      );
       if (!canModify) {
         throw new ForbiddenException('You are not allowed to record grades for this course');
       }
@@ -169,6 +173,13 @@ export class GradesService {
       throw new ConflictException('Student is not actively enrolled in this class group for the term school year');
     }
 
+    const schoolYearId = Number(courseSchoolYear);
+    if (!Number.isFinite(schoolYearId)) {
+      throw new ConflictException('Course schedule is incomplete');
+    }
+
+    await this.assertYearWritable(schoolYearId, currentUser);
+
     const entity = this.gradesRepository.create({
       studentId: student.studentId,
       courseId: course.courseId,
@@ -203,8 +214,10 @@ export class GradesService {
     }
 
     if (currentUser.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const canModify = await accessService.isTeacherOfCourse(currentUser.userId, Number(grade.courseId));
+      const canModify = await this.access.isTeacherOfCourse(
+        currentUser.userId,
+        Number(grade.courseId),
+      );
       if (!canModify) {
         throw new ForbiddenException('You are not allowed to modify grades for this course');
       }
@@ -217,6 +230,22 @@ export class GradesService {
     if (dto.comment !== undefined) {
       grade.comment = dto.comment ?? null;
     }
+
+    const course = await this.coursesRepository.findOne({
+      where: { courseId: grade.courseId },
+      relations: { courseInstance: true },
+    });
+
+    if (!course || !course.courseInstance?.schoolYearId) {
+      throw new ConflictException('Course schedule is incomplete');
+    }
+
+    const schoolYearId = Number(course.courseInstance.schoolYearId);
+    if (!Number.isFinite(schoolYearId)) {
+      throw new ConflictException('Course schedule is incomplete');
+    }
+
+    await this.assertYearWritable(schoolYearId, currentUser);
 
     try {
       const saved = await this.gradesRepository.save(grade);
@@ -252,5 +281,23 @@ export class GradesService {
       mark: grade.mark,
       comment: grade.comment ?? null,
     };
+  }
+
+  private async assertYearWritable(schoolYearId: number, user: { role: string }): Promise<void> {
+    const year = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: schoolYearId.toString() },
+    });
+
+    if (!year) {
+      throw new NotFoundException('School year not found');
+    }
+
+    if (year.isActive) {
+      return;
+    }
+
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Past years are read-only');
+    }
   }
 }

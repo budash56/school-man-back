@@ -20,10 +20,10 @@ export class Terms {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'term_id' })
   termId: string;
 
-  @Column('bigint', { name: 'school_year_id', unique: true })
+  @Column('bigint', { name: 'school_year_id' })
   schoolYearId: string;
 
-  @Column('character varying', { name: 'name', unique: true, length: 20 })
+  @Column('character varying', { name: 'name', length: 20 })
   name: string;
 
   @Column('date', { name: 'start_date' })

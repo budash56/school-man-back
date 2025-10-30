@@ -1,64 +1,88 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
-// Provides CRUD endpoints for users using the generated Users entity.
 import {
   Body,
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { Users } from './users.entity';
-import { UsersRepository } from './users.repository';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { UsersService } from './users.service';
+import { QueryUsersDto } from './dto/query-users.dto';
+import { CreateUsersDto } from './dto/create-users.dto';
+import { UpdateUsersDto } from './dto/update-users.dto';
 
-@Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiTags('users')
+@Roles('admin', 'coordinator')
+@ApiBearerAuth('bearer')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly repository: UsersRepository) {}
+  constructor(private readonly service: UsersService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: QueryUsersDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { nationalId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Users record not found');
-    }
-
-    return entity;
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Roles(...WRITE_ROLES)
   @Post()
-  create(@Body() payload: DeepPartial<Users>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: CreateUsersDto,
+    examples: {
+      default: {
+        summary: 'Create user',
+        value: {
+          nationalId: '199001011234',
+          username: 'jdoe',
+          passwordHash: '$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e',
+          role: 'teacher',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.edu',
+          phone: '+1-202-555-0199',
+          isActive: true,
+        },
+      },
+    },
+  })
+  create(@Body() dto: CreateUsersDto) {
+    return this.service.create(dto);
   }
 
   @Roles(...WRITE_ROLES)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Users>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: UpdateUsersDto,
+    examples: {
+      default: {
+        summary: 'Update user contact information',
+        value: {
+          email: 'johnny.doe@example.edu',
+          phone: '+1-202-555-0100',
+          isActive: false,
+        },
+      },
+    },
+  })
+  update(@Param('id') id: string, @Body() dto: UpdateUsersDto) {
+    return this.service.update(id, dto);
   }
 
   @Roles(...WRITE_ROLES)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
   }
 }

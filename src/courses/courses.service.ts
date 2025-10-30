@@ -1,4 +1,10 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { CourseInstancesRepository } from '../course_instances/course_instances.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
@@ -9,6 +15,7 @@ import { CoursesQueryDto } from './dto/courses-query.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { AccessService } from '../auth/access.service';
+import { SchoolYearsRepository } from '../school_years/school_years.repository';
 
 type ActingUser = {
   userId: number;
@@ -37,6 +44,8 @@ export class CoursesService {
     private readonly courseInstancesRepository: CourseInstancesRepository,
     private readonly classGroupsRepository: ClassGroupsRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly access: AccessService,
+    private readonly schoolYearsRepository: SchoolYearsRepository,
   ) {}
 
   async findAll(query: CoursesQueryDto, currentUser?: ActingUser): Promise<CourseSummary[]> {
@@ -72,8 +81,7 @@ export class CoursesService {
     }
 
     if (currentUser?.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+      const teacherCourseIds = await this.access.courseIdsForTeacher(currentUser.userId);
 
       if (teacherCourseIds.length === 0) {
         return [];
@@ -116,6 +124,7 @@ export class CoursesService {
 
     this.assertGradeLevelMatch(courseInstance.gradeLevel, classGroup.gradeLevel);
     this.assertTeacherRole(teacher.role);
+    await this.assertSchoolYearWritable(courseInstance.schoolYearId, classGroup.schoolYearId);
 
     const entity = this.coursesRepository.create({
       courseInstanceId: dto.courseInstanceId.toString(),
@@ -149,6 +158,7 @@ export class CoursesService {
 
     this.assertGradeLevelMatch(courseInstance.gradeLevel, classGroup.gradeLevel);
     this.assertTeacherRole(teacher.role);
+    await this.assertSchoolYearWritable(courseInstance.schoolYearId, classGroup.schoolYearId);
 
     course.courseInstanceId = courseInstance.courseInstanceId;
     course.classGroupId = classGroup.classGroupId;
@@ -232,6 +242,37 @@ export class CoursesService {
   private assertTeacherRole(role: string) {
     if (role !== 'teacher') {
       throw new ForbiddenException('Only teachers can be assigned to courses');
+    }
+  }
+
+  private async assertSchoolYearWritable(
+    courseInstanceYearId: string | null | undefined,
+    classGroupYearId: string | null | undefined,
+  ): Promise<void> {
+    const instanceYear = Number(courseInstanceYearId);
+    if (!Number.isFinite(instanceYear)) {
+      throw new BadRequestException('Course instance is missing a valid school year');
+    }
+
+    const classYear = Number(classGroupYearId);
+    if (!Number.isFinite(classYear)) {
+      throw new BadRequestException('Class group is missing a valid school year');
+    }
+
+    if (instanceYear !== classYear) {
+      throw new ConflictException('Course instance and class group must share the same school year');
+    }
+
+    const schoolYear = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: instanceYear.toString() },
+    });
+
+    if (!schoolYear) {
+      throw new NotFoundException('School year not found');
+    }
+
+    if (schoolYear.isActive !== true) {
+      throw new ConflictException('Past school years are read-only');
     }
   }
 

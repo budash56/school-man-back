@@ -42,7 +42,6 @@ export class CourseInstances {
 
   @Column('character varying', {
     name: 'course_code',
-    unique: true,
     length: 50,
   })
   courseCode: string;

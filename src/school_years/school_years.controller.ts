@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -22,28 +23,28 @@ import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('school-years')
 @Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('school-years')
 export class SchoolYearsController {
-  constructor(private readonly schoolYearsService: SchoolYearsService) {}
+  constructor(private readonly service: SchoolYearsService) {}
 
   @Get()
   @ApiQuery({ name: 'active', required: false, example: true })
   @ApiQuery({ name: 'name', required: false, example: '2025' })
   findAll(@Query() query: SchoolYearsQueryDto) {
-    return this.schoolYearsService.findAll(query);
+    return this.service.findAll(query);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.schoolYearsService.findOne(id);
+    return this.service.findOne(id);
   }
 
   @Roles('admin', 'coordinator')
   @Post()
   create(@Body() dto: CreateSchoolYearDto) {
-    return this.schoolYearsService.create(dto);
+    return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
@@ -52,12 +53,27 @@ export class SchoolYearsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSchoolYearDto,
   ) {
-    return this.schoolYearsService.update(id, dto);
+    return this.service.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.schoolYearsService.remove(id);
+    return this.service.remove(id);
+  }
+
+  @Post('rollover')
+  @Roles('admin')
+  rollover(
+    @Body() dto: { name?: string; startDate: string; endDate: string },
+    @Req() req: { user: { role: string } },
+  ) {
+    return this.service.rollover(dto, req.user);
+  }
+
+  @Post(':id/lock')
+  @Roles('admin')
+  lock(@Param('id', ParseIntPipe) id: number, @Req() req: { user: { role: string } }) {
+    return this.service.lock(id, req.user);
   }
 }

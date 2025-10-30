@@ -27,13 +27,13 @@ export class Enrollments {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'enrollment_id' })
   enrollmentId: string;
 
-  @Column('bigint', { name: 'student_id', unique: true })
+  @Column('bigint', { name: 'student_id' })
   studentId: string;
 
-  @Column('bigint', { name: 'class_group_id', unique: true })
+  @Column('bigint', { name: 'class_group_id' })
   classGroupId: string;
 
-  @Column('bigint', { name: 'school_year_id', unique: true })
+  @Column('bigint', { name: 'school_year_id' })
   schoolYearId: string;
 
   @Column('timestamp with time zone', {

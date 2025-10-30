@@ -24,10 +24,10 @@ export class TimetableAssignments {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'assignment_id' })
   assignmentId: string;
 
-  @Column('bigint', { name: 'course_id', unique: true })
+  @Column('bigint', { name: 'course_id' })
   courseId: string;
 
-  @Column('bigint', { name: 'slot_id', unique: true, nullable: true })
+  @Column('bigint', { name: 'slot_id', nullable: true })
   slotId: string | null;
 
   @Column('timestamp with time zone', {

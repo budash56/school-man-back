@@ -20,10 +20,10 @@ export class GradeSchemeValues {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'value_id' })
   valueId: string;
 
-  @Column('bigint', { name: 'scheme_id', unique: true })
+  @Column('bigint', { name: 'scheme_id' })
   schemeId: string;
 
-  @Column('character varying', { name: 'code', unique: true, length: 10 })
+  @Column('character varying', { name: 'code', length: 10 })
   code: string;
 
   @Column('character varying', { name: 'label', length: 50 })

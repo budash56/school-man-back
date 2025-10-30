@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
@@ -109,12 +109,19 @@ export class EnrollmentsService {
     return this.toResponse(enrollment);
   }
 
-  async create(dto: CreateEnrollmentDto): Promise<EnrollmentResponse> {
+  async create(dto: CreateEnrollmentDto, currentUser?: ActingUser): Promise<EnrollmentResponse> {
     const student = await this.resolveStudent(dto.studentId);
     const classGroup = await this.resolveClassGroup(dto.classGroupId);
     const schoolYear = await this.resolveSchoolYear(dto.schoolYearId);
 
     this.assertClassGroupMatchesSchoolYear(classGroup.schoolYearId, schoolYear.schoolYearId);
+
+    const classGroupYearId = Number(classGroup.schoolYearId);
+    if (!Number.isFinite(classGroupYearId)) {
+      throw new ConflictException('Class group has invalid school year reference');
+    }
+
+    await this.assertYearWritable(classGroupYearId, currentUser);
 
     const entity = this.enrollmentsRepository.create({
       studentId: student.studentId,
@@ -134,12 +141,23 @@ export class EnrollmentsService {
     }
   }
 
-  async deactivate(id: number): Promise<EnrollmentResponse> {
+  async deactivate(id: number, currentUser?: ActingUser): Promise<EnrollmentResponse> {
     const enrollment = await this.getEnrollmentEntity(id);
 
     if (enrollment.active === false) {
       return this.toResponse(enrollment);
     }
+
+    const schoolYearId =
+      enrollment.classGroup?.schoolYearId ??
+      enrollment.schoolYear?.schoolYearId ??
+      enrollment.schoolYearId;
+    const numericYearId = Number(schoolYearId);
+    if (!Number.isFinite(numericYearId)) {
+      throw new ConflictException('Enrollment has invalid school year reference');
+    }
+
+    await this.assertYearWritable(numericYearId, currentUser);
 
     enrollment.active = false;
 
@@ -212,6 +230,27 @@ export class EnrollmentsService {
   ): void {
     if (classGroupSchoolYearId !== schoolYearId) {
       throw new ConflictException('Class group belongs to a different school year');
+    }
+  }
+
+  private async assertYearWritable(
+    schoolYearId: number,
+    user?: ActingUser,
+  ): Promise<void> {
+    const year = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: schoolYearId.toString() },
+    });
+
+    if (!year) {
+      throw new NotFoundException('School year not found');
+    }
+
+    if (year.isActive) {
+      return;
+    }
+
+    if ((user?.role ?? 'admin') !== 'admin') {
+      throw new ForbiddenException('Past years are read-only');
     }
   }
 

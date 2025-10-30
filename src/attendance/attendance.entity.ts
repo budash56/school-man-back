@@ -28,13 +28,13 @@ export class Attendance {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'attendance_id' })
   attendanceId: string;
 
-  @Column('bigint', { name: 'student_id', unique: true })
+  @Column('bigint', { name: 'student_id' })
   studentId: string;
 
-  @Column('bigint', { name: 'course_id', unique: true })
+  @Column('bigint', { name: 'course_id' })
   courseId: string;
 
-  @Column('date', { name: 'date', unique: true })
+  @Column('date', { name: 'date' })
   date: string;
 
   @Column('enum', { name: 'status', enum: ['P', 'A', 'AE'] })

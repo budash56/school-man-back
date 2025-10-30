@@ -4,65 +4,83 @@ import {
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
-import type { DeepPartial } from 'typeorm';
-import { Classrooms } from './classrooms.entity';
-import { ClassroomsRepository } from './classrooms.repository';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { ClassroomsService } from './classrooms.service';
+import { QueryClassroomDto } from './dto/query-classroom.dto';
+import { CreateClassroomDto } from './dto/create-classroom.dto';
+import { UpdateClassroomDto } from './dto/update-classroom.dto';
 
+@ApiTags('classrooms')
 @Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('classrooms')
 export class ClassroomsController {
-  constructor(private readonly repository: ClassroomsRepository) {}
+  constructor(private readonly service: ClassroomsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: QueryClassroomDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { classroomId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('Classrooms record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
   @Roles('admin', 'coordinator')
   @Post()
-  create(@Body() payload: DeepPartial<Classrooms>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: CreateClassroomDto,
+    examples: {
+      default: {
+        summary: 'Create classroom',
+        value: {
+          name: 'Room 101',
+          building: 'Main Building',
+          capacity: 30,
+        },
+      },
+    },
+  })
+  create(@Body() dto: CreateClassroomDto) {
+    return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<Classrooms>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: UpdateClassroomDto,
+    examples: {
+      default: {
+        summary: 'Update classroom capacity',
+        value: {
+          capacity: 28,
+        },
+      },
+    },
+  })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateClassroomDto,
+  ) {
+    return this.service.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.service.remove(id);
     return { deleted: true };
   }
 }

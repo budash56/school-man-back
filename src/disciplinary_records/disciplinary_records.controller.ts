@@ -1,64 +1,89 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
-// Provides CRUD endpoints for disciplinary-records using the generated DisciplinaryRecords entity.
 import {
   Body,
   Controller,
   Delete,
   Get,
-  NotFoundException,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
-import { DisciplinaryRecords } from './disciplinary_records.entity';
-import { DisciplinaryRecordsRepository } from './disciplinary_records.repository';
-import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { READ_ROLES, Roles } from '../auth/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { DisciplinaryRecordsService } from './disciplinary_records.service';
+import { QueryDisciplinaryRecordDto } from './dto/query-disciplinary-record.dto';
+import { CreateDisciplinaryRecordDto } from './dto/create-disciplinary-record.dto';
+import { UpdateDisciplinaryRecordDto } from './dto/update-disciplinary-record.dto';
 
+@ApiTags('disciplinary-records')
 @Roles(...READ_ROLES)
-@ApiBearerAuth()
+@ApiBearerAuth('bearer')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('disciplinary-records')
 export class DisciplinaryRecordsController {
-  constructor(private readonly repository: DisciplinaryRecordsRepository) {}
+  constructor(private readonly service: DisciplinaryRecordsService) {}
 
   @Get()
-  findAll() {
-    return this.repository.find();
+  findAll(@Query() query: QueryDisciplinaryRecordDto) {
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { disciplinaryId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('DisciplinaryRecords record not found');
-    }
-
-    return entity;
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Post()
-  create(@Body() payload: DeepPartial<DisciplinaryRecords>) {
-    const entity = this.repository.create(payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: CreateDisciplinaryRecordDto,
+    examples: {
+      default: {
+        summary: 'Create disciplinary record',
+        value: {
+          studentId: 1234,
+          recordedBy: 'PRINCIPAL01',
+          dateHappened: '2025-02-10',
+          category: 'yellow',
+          description: 'Late for class without excuse',
+          expiresAt: '2025-05-31',
+        },
+      },
+    },
+  })
+  create(@Body() dto: CreateDisciplinaryRecordDto) {
+    return this.service.create(dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<DisciplinaryRecords>) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+  @ApiBody({
+    type: UpdateDisciplinaryRecordDto,
+    examples: {
+      default: {
+        summary: 'Update disciplinary record',
+        value: {
+          category: 'red',
+          description: 'Escalated after review',
+        },
+      },
+    },
+  })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateDisciplinaryRecordDto,
+  ) {
+    return this.service.update(id, dto);
   }
 
-  @Roles(...WRITE_ROLES)
+  @Roles('admin', 'coordinator')
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    await this.service.remove(id);
     return { deleted: true };
   }
 }
