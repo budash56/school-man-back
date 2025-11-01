@@ -5,6 +5,25 @@ export type PaginatedResult<T> = {
   pageSize: number;
 };
 
+export const PAGINATION_METADATA = {
+  data: {
+    description: 'Collection of items for the current page',
+    isArray: true,
+  },
+  total: {
+    description: 'Total number of items available across all pages',
+    example: 120,
+  },
+  page: {
+    description: 'Current page number (1-indexed)',
+    example: 1,
+  },
+  pageSize: {
+    description: 'Number of items returned per page',
+    example: 25,
+  },
+} as const;
+
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;

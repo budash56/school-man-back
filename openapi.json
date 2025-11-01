@@ -23,7 +23,103 @@
     "/attendance": {
       "get": {
         "operationId": "AttendanceController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by student identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 101,
+              "type": "number"
+            }
+          },
+          {
+            "name": "courseId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by course identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 205,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by attendance status",
+            "schema": {
+              "example": "A",
+              "type": "string",
+              "enum": [
+                "P",
+                "A",
+                "AE"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Include attendances on or after this date (ISO 8601)",
+            "schema": {
+              "format": "date",
+              "example": "2025-02-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Include attendances on or before this date (ISO 8601)",
+            "schema": {
+              "format": "date",
+              "example": "2025-02-28",
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "description": "Teacher scope filter for own courses versus class groups",
+            "schema": {
+              "example": "group",
+              "type": "string",
+              "enum": [
+                "own",
+                "group"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number for paginated results",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of records per page",
+            "schema": {
+              "minimum": 1,
+              "example": 25,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1428,7 +1524,63 @@
     "/enrollments": {
       "get": {
         "operationId": "EnrollmentsController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by student identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 501,
+              "type": "number"
+            }
+          },
+          {
+            "name": "classGroupId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by class group identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 32,
+              "type": "number"
+            }
+          },
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by school year identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 2026,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "minimum": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Page size for pagination",
+            "schema": {
+              "minimum": 1,
+              "example": 25,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1566,7 +1718,74 @@
     "/grades": {
       "get": {
         "operationId": "GradesController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by student identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 301,
+              "type": "number"
+            }
+          },
+          {
+            "name": "courseId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by course identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 410,
+              "type": "number"
+            }
+          },
+          {
+            "name": "termId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by term identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "Filter results by school year identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 2025,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number for paginated results",
+            "schema": {
+              "minimum": 1,
+              "example": 2,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "minimum": 1,
+              "example": 50,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -3630,11 +3849,76 @@
     "schemas": {
       "CreateAttendanceDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "studentId": {
+            "type": "number",
+            "description": "Identifier of the student the attendance belongs to",
+            "example": 101,
+            "minimum": 1
+          },
+          "courseId": {
+            "type": "number",
+            "description": "Identifier of the course the attendance refers to",
+            "example": 205,
+            "minimum": 1
+          },
+          "slotId": {
+            "type": "number",
+            "description": "Identifier of the timetable slot when the lesson occurred",
+            "example": 12,
+            "minimum": 1
+          },
+          "date": {
+            "type": "string",
+            "description": "Date of the attendance entry in ISO 8601 format",
+            "example": "2025-02-10",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "description": "Recorded attendance status",
+            "example": "P",
+            "enum": [
+              "P",
+              "A",
+              "AE"
+            ]
+          }
+        },
+        "required": [
+          "studentId",
+          "courseId",
+          "slotId",
+          "date",
+          "status"
+        ]
       },
       "UpdateAttendanceDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Updated attendance status",
+            "example": "AE",
+            "enum": [
+              "P",
+              "A",
+              "AE"
+            ]
+          },
+          "reasonNote": {
+            "type": "string",
+            "description": "Reason provided for the attendance change",
+            "example": "Excused absence approved by coordinator",
+            "maxLength": 500
+          },
+          "excusedAt": {
+            "type": "string",
+            "description": "Timestamp when the absence was excused",
+            "example": "2025-02-10T14:30:00.000Z",
+            "format": "date-time"
+          }
+        }
       },
       "CreateAuditLogDto": {
         "type": "object",
@@ -3865,15 +4149,99 @@
       },
       "CreateEnrollmentDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "studentId": {
+            "type": "number",
+            "description": "Identifier of the student being enrolled",
+            "example": 501,
+            "minimum": 1
+          },
+          "classGroupId": {
+            "type": "number",
+            "description": "Identifier of the class group the student joins",
+            "example": 32,
+            "minimum": 1
+          },
+          "schoolYearId": {
+            "type": "number",
+            "description": "Identifier of the school year for the enrollment",
+            "example": 2026,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "studentId",
+          "classGroupId",
+          "schoolYearId"
+        ]
       },
       "CreateGradeDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "studentId": {
+            "type": "number",
+            "description": "Identifier of the student receiving the grade",
+            "example": 301,
+            "minimum": 1
+          },
+          "courseId": {
+            "type": "number",
+            "description": "Identifier of the course in which the grade is recorded",
+            "example": 410,
+            "minimum": 1
+          },
+          "termId": {
+            "type": "number",
+            "description": "Identifier of the term linked to the grade",
+            "example": 12,
+            "minimum": 1
+          },
+          "mark": {
+            "type": "string",
+            "description": "Letter mark assigned to the student",
+            "example": "A",
+            "enum": [
+              "S",
+              "A",
+              "B",
+              "J"
+            ]
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional comment that accompanies the grade",
+            "example": "Demonstrated excellent understanding of the material.",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "studentId",
+          "courseId",
+          "termId",
+          "mark"
+        ]
       },
       "UpdateGradeDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "mark": {
+            "type": "string",
+            "description": "Updated letter mark for the student",
+            "example": "B",
+            "enum": [
+              "S",
+              "A",
+              "B",
+              "J"
+            ]
+          },
+          "comment": {
+            "type": "string",
+            "description": "Updated comment for the grade",
+            "example": "Improved after remedial sessions.",
+            "maxLength": 500
+          }
+        }
       },
       "CreateNotificationDto": {
         "type": "object",
