@@ -4,7 +4,7 @@ import { CoursesQueryDto } from './dto/courses-query.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
@@ -50,6 +50,9 @@ export class CoursesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateCourseDto) {
     return this.coursesService.create(dto);
   }
@@ -67,12 +70,18 @@ export class CoursesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCourseDto) {
     return this.coursesService.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.coursesService.remove(id);
   }

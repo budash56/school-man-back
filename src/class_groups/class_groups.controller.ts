@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
@@ -52,6 +52,9 @@ export class ClassGroupsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   async create(@Body() dto: CreateClassGroupDto) {
     return this.service.create(dto);
   }
@@ -70,6 +73,9 @@ export class ClassGroupsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateClassGroupDto,
@@ -79,6 +85,9 @@ export class ClassGroupsController {
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.service.remove(id);
     return { deleted: true };

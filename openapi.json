@@ -160,8 +160,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin, coordinator"
           }
         },
         "security": [
@@ -233,8 +233,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin, coordinator"
           }
         },
         "security": [
@@ -259,8 +259,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin, coordinator"
           }
         },
         "security": [
@@ -398,8 +398,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -474,8 +474,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -500,8 +500,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -620,8 +620,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -693,8 +693,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -719,8 +719,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -818,8 +818,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -890,8 +890,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -916,8 +916,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1020,8 +1020,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1093,8 +1093,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1119,8 +1119,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1175,8 +1175,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1247,8 +1247,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1273,8 +1273,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1408,8 +1408,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1481,8 +1481,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1507,8 +1507,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1619,8 +1619,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1673,8 +1673,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1701,8 +1701,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -1826,8 +1826,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin"
           }
         },
         "security": [
@@ -1898,8 +1898,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin"
           }
         },
         "security": [
@@ -1924,8 +1924,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role teacher, admin"
           }
         },
         "security": [
@@ -1960,8 +1960,8 @@
         "operationId": "GradeSchemesController_create",
         "parameters": [],
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2014,8 +2014,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2040,8 +2040,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2076,8 +2076,8 @@
         "operationId": "GradeSchemeValuesController_create",
         "parameters": [],
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2130,8 +2130,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2156,8 +2156,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2255,8 +2255,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2327,8 +2327,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2353,8 +2353,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2420,8 +2420,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2484,8 +2484,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2510,8 +2510,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2529,8 +2529,8 @@
         "operationId": "SchoolYearsController_rollover",
         "parameters": [],
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin"
           }
         },
         "security": [
@@ -2557,8 +2557,8 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin"
           }
         },
         "security": [
@@ -2646,8 +2646,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2710,8 +2710,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2736,8 +2736,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2814,8 +2814,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2878,8 +2878,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2904,8 +2904,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -2992,8 +2992,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3056,8 +3056,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3082,8 +3082,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3166,8 +3166,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3230,8 +3230,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3256,8 +3256,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3308,8 +3308,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3375,8 +3375,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3401,8 +3401,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3437,8 +3437,8 @@
         "operationId": "TimetableSlotsController_create",
         "parameters": [],
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3491,8 +3491,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3517,8 +3517,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3638,8 +3638,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3712,8 +3712,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [
@@ -3738,8 +3738,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": ""
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
           }
         },
         "security": [

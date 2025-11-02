@@ -1,4 +1,4 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse } from '@nestjs/swagger';
 // src/timetable_slots/timetable_slots.controller.ts
 import {
   Body,
@@ -41,6 +41,9 @@ export class TimetableSlotsController {
 
   @Roles(...WRITE_ROLES)
   @Post()
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async create(@Body() payload: DeepPartial<TimetableSlot>) {
     // optional guard: prevent client from sending slotId
     if ('slotId' in payload!) {
@@ -52,6 +55,9 @@ export class TimetableSlotsController {
 
   @Roles(...WRITE_ROLES)
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() payload: DeepPartial<TimetableSlot>, // <-- fixed plural
@@ -63,6 +69,9 @@ export class TimetableSlotsController {
 
   @Roles(...WRITE_ROLES)
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async remove(@Param('id', ParseIntPipe) id: number) {
     const entity = await this.findOne(id);
     await this.repository.remove(entity);

@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -56,6 +56,9 @@ export class AuditLogsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateAuditLogDto) {
     return this.service.create(dto);
   }
@@ -73,12 +76,18 @@ export class AuditLogsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAuditLogDto) {
     return this.service.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.service.remove(id);
     return { deleted: true };

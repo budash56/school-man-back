@@ -3,7 +3,7 @@ import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { EnrollmentsQueryDto } from './dto/enrollments-query.dto';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
@@ -44,18 +44,27 @@ export class EnrollmentsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateEnrollmentDto) {
     return this.enrollmentsService.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id/deactivate')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   deactivate(@Param('id', ParseIntPipe) id: number) {
     return this.enrollmentsService.deactivate(id);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.enrollmentsService.remove(id);
   }

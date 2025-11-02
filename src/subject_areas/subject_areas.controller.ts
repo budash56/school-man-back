@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
@@ -47,12 +47,18 @@ export class SubjectAreasController {
 
   @Roles('admin', 'coordinator')
   @Post()
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateSubjectAreaDto) {
     return this.subjectAreasService.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSubjectAreaDto,
@@ -62,6 +68,9 @@ export class SubjectAreasController {
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.subjectAreasService.remove(id);
   }

@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
 import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -57,6 +57,9 @@ export class UsersController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   create(@Body() dto: CreateUsersDto) {
     return this.service.create(dto);
   }
@@ -76,12 +79,18 @@ export class UsersController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   update(@Param('id') id: string, @Body() dto: UpdateUsersDto) {
     return this.service.update(id, dto);
   }
 
   @Roles(...WRITE_ROLES)
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

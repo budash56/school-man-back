@@ -5,7 +5,7 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import type { SanitizedUser } from '../auth/auth.types';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
@@ -63,6 +63,9 @@ export class AttendanceController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin, coordinator',
+  })
   create(@Body() dto: CreateAttendanceDto, @Req() req: RequestWithUser) {
     return this.attendanceService.create(dto, this.toActingUser(req));
   }
@@ -81,6 +84,9 @@ export class AttendanceController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin, coordinator',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAttendanceDto,
@@ -91,6 +97,9 @@ export class AttendanceController {
 
   @Roles('teacher', 'admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.attendanceService.remove(id);
   }

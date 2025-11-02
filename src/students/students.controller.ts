@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { StudentsQueryDto } from './dto/students-query.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -53,12 +53,18 @@ export class StudentsController {
 
   @Roles('admin', 'coordinator')
   @Post()
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateStudentDto) {
     return this.studentsService.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateStudentDto,
@@ -68,6 +74,9 @@ export class StudentsController {
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.studentsService.remove(id);
   }

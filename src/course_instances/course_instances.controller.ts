@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CourseInstancesService } from './course_instances.service';
 import { CourseInstancesQueryDto } from './dto/course-instances-query.dto';
 import { CreateCourseInstanceDto } from './dto/create-course-instance.dto';
@@ -67,6 +67,9 @@ export class CourseInstancesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateCourseInstanceDto) {
     return this.courseInstancesService.create(dto);
   }
@@ -85,6 +88,9 @@ export class CourseInstancesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCourseInstanceDto,
@@ -94,6 +100,9 @@ export class CourseInstancesController {
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.courseInstancesService.remove(id);
   }

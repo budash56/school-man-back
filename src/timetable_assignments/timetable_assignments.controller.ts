@@ -16,7 +16,7 @@ import { TimetableAssignmentsRepository } from './timetable_assignments.reposito
 import { TimetableAssignmentsService, TimetableAssignmentsQuery } from './timetable_assignments.service';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { Request } from 'express';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
 
 type RequestWithUser = Request & {
   user?: { userId?: number; nationalId?: string; role?: string };
@@ -64,6 +64,9 @@ export class TimetableAssignmentsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   create(@Body() payload: DeepPartial<TimetableAssignments>, @Req() req: RequestWithUser) {
     return this.assignmentsService.create(payload, req.user);
   }
@@ -78,6 +81,9 @@ export class TimetableAssignmentsController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   update(
     @Param('id') id: string,
     @Body() payload: DeepPartial<TimetableAssignments>,
@@ -88,6 +94,9 @@ export class TimetableAssignmentsController {
 
   @Roles(...WRITE_ROLES)
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);
     await this.repository.remove(entity);

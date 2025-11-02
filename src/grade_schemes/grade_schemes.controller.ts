@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
 // Provides CRUD endpoints for grade-schemes using the generated GradeSchemes entity.
 import {
   Body,
@@ -42,6 +42,9 @@ export class GradeSchemesController {
 
   @Roles(...WRITE_ROLES)
   @Post()
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   create(@Body() payload: DeepPartial<GradeSchemes>) {
     const entity = this.repository.create(payload);
     return this.repository.save(entity);
@@ -49,6 +52,9 @@ export class GradeSchemesController {
 
   @Roles(...WRITE_ROLES)
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async update(@Param('id') id: string, @Body() payload: DeepPartial<GradeSchemes>) {
     const entity = await this.findOne(id);
     this.repository.merge(entity, payload);
@@ -57,6 +63,9 @@ export class GradeSchemesController {
 
   @Roles(...WRITE_ROLES)
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
   async remove(@Param('id') id: string) {
     const entity = await this.findOne(id);
     await this.repository.remove(entity);

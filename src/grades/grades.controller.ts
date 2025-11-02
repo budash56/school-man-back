@@ -5,7 +5,7 @@ import { UpdateGradeDto } from './dto/update-grade.dto';
 import { GradesQueryDto } from './dto/grades-query.dto';
 import type { SanitizedUser } from '../auth/auth.types';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
@@ -53,6 +53,9 @@ export class GradesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin',
+  })
   create(@Body() dto: CreateGradeDto, @Req() req: RequestWithUser) {
     return this.gradesService.create(dto, this.toActingUser(req));
   }
@@ -70,6 +73,9 @@ export class GradesController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateGradeDto,
@@ -80,6 +86,9 @@ export class GradesController {
 
   @Roles('teacher', 'admin')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role teacher, admin',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.gradesService.remove(id);
   }

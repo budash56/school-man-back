@@ -12,7 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
@@ -43,12 +43,18 @@ export class SchoolYearsController {
 
   @Roles('admin', 'coordinator')
   @Post()
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateSchoolYearDto) {
     return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSchoolYearDto,
@@ -58,12 +64,18 @@ export class SchoolYearsController {
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.service.remove(id);
   }
 
   @Post('rollover')
   @Roles('admin')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin',
+  })
   rollover(
     @Body() dto: { name?: string; startDate: string; endDate: string },
     @Req() req: { user: { role: string } },
@@ -73,6 +85,9 @@ export class SchoolYearsController {
 
   @Post(':id/lock')
   @Roles('admin')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin',
+  })
   lock(@Param('id', ParseIntPipe) id: number, @Req() req: { user: { role: string } }) {
     return this.service.lock(id, req.user);
   }

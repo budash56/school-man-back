@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateTermDto } from './dto/create-term.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { TermsQueryDto } from './dto/terms-query.dto';
@@ -43,18 +43,27 @@ export class TermsController {
 
   @Roles('admin', 'coordinator')
   @Post()
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateTermDto) {
     return this.termsService.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTermDto) {
     return this.termsService.update(id, dto);
   }
 
   @Roles('admin', 'coordinator')
   @Delete(':id')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.termsService.remove(id);
   }
