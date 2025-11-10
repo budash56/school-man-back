@@ -2,7 +2,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+import * as typeorm from 'typeorm';
 async function exportOpenApi(): Promise<void> {
   process.env.OPENAPI_EXPORT = '1';
 

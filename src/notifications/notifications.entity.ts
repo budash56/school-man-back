@@ -9,24 +9,20 @@ import {
 } from 'typeorm';
 import { Users } from '../users/users.entity';
 
-@Index('idx_notifications_target', ['createdAt', 'targetRole'], {})
 @Index('notifications_pkey', ['notificationId'], { unique: true })
 @Entity('notifications', { schema: 'public' })
 export class Notifications {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'notification_id' })
   notificationId: string;
 
-  @Column('character varying', { name: 'type', length: 40 })
-  type: string;
+  @Column('character varying', { name: 'title', length: 120 })
+  title: string;
 
-  @Column('jsonb', { name: 'payload' })
-  payload: object;
+  @Column('text', { name: 'message', nullable: true })
+  message: string | null;
 
-  @Column('enum', {
-    name: 'target_role',
-    enum: ['admin', 'registrar', 'teacher', 'coordinator'],
-  })
-  targetRole: 'admin' | 'registrar' | 'teacher' | 'coordinator';
+  @Column('boolean', { name: 'is_active', default: () => 'true' })
+  isActive: boolean;
 
   @Column('timestamp with time zone', {
     name: 'created_at',
@@ -35,10 +31,7 @@ export class Notifications {
   })
   createdAt: Date | null;
 
-  @Column('timestamp with time zone', { name: 'read_at', nullable: true })
-  readAt: Date | null;
-
-  @ManyToOne(() => Users, (users) => users.notifications)
+  @ManyToOne(() => Users, (users) => users.notifications, { nullable: true })
   @JoinColumn([{ name: 'created_by', referencedColumnName: 'nationalId' }])
-  createdBy: Users;
+  createdBy: Users | null;
 }

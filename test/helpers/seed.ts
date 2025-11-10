@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Users } from '../../src/users/users.entity';
 import { SchoolYears } from '../../src/school_years/school_years.entity';
@@ -22,6 +22,10 @@ export type SeedResult = {
   course: Courses;
 };
 
+async function wipe(repo: Repository<unknown>): Promise<void> {
+  await repo.createQueryBuilder().delete().where('1=1').execute();
+}
+
 export async function seedBasicData(dataSource: DataSource): Promise<SeedResult> {
   const attendanceRepo = dataSource.getRepository(Attendance);
   const gradesRepo = dataSource.getRepository(Grades);
@@ -36,18 +40,18 @@ export async function seedBasicData(dataSource: DataSource): Promise<SeedResult>
   const subjectAreasRepo = dataSource.getRepository(SubjectAreas);
   const usersRepo = dataSource.getRepository(Users);
 
-  await attendanceRepo.delete({});
-  await gradesRepo.delete({});
-  await timetableAssignmentsRepo.delete({});
-  await coursesRepo.delete({});
-  await courseInstancesRepo.delete({});
-  await enrollmentsRepo.delete({});
-  await classGroupsRepo.delete({});
-  await classroomsRepo.delete({});
-  await schoolYearsRepo.delete({});
-  await subjectsRepo.delete({});
-  await subjectAreasRepo.delete({});
-  await usersRepo.delete({});
+  await wipe(attendanceRepo);
+  await wipe(gradesRepo);
+  await wipe(timetableAssignmentsRepo);
+  await wipe(coursesRepo);
+  await wipe(courseInstancesRepo);
+  await wipe(enrollmentsRepo);
+  await wipe(classGroupsRepo);
+  await wipe(classroomsRepo);
+  await wipe(schoolYearsRepo);
+  await wipe(subjectsRepo);
+  await wipe(subjectAreasRepo);
+  await wipe(usersRepo);
 
   const userSeeds: Array<{
     key: SeedUserKey;
@@ -144,7 +148,7 @@ export async function seedBasicData(dataSource: DataSource): Promise<SeedResult>
       classGroupId: '1',
       schoolYearId: schoolYear.schoolYearId,
       gradeLevel: 10,
-      section: 'A1',
+      section: '01',
       classroom,
     }),
   );

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
@@ -13,6 +14,7 @@ import { CourseInstances } from '../src/course_instances/course_instances.entity
 import { Courses } from '../src/courses/courses.entity';
 import { Students } from '../src/students/students.entity';
 import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
+import { TimetableAssignments } from '../src/timetable_assignments/timetable_assignments.entity';
 import { Attendance } from '../src/attendance/attendance.entity';
 import { Enrollments } from '../src/enrollments/enrollments.entity';
 
@@ -115,10 +117,15 @@ describe('Authorization flows (e2e)', () => {
     return body.accessToken;
   }
 
+  async function wipe(repo: Repository<unknown>): Promise<void> {
+    await repo.createQueryBuilder().delete().where('1=1').execute();
+  }
+
   async function seedDatabase(): Promise<void> {
     const attendanceRepo = dataSource.getRepository(Attendance);
     const enrollmentsRepo = dataSource.getRepository(Enrollments);
     const coursesRepo = dataSource.getRepository(Courses);
+    const assignmentsRepo = dataSource.getRepository(TimetableAssignments);
     const courseInstancesRepo = dataSource.getRepository(CourseInstances);
     const classGroupsRepo = dataSource.getRepository(ClassGroups);
     const schoolYearsRepo = dataSource.getRepository(SchoolYears);
@@ -128,17 +135,17 @@ describe('Authorization flows (e2e)', () => {
     const usersRepo = dataSource.getRepository(Users);
     const slotsRepo = dataSource.getRepository(TimetableSlot);
 
-    await attendanceRepo.delete({});
-    await enrollmentsRepo.delete({});
-    await coursesRepo.delete({});
-    await courseInstancesRepo.delete({});
-    await classGroupsRepo.delete({});
-    await schoolYearsRepo.delete({});
-    await subjectsRepo.delete({});
-    await subjectAreasRepo.delete({});
-    await studentsRepo.delete({});
-    await usersRepo.delete({});
-    await slotsRepo.delete({});
+    await wipe(attendanceRepo);
+    await wipe(enrollmentsRepo);
+    await wipe(coursesRepo);
+    await wipe(courseInstancesRepo);
+    await wipe(classGroupsRepo);
+    await wipe(schoolYearsRepo);
+    await wipe(subjectsRepo);
+    await wipe(subjectAreasRepo);
+    await wipe(studentsRepo);
+    await wipe(usersRepo);
+    await wipe(slotsRepo);
 
     const adminPasswordHash = await bcrypt.hash(adminCredentials.password, 10);
     const coordinatorPasswordHash = await bcrypt.hash(coordinatorCredentials.password, 10);
@@ -222,7 +229,7 @@ describe('Authorization flows (e2e)', () => {
     const classGroupOne = await classGroupsRepo.save(
       classGroupsRepo.create({
         gradeLevel: 10,
-        section: 'A1',
+        section: '01',
         schoolYearId: schoolYearOne.schoolYearId,
         schoolYear: schoolYearOne,
       }),
@@ -231,7 +238,7 @@ describe('Authorization flows (e2e)', () => {
     const classGroupTwo = await classGroupsRepo.save(
       classGroupsRepo.create({
         gradeLevel: 11,
-        section: 'B1',
+        section: '02',
         schoolYearId: schoolYearTwo.schoolYearId,
         schoolYear: schoolYearTwo,
       }),
@@ -292,6 +299,15 @@ describe('Authorization flows (e2e)', () => {
         dayOfWeek: 1,
         startTime: '08:00:00',
         endTime: '08:45:00',
+      }),
+    );
+
+    await assignmentsRepo.save(
+      assignmentsRepo.create({
+        courseId: teacherTwoCourse.courseId,
+        slotId: slot.slotId,
+        teacherId: teacherTwoCourse.teacherId,
+        classGroupId: teacherTwoCourse.classGroupId,
       }),
     );
 

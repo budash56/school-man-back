@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
@@ -99,6 +100,10 @@ describe('Year write lock (e2e)', () => {
     return body.accessToken;
   }
 
+  async function wipe(repo: Repository<unknown>): Promise<void> {
+    await repo.createQueryBuilder().delete().where('1=1').execute();
+  }
+
   async function seedDatabase(): Promise<void> {
     const gradesRepo = dataSource.getRepository(Grades);
     const enrollmentsRepo = dataSource.getRepository(Enrollments);
@@ -112,17 +117,17 @@ describe('Year write lock (e2e)', () => {
     const subjectsRepo = dataSource.getRepository(Subjects);
     const subjectAreasRepo = dataSource.getRepository(SubjectAreas);
 
-    await gradesRepo.delete({});
-    await enrollmentsRepo.delete({});
-    await coursesRepo.delete({});
-    await courseInstancesRepo.delete({});
-    await classGroupsRepo.delete({});
-    await termsRepo.delete({});
-    await schoolYearsRepo.delete({});
-    await studentsRepo.delete({});
-    await usersRepo.delete({});
-    await subjectsRepo.delete({});
-    await subjectAreasRepo.delete({});
+    await wipe(gradesRepo);
+    await wipe(enrollmentsRepo);
+    await wipe(coursesRepo);
+    await wipe(courseInstancesRepo);
+    await wipe(classGroupsRepo);
+    await wipe(termsRepo);
+    await wipe(schoolYearsRepo);
+    await wipe(studentsRepo);
+    await wipe(usersRepo);
+    await wipe(subjectsRepo);
+    await wipe(subjectAreasRepo);
 
     const adminPasswordHash = await bcrypt.hash(adminCredentials.password, 10);
     const teacherPasswordHash = await bcrypt.hash(teacherCredentials.password, 10);
@@ -175,7 +180,7 @@ describe('Year write lock (e2e)', () => {
         schoolYearId: activeYear.schoolYearId,
         schoolYear: activeYear,
         gradeLevel: 10,
-        section: 'A',
+        section: '01',
       }),
     );
 
