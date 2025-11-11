@@ -83,11 +83,13 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 - **Students (`/students`)**
   - CRUD with guardian data requirements (`guardianPhone` non-null), soft constraints on uniqueness by `nationalId`.
   - Listing supports search keyword and filtering by school year (via enrollment existence).
+  - Deletes mark the record as inactive/soft-deleted so historical enrollments, attendance, and grades remain intact.
 
 - **Enrollments (`/enrollments`)**
   - Manage student membership in class groups per school year.
   - Service validates student, class group, and school year alignment; ensures one active enrollment per `(student, year)`.
   - Teacher queries scoped to their class groups via `AccessService`.
+  - Admins and coordinators can continue adjusting archived-year enrollments when business rules require corrections; other roles are blocked once a year is locked.
   - Includes `deactivate` logic (not exposed via controller yet) and delete endpoints.
 
 - **Grades (`/grades`)**
@@ -111,7 +113,7 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 ### Cross-Cutting Behaviours
 - **Pagination:** All list endpoints return `{ data, total, page, pageSize }` using `shared/pagination.ts`.
 - **Error Mapping:** Unique constraint violations bubble up as `ConflictException` via `DbErrorMapper.throwConflict`.
-- **School-Year Write Locks:** Attendance, grades, enrollments, timetable assignments, and courses consult `SchoolYearsRepository` to prevent writes to inactive years (teachers cannot override; admins can in narrowly scoped flows).
+- **School-Year Write Locks:** Attendance, grades, enrollments, timetable assignments, and courses consult `SchoolYearsRepository` to prevent writes to inactive years (teachers cannot override; admins can everywhere, coordinators only within enrollment workflows).
 - **AccessService:** Instantiated per request in services needing scoped visibility; centralizes teacher-level lookups for allowed course/class group IDs.
 
 ## Data Model Overview

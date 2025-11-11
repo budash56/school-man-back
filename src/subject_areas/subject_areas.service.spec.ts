@@ -36,7 +36,9 @@ describe('SubjectAreasService', () => {
       new QueryFailedError('', [], { code: '23505' }),
     );
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('creates a subject area successfully', async () => {

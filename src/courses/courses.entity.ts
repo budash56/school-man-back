@@ -18,7 +18,7 @@ import { TimetableAssignments } from '../timetable_assignments/timetable_assignm
 @Index(
   'courses_course_instance_id_class_group_id_teacher_id_key',
   ['classGroupId', 'courseInstanceId', 'teacherId'],
-  { unique: true }
+  { unique: true },
 )
 @Index('courses_pkey', ['courseId'], { unique: true })
 @Entity('courses', { schema: 'public' })
@@ -56,7 +56,7 @@ export class Courses {
   @ManyToOne(
     () => CourseInstances,
     (courseInstances) => courseInstances.courses,
-    { onDelete: 'CASCADE' }
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn([
     { name: 'course_instance_id', referencedColumnName: 'courseInstanceId' },
@@ -72,7 +72,7 @@ export class Courses {
 
   @OneToMany(
     () => TimetableAssignments,
-    (timetableAssignments) => timetableAssignments.course
+    (timetableAssignments) => timetableAssignments.course,
   )
   timetableAssignments: TimetableAssignments[];
 }

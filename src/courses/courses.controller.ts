@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CoursesQueryDto } from './dto/courses-query.dto';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -90,7 +102,9 @@ export class CoursesController {
     if (!req.user) {
       return undefined;
     }
-    const rawId = req.user.userId ?? (req.user.nationalId ? Number(req.user.nationalId) : NaN);
+    const rawId =
+      req.user.userId ??
+      (req.user.nationalId ? Number(req.user.nationalId) : NaN);
     return {
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
       role: req.user.role ?? 'teacher',

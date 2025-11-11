@@ -32,10 +32,13 @@ export function resolvePagination(
   rawPage?: number,
   rawPageSize?: number,
 ): { page: number; pageSize: number } {
-  const page = !rawPage || rawPage < DEFAULT_PAGE ? DEFAULT_PAGE : Math.floor(rawPage);
+  const page =
+    !rawPage || rawPage < DEFAULT_PAGE ? DEFAULT_PAGE : Math.floor(rawPage);
 
   let pageSize =
-    !rawPageSize || rawPageSize < 1 ? DEFAULT_PAGE_SIZE : Math.floor(rawPageSize);
+    !rawPageSize || rawPageSize < 1
+      ? DEFAULT_PAGE_SIZE
+      : Math.floor(rawPageSize);
 
   if (pageSize > MAX_PAGE_SIZE) {
     pageSize = MAX_PAGE_SIZE;

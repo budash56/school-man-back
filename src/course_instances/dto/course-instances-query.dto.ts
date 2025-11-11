@@ -15,7 +15,9 @@ export class CourseInstancesQueryDto {
     description: 'Filters course instances by school year identifier',
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsOptional()
   @IsInt()
@@ -29,7 +31,9 @@ export class CourseInstancesQueryDto {
     maximum: 11,
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsOptional()
   @IsInt()
@@ -42,7 +46,9 @@ export class CourseInstancesQueryDto {
     description: 'Filters course instances by subject identifier',
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsOptional()
   @IsInt()

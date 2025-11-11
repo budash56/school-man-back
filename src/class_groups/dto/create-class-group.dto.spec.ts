@@ -1,4 +1,8 @@
-import { ArgumentMetadata, BadRequestException, ValidationPipe } from '@nestjs/common';
+import {
+  ArgumentMetadata,
+  BadRequestException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CreateClassGroupDto } from './create-class-group.dto';
 
 const validationPipe = new ValidationPipe({

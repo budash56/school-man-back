@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { GradesService } from './grades.service';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
@@ -94,7 +106,9 @@ export class GradesController {
   }
 
   private toActingUser(req: RequestWithUser): ActingUser {
-    const rawId = req.user?.userId ?? (req.user?.nationalId ? Number(req.user.nationalId) : NaN);
+    const rawId =
+      req.user?.userId ??
+      (req.user?.nationalId ? Number(req.user.nationalId) : NaN);
     return {
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
       role: (req.user?.role as SanitizedUser['role']) ?? 'teacher',

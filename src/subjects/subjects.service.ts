@@ -7,7 +7,11 @@ import { SubjectsRepository } from './subjects.repository';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 import { SubjectsQueryDto } from './dto/subjects-query.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 
 @Injectable()
 export class SubjectsService {
@@ -26,14 +30,16 @@ export class SubjectsService {
       qb.andWhere(
         new Brackets((searchQb) => {
           searchQb
-            .where('subjects.subject_code ILIKE :keyword ESCAPE \'\\\'')
-            .orWhere('subjects.name ILIKE :keyword ESCAPE \'\\\'');
+            .where("subjects.subject_code ILIKE :keyword ESCAPE '\\'")
+            .orWhere("subjects.name ILIKE :keyword ESCAPE '\\'");
         }),
       ).setParameter('keyword', keyword);
     }
 
     if (query.areaId) {
-      qb.andWhere('subjects.area_id = :areaId', { areaId: query.areaId.toString() });
+      qb.andWhere('subjects.area_id = :areaId', {
+        areaId: query.areaId.toString(),
+      });
     }
 
     qb.orderBy('subjects.created_at', 'DESC');
@@ -76,7 +82,10 @@ export class SubjectsService {
     try {
       return await this.repository.save(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Subject with this code already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Subject with this code already exists',
+      );
     }
   }
 
@@ -111,7 +120,10 @@ export class SubjectsService {
     try {
       return await this.repository.save(subject);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Subject with this code already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Subject with this code already exists',
+      );
     }
   }
 

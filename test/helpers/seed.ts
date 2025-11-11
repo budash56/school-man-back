@@ -26,10 +26,13 @@ async function wipe(repo: Repository<unknown>): Promise<void> {
   await repo.createQueryBuilder().delete().where('1=1').execute();
 }
 
-export async function seedBasicData(dataSource: DataSource): Promise<SeedResult> {
+export async function seedBasicData(
+  dataSource: DataSource,
+): Promise<SeedResult> {
   const attendanceRepo = dataSource.getRepository(Attendance);
   const gradesRepo = dataSource.getRepository(Grades);
-  const timetableAssignmentsRepo = dataSource.getRepository(TimetableAssignments);
+  const timetableAssignmentsRepo =
+    dataSource.getRepository(TimetableAssignments);
   const coursesRepo = dataSource.getRepository(Courses);
   const courseInstancesRepo = dataSource.getRepository(CourseInstances);
   const enrollmentsRepo = dataSource.getRepository(Enrollments);
@@ -90,7 +93,10 @@ export async function seedBasicData(dataSource: DataSource): Promise<SeedResult>
     },
   ];
 
-  const credentials = {} as Record<SeedUserKey, { nationalId: string; password: string }>;
+  const credentials = {} as Record<
+    SeedUserKey,
+    { nationalId: string; password: string }
+  >;
   const usersByKey = {} as Record<SeedUserKey, Users>;
 
   for (const seed of userSeeds) {
@@ -103,7 +109,10 @@ export async function seedBasicData(dataSource: DataSource): Promise<SeedResult>
     });
 
     usersByKey[seed.key] = await usersRepo.save(entity);
-    credentials[seed.key] = { nationalId: seed.nationalId, password: seed.password };
+    credentials[seed.key] = {
+      nationalId: seed.nationalId,
+      password: seed.password,
+    };
   }
 
   const subjectArea = await subjectAreasRepo.save(

@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { EnrollmentsQueryDto } from './dto/enrollments-query.dto';
@@ -47,8 +59,8 @@ export class EnrollmentsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  create(@Body() dto: CreateEnrollmentDto) {
-    return this.enrollmentsService.create(dto);
+  create(@Body() dto: CreateEnrollmentDto, @Req() req: RequestWithUser) {
+    return this.enrollmentsService.create(dto, this.toActingUser(req));
   }
 
   @Roles('admin', 'coordinator')
@@ -56,8 +68,11 @@ export class EnrollmentsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  deactivate(@Param('id', ParseIntPipe) id: number) {
-    return this.enrollmentsService.deactivate(id);
+  deactivate(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.enrollmentsService.deactivate(id, this.toActingUser(req));
   }
 
   @Roles('admin', 'coordinator')
@@ -65,15 +80,17 @@ export class EnrollmentsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.enrollmentsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: RequestWithUser) {
+    return this.enrollmentsService.remove(id, this.toActingUser(req));
   }
 
   private toActingUser(req: RequestWithUser) {
     if (!req.user) {
       return undefined;
     }
-    const rawId = req.user.userId ?? (req.user.nationalId ? Number(req.user.nationalId) : NaN);
+    const rawId =
+      req.user.userId ??
+      (req.user.nationalId ? Number(req.user.nationalId) : NaN);
     return {
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
       role: req.user.role ?? 'teacher',

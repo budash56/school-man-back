@@ -38,7 +38,7 @@ export class GradeSchemeValues {
   @ManyToOne(
     () => GradeSchemes,
     (gradeSchemes) => gradeSchemes.gradeSchemeValues,
-    { onDelete: 'CASCADE' }
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn([{ name: 'scheme_id', referencedColumnName: 'schemeId' }])
   scheme: GradeSchemes;

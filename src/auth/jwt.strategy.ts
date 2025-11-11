@@ -29,7 +29,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('User is not authorized to access this resource');
+      throw new UnauthorizedException(
+        'User is not authorized to access this resource',
+      );
     }
 
     return {

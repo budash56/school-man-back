@@ -5,7 +5,11 @@ import { UsersRepository } from '../users/users.repository';
 import { QueryAuditLogDto } from './dto/query-audit-log.dto';
 import { CreateAuditLogDto } from './dto/create-audit-log.dto';
 import { UpdateAuditLogDto } from './dto/update-audit-log.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { AuditLogs } from './audit_logs.entity';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Users } from '../users/users.entity';
@@ -27,7 +31,9 @@ export class AuditLogsService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  async findAll(query: QueryAuditLogDto): Promise<PaginatedResult<AuditLogResponse>> {
+  async findAll(
+    query: QueryAuditLogDto,
+  ): Promise<PaginatedResult<AuditLogResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.auditLogsRepository
@@ -37,14 +43,14 @@ export class AuditLogsService {
 
     if (query.entityName?.trim()) {
       const keyword = `%${query.entityName.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
-      qb.andWhere('auditLogs.entityName ILIKE :entityName ESCAPE \\\'', {
+      qb.andWhere("auditLogs.entityName ILIKE :entityName ESCAPE \\'", {
         entityName: keyword,
       });
     }
 
     if (query.action?.trim()) {
       const keyword = `%${query.action.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
-      qb.andWhere('auditLogs.action ILIKE :action ESCAPE \\\'', {
+      qb.andWhere("auditLogs.action ILIKE :action ESCAPE \\'", {
         action: keyword,
       });
     }
@@ -117,7 +123,8 @@ export class AuditLogsService {
     }
 
     if (dto.entityId !== undefined) {
-      entity.entityId = dto.entityId !== undefined ? dto.entityId.toString() : null;
+      entity.entityId =
+        dto.entityId !== undefined ? dto.entityId.toString() : null;
     }
 
     if (dto.action !== undefined) {

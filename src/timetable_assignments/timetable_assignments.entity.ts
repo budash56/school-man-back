@@ -63,7 +63,7 @@ export class TimetableAssignments {
   @ManyToOne(
     () => TimetableSlot,
     (timetableSlots) => timetableSlots.timetableAssignments,
-    { onDelete: 'CASCADE' }
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn([{ name: 'slot_id', referencedColumnName: 'slotId' }])
   slot: TimetableSlot;

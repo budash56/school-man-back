@@ -4,7 +4,8 @@ import { IsString, Matches, MinLength } from 'class-validator';
 export class LoginDto {
   @IsString()
   @Matches(/^[A-Z0-9\-_.]{3,32}$/i, {
-    message: 'nationalId must be 3-32 characters using letters, numbers, hyphen, underscore, or dot',
+    message:
+      'nationalId must be 3-32 characters using letters, numbers, hyphen, underscore, or dot',
   })
   nationalId: string;
 

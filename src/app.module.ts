@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { appDataSourceOptions } from './data-source';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -68,30 +69,17 @@ import { RolesGuard } from './auth/roles.guard';
 
 const isOpenApiExport = process.env.OPENAPI_EXPORT === '1';
 
-const typeOrmConfig: TypeOrmModuleOptions = isOpenApiExport
-  ? {
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '1234',
-      database: 'SchoolManBeta',
-      autoLoadEntities: true,
-      synchronize: false,
-      logging: false,
-      retryAttempts: 0,
-      connectTimeoutMS: 1000,
-    }
-  : {
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '1234',
-      database: 'SchoolManBeta',
-      autoLoadEntities: true,
-      synchronize: false,
-    };
+const typeOrmConfig: TypeOrmModuleOptions = {
+  ...appDataSourceOptions,
+  autoLoadEntities: true,
+  ...(isOpenApiExport
+    ? {
+        logging: false,
+        retryAttempts: 0,
+        connectTimeoutMS: 1000,
+      }
+    : {}),
+};
 
 @Module({
   imports: [

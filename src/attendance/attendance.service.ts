@@ -15,7 +15,11 @@ import { TimetableSlotRepository } from '../timetable_slots/timetable_slots.repo
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Attendance } from './attendance.entity';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { Courses } from '../courses/courses.entity';
 import { AccessService } from '../auth/access.service';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
@@ -54,7 +58,8 @@ export class AttendanceService {
     currentUser: ActingUser,
   ): Promise<PaginatedResult<AttendanceResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
-    const scope = currentUser.role === 'teacher' ? query.scope ?? 'own' : query.scope;
+    const scope =
+      currentUser.role === 'teacher' ? (query.scope ?? 'own') : query.scope;
 
     const qb = this.attendanceRepository
       .createQueryBuilder('attendance')
@@ -89,7 +94,9 @@ export class AttendanceService {
 
     if (currentUser.role === 'teacher') {
       const accessService = this.createAccessHelper();
-      const teacherCourseIds = await accessService.courseIdsForTeacher(currentUser.userId);
+      const teacherCourseIds = await accessService.courseIdsForTeacher(
+        currentUser.userId,
+      );
 
       if (query.courseId !== undefined) {
         if (!teacherCourseIds.includes(Number(query.courseId))) {
@@ -98,7 +105,9 @@ export class AttendanceService {
       }
 
       if ((scope ?? 'own') === 'group') {
-        const classGroupIds = await accessService.classGroupIdsForTeacher(currentUser.userId);
+        const classGroupIds = await accessService.classGroupIdsForTeacher(
+          currentUser.userId,
+        );
         if (classGroupIds.length === 0) {
           return buildPaginationResult([], 0, page, pageSize);
         }
@@ -127,7 +136,10 @@ export class AttendanceService {
     );
   }
 
-  async findOne(id: number, currentUser: ActingUser): Promise<AttendanceResponse> {
+  async findOne(
+    id: number,
+    currentUser: ActingUser,
+  ): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
       relations: { recordedBy: true, course: true },
@@ -165,7 +177,11 @@ export class AttendanceService {
       throw new NotFoundException('Course not found');
     }
 
-    await this.assertTeacherCanMutateCourse(currentUser, course, Number(dto.courseId));
+    await this.assertTeacherCanMutateCourse(
+      currentUser,
+      course,
+      Number(dto.courseId),
+    );
 
     const slot = await this.timetableSlotRepository.findOne({
       where: { slotId: dto.slotId },
@@ -199,7 +215,9 @@ export class AttendanceService {
     });
 
     if (!enrollment) {
-      throw new ConflictException('Student is not actively enrolled in this class group for the school year');
+      throw new ConflictException(
+        'Student is not actively enrolled in this class group for the school year',
+      );
     }
 
     const recordedBy = course.teacher ?? null;
@@ -243,11 +261,19 @@ export class AttendanceService {
     if (dto.status !== undefined && dto.status !== attendance.status) {
       if (attendance.status === 'A' && dto.status === 'AE') {
         const recordedById = attendance.recordedBy?.nationalId;
-        const canOverride = currentUser.role === 'admin' || currentUser.role === 'coordinator';
-        if (!recordedById || (recordedById !== currentUser.nationalId && !canOverride)) {
-          throw new ForbiddenException('Only the recording teacher can excuse an absence');
+        const canOverride =
+          currentUser.role === 'admin' || currentUser.role === 'coordinator';
+        if (
+          !recordedById ||
+          (recordedById !== currentUser.nationalId && !canOverride)
+        ) {
+          throw new ForbiddenException(
+            'Only the recording teacher can excuse an absence',
+          );
         }
-        attendance.excusedAt = dto.excusedAt ? this.parseDate(dto.excusedAt) : new Date();
+        attendance.excusedAt = dto.excusedAt
+          ? this.parseDate(dto.excusedAt)
+          : new Date();
       } else if (attendance.status === 'A' && dto.status !== 'AE') {
         attendance.excusedAt = null;
       }
@@ -282,14 +308,38 @@ export class AttendanceService {
     return this.toResponse(saved);
   }
 
-  async remove(id: number): Promise<{ deleted: true }> {
+  async remove(
+    id: number,
+    currentUser: ActingUser,
+  ): Promise<{ deleted: true }> {
     const attendance = await this.attendanceRepository.findOne({
       where: { attendanceId: id.toString() },
+      relations: { course: { courseInstance: true } },
     });
 
     if (!attendance) {
       throw new NotFoundException('Attendance record not found');
     }
+
+    await this.assertTeacherCanMutateCourse(currentUser, attendance.course);
+
+    const course =
+      attendance.course ??
+      (await this.coursesRepository.findOne({
+        where: { courseId: attendance.courseId },
+        relations: { courseInstance: true },
+      }));
+
+    if (!course || !course.courseInstance?.schoolYearId) {
+      throw new ConflictException('Course is missing schedule information');
+    }
+
+    const schoolYearId = Number(course.courseInstance.schoolYearId);
+    if (!Number.isFinite(schoolYearId)) {
+      throw new ConflictException('Course is missing schedule information');
+    }
+
+    await this.assertYearWritable(schoolYearId, currentUser);
 
     await this.attendanceRepository.remove(attendance);
     return { deleted: true };
@@ -298,7 +348,9 @@ export class AttendanceService {
   private assertSlotMatchesDate(slotDayOfWeek: number, date: string): void {
     const weekday = this.getIsoDay(date);
     if (slotDayOfWeek !== weekday) {
-      throw new BadRequestException('Attendance date does not match the slot day of week');
+      throw new BadRequestException(
+        'Attendance date does not match the slot day of week',
+      );
     }
   }
 
@@ -350,19 +402,29 @@ export class AttendanceService {
     }
 
     if (!course && courseIdOverride === undefined) {
-      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+      throw new ForbiddenException(
+        'You are not allowed to modify attendance for this course',
+      );
     }
 
     const courseId =
-      courseIdOverride ?? (course?.courseId ? Number(course.courseId) : Number.NaN);
+      courseIdOverride ??
+      (course?.courseId ? Number(course.courseId) : Number.NaN);
 
     if (!Number.isFinite(courseId)) {
-      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+      throw new ForbiddenException(
+        'You are not allowed to modify attendance for this course',
+      );
     }
 
-    const canModify = await this.createAccessHelper().isTeacherOfCourse(user.userId, courseId);
+    const canModify = await this.createAccessHelper().isTeacherOfCourse(
+      user.userId,
+      courseId,
+    );
     if (!canModify) {
-      throw new ForbiddenException('You are not allowed to modify attendance for this course');
+      throw new ForbiddenException(
+        'You are not allowed to modify attendance for this course',
+      );
     }
   }
 
@@ -375,7 +437,9 @@ export class AttendanceService {
     }
 
     if (!course) {
-      throw new ForbiddenException('You are not allowed to access this attendance record');
+      throw new ForbiddenException(
+        'You are not allowed to access this attendance record',
+      );
     }
 
     const accessService = this.createAccessHelper();
@@ -388,12 +452,16 @@ export class AttendanceService {
       return;
     }
 
-    const classGroupId = course.classGroupId ? Number(course.classGroupId) : undefined;
+    const classGroupId = course.classGroupId
+      ? Number(course.classGroupId)
+      : undefined;
     if (classGroupId !== undefined && classGroupIds.includes(classGroupId)) {
       return;
     }
 
-    throw new ForbiddenException('You are not allowed to access this attendance record');
+    throw new ForbiddenException(
+      'You are not allowed to access this attendance record',
+    );
   }
 
   private toResponse(record: Attendance): AttendanceResponse {

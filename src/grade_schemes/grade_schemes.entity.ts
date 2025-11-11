@@ -34,7 +34,7 @@ export class GradeSchemes {
 
   @OneToMany(
     () => GradeSchemeValues,
-    (gradeSchemeValues) => gradeSchemeValues.scheme
+    (gradeSchemeValues) => gradeSchemeValues.scheme,
   )
   gradeSchemeValues: GradeSchemeValues[];
 }

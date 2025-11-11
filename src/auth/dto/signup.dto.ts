@@ -11,7 +11,8 @@ import {
 export class SignupDto {
   @IsString()
   @Matches(/^[A-Z0-9\-_.]{3,32}$/i, {
-    message: 'nationalId must be 3-32 characters using letters, numbers, hyphen, underscore, or dot',
+    message:
+      'nationalId must be 3-32 characters using letters, numbers, hyphen, underscore, or dot',
   })
   nationalId: string;
 

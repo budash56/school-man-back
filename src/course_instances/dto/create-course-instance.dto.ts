@@ -13,9 +13,14 @@ import {
 } from 'class-validator';
 
 export class CreateCourseInstanceDto {
-  @ApiProperty({ example: 12, description: 'Identifier of the related subject' })
+  @ApiProperty({
+    example: 12,
+    description: 'Identifier of the related subject',
+  })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsInt()
   @IsPositive()
@@ -28,7 +33,9 @@ export class CreateCourseInstanceDto {
     maximum: 11,
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsInt()
   @Min(1)
@@ -37,7 +44,9 @@ export class CreateCourseInstanceDto {
 
   @ApiProperty({ example: 3, description: 'School year identifier' })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsInt()
   @IsPositive()
@@ -45,7 +54,8 @@ export class CreateCourseInstanceDto {
 
   @ApiPropertyOptional({
     example: 'MATH-10-Y2025',
-    description: 'Custom course code. When omitted, it is generated automatically',
+    description:
+      'Custom course code. When omitted, it is generated automatically',
     maxLength: 50,
   })
   @IsOptional()
@@ -78,10 +88,13 @@ export class CreateCourseInstanceDto {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Flag to enable or disable the course instance without deleting it',
+    description:
+      'Flag to enable or disable the course instance without deleting it',
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : value === 'true' || value === true,
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
   )
   @IsOptional()
   @IsBoolean()

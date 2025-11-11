@@ -10,7 +10,11 @@ import { ClassGroupsRepository } from './class_groups.repository';
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 
 export type ClassGroupResponse = {
   classGroupId: number;
@@ -30,7 +34,9 @@ export class ClassGroupsService {
     private readonly classroomsRepository: ClassroomsRepository,
   ) {}
 
-  async findAll(query: QueryClassGroupDto): Promise<PaginatedResult<ClassGroupResponse>> {
+  async findAll(
+    query: QueryClassGroupDto,
+  ): Promise<PaginatedResult<ClassGroupResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.classGroupsRepository
@@ -61,7 +67,9 @@ export class ClassGroupsService {
       const keyword = `%${query.q.trim().replace(/[%_]/g, (match) => `\\${match}`)}%`;
       qb.andWhere(
         new Brackets((sub) => {
-          sub.where('classGroups.section ILIKE :keyword ESCAPE \\\'', { keyword });
+          sub.where("classGroups.section ILIKE :keyword ESCAPE \\'", {
+            keyword,
+          });
         }),
       );
     }
@@ -120,7 +128,10 @@ export class ClassGroupsService {
     }
   }
 
-  async update(id: number, dto: UpdateClassGroupDto): Promise<ClassGroupResponse> {
+  async update(
+    id: number,
+    dto: UpdateClassGroupDto,
+  ): Promise<ClassGroupResponse> {
     const entity = await this.getClassGroupEntity(id);
 
     if (dto.schoolYearId !== undefined) {

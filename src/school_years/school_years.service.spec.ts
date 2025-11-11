@@ -1,10 +1,16 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { SchoolYearsService } from './school_years.service';
 import { SchoolYearsRepository } from './school_years.repository';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 
-type MockedRepository = Partial<Record<keyof SchoolYearsRepository, jest.Mock>> & {
+type MockedRepository = Partial<
+  Record<keyof SchoolYearsRepository, jest.Mock>
+> & {
   manager: { transaction: jest.Mock };
 };
 
@@ -51,7 +57,9 @@ describe('SchoolYearsService', () => {
       new QueryFailedError('', [], { code: '23505' }),
     );
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('creates a school year successfully', async () => {
@@ -106,8 +114,8 @@ describe('SchoolYearsService', () => {
       getRepository: jest.fn().mockReturnValue(transactionRepository),
     };
 
-    (repository.manager.transaction as jest.Mock).mockImplementation(async (callback) =>
-      callback(manager as never),
+    (repository.manager.transaction as jest.Mock).mockImplementation(
+      async (callback) => callback(manager as never),
     );
 
     const result = await service.rollover(
@@ -123,7 +131,9 @@ describe('SchoolYearsService', () => {
       isActive: true,
     });
     expect(transactionRepository.save).toHaveBeenCalledTimes(2);
-    expect(transactionRepository.count).toHaveBeenCalledWith({ where: { isActive: true } });
+    expect(transactionRepository.count).toHaveBeenCalledWith({
+      where: { isActive: true },
+    });
     expect(previousYear.isActive).toBe(false);
     expect(result.previous).toEqual(
       expect.objectContaining({
@@ -150,7 +160,9 @@ describe('SchoolYearsService', () => {
   it('throws ConflictException when rollover encounters duplicate name', async () => {
     const transactionRepository = {
       findOne: jest.fn().mockResolvedValue(null),
-      save: jest.fn().mockRejectedValue(new QueryFailedError('', [], { code: '23505' })),
+      save: jest
+        .fn()
+        .mockRejectedValue(new QueryFailedError('', [], { code: '23505' })),
       create: jest.fn().mockImplementation((data) => data),
       count: jest.fn(),
     };
@@ -159,12 +171,15 @@ describe('SchoolYearsService', () => {
       getRepository: jest.fn().mockReturnValue(transactionRepository),
     };
 
-    (repository.manager.transaction as jest.Mock).mockImplementation(async (callback) =>
-      callback(manager as never),
+    (repository.manager.transaction as jest.Mock).mockImplementation(
+      async (callback) => callback(manager as never),
     );
 
     await expect(
-      service.rollover({ startDate: '2026-01-01', endDate: '2026-12-31' }, { role: 'admin' }),
+      service.rollover(
+        { startDate: '2026-01-01', endDate: '2026-12-31' },
+        { role: 'admin' },
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
 
     expect(transactionRepository.create).toHaveBeenCalledWith({

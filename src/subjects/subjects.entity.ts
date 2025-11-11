@@ -40,7 +40,7 @@ export class Subjects {
 
   @OneToMany(
     () => CourseInstances,
-    (courseInstances) => courseInstances.subject
+    (courseInstances) => courseInstances.subject,
   )
   courseInstances: CourseInstances[];
 

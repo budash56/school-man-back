@@ -14,7 +14,9 @@ const MAX_PAGE_SIZE = 100;
 
 export class SubjectsQueryDto {
   @ApiPropertyOptional({ example: 1, minimum: 1 })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @IsPositive()
@@ -25,7 +27,9 @@ export class SubjectsQueryDto {
     minimum: 1,
     maximum: MAX_PAGE_SIZE,
   })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -44,7 +48,9 @@ export class SubjectsQueryDto {
     example: 1,
     description: 'Filter by subject area ID',
   })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)

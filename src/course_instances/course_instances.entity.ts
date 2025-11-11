@@ -15,13 +15,13 @@ import { Courses } from '../courses/courses.entity';
 @Index(
   'course_instances_course_code_school_year_id_key',
   ['courseCode', 'schoolYearId'],
-  { unique: true }
+  { unique: true },
 )
 @Index('course_instances_pkey', ['courseInstanceId'], { unique: true })
 @Index(
   'course_instances_subject_id_grade_level_school_year_id_key',
   ['gradeLevel', 'schoolYearId', 'subjectId'],
-  { unique: true }
+  { unique: true },
 )
 @Entity('course_instances', { schema: 'public' })
 export class CourseInstances {

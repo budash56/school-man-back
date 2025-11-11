@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
@@ -38,7 +50,10 @@ export class AttendanceController {
       normalizedQuery.scope = scope;
     }
 
-    return this.attendanceService.findAll(normalizedQuery, this.toActingUser(req));
+    return this.attendanceService.findAll(
+      normalizedQuery,
+      this.toActingUser(req),
+    );
   }
 
   @Get(':id')
@@ -100,12 +115,14 @@ export class AttendanceController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role teacher, admin, coordinator',
   })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.attendanceService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Req() req: RequestWithUser) {
+    return this.attendanceService.remove(id, this.toActingUser(req));
   }
 
   private toActingUser(req: RequestWithUser): ActingUser {
-    const rawId = req.user?.userId ?? (req.user?.nationalId ? Number(req.user.nationalId) : NaN);
+    const rawId =
+      req.user?.userId ??
+      (req.user?.nationalId ? Number(req.user.nationalId) : NaN);
     return {
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
       nationalId: req.user?.nationalId ?? '',

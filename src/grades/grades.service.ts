@@ -1,4 +1,9 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { CoursesRepository } from '../courses/courses.repository';
@@ -10,7 +15,11 @@ import { GradesRepository } from './grades.repository';
 import { CreateGradeDto } from './dto/create-grade.dto';
 import { UpdateGradeDto } from './dto/update-grade.dto';
 import { GradesQueryDto } from './dto/grades-query.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { AccessService } from '../auth/access.service';
 
 type ActingUser = {
@@ -40,7 +49,10 @@ export class GradesService {
     private readonly access: AccessService,
   ) {}
 
-  async findAll(query: GradesQueryDto, currentUser: ActingUser): Promise<PaginatedResult<GradeResponse>> {
+  async findAll(
+    query: GradesQueryDto,
+    currentUser: ActingUser,
+  ): Promise<PaginatedResult<GradeResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.gradesRepository
@@ -52,15 +64,21 @@ export class GradesService {
       .addOrderBy('grade.gradeId', 'DESC');
 
     if (query.studentId !== undefined) {
-      qb.andWhere('grade.studentId = :studentId', { studentId: query.studentId.toString() });
+      qb.andWhere('grade.studentId = :studentId', {
+        studentId: query.studentId.toString(),
+      });
     }
 
     if (query.courseId !== undefined) {
-      qb.andWhere('grade.courseId = :courseId', { courseId: query.courseId.toString() });
+      qb.andWhere('grade.courseId = :courseId', {
+        courseId: query.courseId.toString(),
+      });
     }
 
     if (query.termId !== undefined) {
-      qb.andWhere('grade.termId = :termId', { termId: query.termId.toString() });
+      qb.andWhere('grade.termId = :termId', {
+        termId: query.termId.toString(),
+      });
     }
 
     if (query.schoolYearId !== undefined) {
@@ -70,7 +88,9 @@ export class GradesService {
     }
 
     if (currentUser.role === 'teacher') {
-      const teacherCourseIds = await this.access.courseIdsForTeacher(currentUser.userId);
+      const teacherCourseIds = await this.access.courseIdsForTeacher(
+        currentUser.userId,
+      );
 
       if (query.courseId !== undefined) {
         if (!teacherCourseIds.includes(Number(query.courseId))) {
@@ -112,7 +132,10 @@ export class GradesService {
     return this.toResponse(grade);
   }
 
-  async create(dto: CreateGradeDto, currentUser: ActingUser): Promise<GradeResponse> {
+  async create(
+    dto: CreateGradeDto,
+    currentUser: ActingUser,
+  ): Promise<GradeResponse> {
     if (currentUser.role === 'coordinator') {
       throw new ForbiddenException('Coordinators cannot modify grades');
     }
@@ -138,7 +161,9 @@ export class GradesService {
         Number(course.courseId),
       );
       if (!canModify) {
-        throw new ForbiddenException('You are not allowed to record grades for this course');
+        throw new ForbiddenException(
+          'You are not allowed to record grades for this course',
+        );
       }
     }
 
@@ -157,7 +182,9 @@ export class GradesService {
     }
 
     if (courseSchoolYear !== term.schoolYearId) {
-      throw new ConflictException('Course and term belong to different school years');
+      throw new ConflictException(
+        'Course and term belong to different school years',
+      );
     }
 
     const enrollment = await this.enrollmentsRepository.findOne({
@@ -170,7 +197,9 @@ export class GradesService {
     });
 
     if (!enrollment) {
-      throw new ConflictException('Student is not actively enrolled in this class group for the term school year');
+      throw new ConflictException(
+        'Student is not actively enrolled in this class group for the term school year',
+      );
     }
 
     const schoolYearId = Number(courseSchoolYear);
@@ -199,7 +228,11 @@ export class GradesService {
     }
   }
 
-  async update(id: number, dto: UpdateGradeDto, currentUser: ActingUser): Promise<GradeResponse> {
+  async update(
+    id: number,
+    dto: UpdateGradeDto,
+    currentUser: ActingUser,
+  ): Promise<GradeResponse> {
     if (currentUser.role === 'coordinator') {
       throw new ForbiddenException('Coordinators cannot modify grades');
     }
@@ -219,7 +252,9 @@ export class GradesService {
         Number(grade.courseId),
       );
       if (!canModify) {
-        throw new ForbiddenException('You are not allowed to modify grades for this course');
+        throw new ForbiddenException(
+          'You are not allowed to modify grades for this course',
+        );
       }
     }
 
@@ -277,13 +312,18 @@ export class GradesService {
       studentId: Number(grade.studentId),
       courseId: Number(grade.courseId),
       termId: Number(grade.termId),
-      schoolYearId: grade.term?.schoolYearId ? Number(grade.term.schoolYearId) : null,
+      schoolYearId: grade.term?.schoolYearId
+        ? Number(grade.term.schoolYearId)
+        : null,
       mark: grade.mark,
       comment: grade.comment ?? null,
     };
   }
 
-  private async assertYearWritable(schoolYearId: number, user: { role: string }): Promise<void> {
+  private async assertYearWritable(
+    schoolYearId: number,
+    user: { role: string },
+  ): Promise<void> {
     const year = await this.schoolYearsRepository.findOne({
       where: { schoolYearId: schoolYearId.toString() },
     });

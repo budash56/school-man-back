@@ -25,10 +25,13 @@ type MockedSchoolYearsRepository = Partial<
 
 describe('EnrollmentsService', () => {
   let service: EnrollmentsService;
-  let enrollmentsRepository: EnrollmentsRepository & MockedEnrollmentsRepository;
+  let enrollmentsRepository: EnrollmentsRepository &
+    MockedEnrollmentsRepository;
   let studentsRepository: StudentsRepository & MockedStudentsRepository;
-  let classGroupsRepository: ClassGroupsRepository & MockedClassGroupsRepository;
-  let schoolYearsRepository: SchoolYearsRepository & MockedSchoolYearsRepository;
+  let classGroupsRepository: ClassGroupsRepository &
+    MockedClassGroupsRepository;
+  let schoolYearsRepository: SchoolYearsRepository &
+    MockedSchoolYearsRepository;
 
   const createDto: CreateEnrollmentDto = {
     studentId: 1,
@@ -103,7 +106,9 @@ describe('EnrollmentsService', () => {
 
     await service.create(createDto);
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('allows creating a new active enrollment after deactivation', async () => {

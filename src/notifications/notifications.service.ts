@@ -4,7 +4,11 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { QueryNotificationDto } from './dto/query-notification.dto';
 import { Notifications } from './notifications.entity';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 
 export type NotificationResponse = {
@@ -19,18 +23,26 @@ export type NotificationResponse = {
 export class NotificationsService {
   constructor(private readonly repository: NotificationsRepository) {}
 
-  async findAll(query: QueryNotificationDto): Promise<PaginatedResult<NotificationResponse>> {
+  async findAll(
+    query: QueryNotificationDto,
+  ): Promise<PaginatedResult<NotificationResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
-    const qb = this.repository.createQueryBuilder('notifications').orderBy('notifications.createdAt', 'DESC');
+    const qb = this.repository
+      .createQueryBuilder('notifications')
+      .orderBy('notifications.createdAt', 'DESC');
 
     if (query.title?.trim()) {
       const keyword = `%${query.title.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
-      qb.andWhere('notifications.title ILIKE :title ESCAPE \\\'', { title: keyword });
+      qb.andWhere("notifications.title ILIKE :title ESCAPE \\'", {
+        title: keyword,
+      });
     }
 
     if (query.isActive !== undefined) {
-      qb.andWhere('notifications.isActive = :isActive', { isActive: query.isActive });
+      qb.andWhere('notifications.isActive = :isActive', {
+        isActive: query.isActive,
+      });
     }
 
     qb.skip((page - 1) * pageSize);
@@ -69,11 +81,17 @@ export class NotificationsService {
       const saved = await this.repository.save(entity);
       return this.findOne(Number(saved.notificationId));
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Notification with this title already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Notification with this title already exists',
+      );
     }
   }
 
-  async update(id: number, dto: UpdateNotificationDto): Promise<NotificationResponse> {
+  async update(
+    id: number,
+    dto: UpdateNotificationDto,
+  ): Promise<NotificationResponse> {
     const entity = await this.getEntity(id);
 
     if (dto.title !== undefined) {
@@ -92,7 +110,10 @@ export class NotificationsService {
       await this.repository.save(entity);
       return this.toResponse(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Notification with this title already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Notification with this title already exists',
+      );
     }
   }
 

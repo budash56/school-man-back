@@ -6,7 +6,11 @@ import { UsersRepository } from '../users/users.repository';
 import { QueryDisciplinaryRecordDto } from './dto/query-disciplinary-record.dto';
 import { CreateDisciplinaryRecordDto } from './dto/create-disciplinary-record.dto';
 import { UpdateDisciplinaryRecordDto } from './dto/update-disciplinary-record.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { DisciplinaryRecords } from './disciplinary_records.entity';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { Users } from '../users/users.entity';
@@ -93,7 +97,9 @@ export class DisciplinaryRecordsService {
     return this.toResponse(entity);
   }
 
-  async create(dto: CreateDisciplinaryRecordDto): Promise<DisciplinaryRecordResponse> {
+  async create(
+    dto: CreateDisciplinaryRecordDto,
+  ): Promise<DisciplinaryRecordResponse> {
     const student = await this.resolveStudent(dto.studentId);
     const recordedBy = await this.resolveUser(dto.recordedBy);
 

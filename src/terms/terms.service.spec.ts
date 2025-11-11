@@ -19,7 +19,8 @@ const SCHOOL_YEAR = {
 describe('TermsService', () => {
   let service: TermsService;
   let repository: TermsRepository & MockedTermsRepository;
-  let schoolYearsRepository: SchoolYearsRepository & MockedSchoolYearsRepository;
+  let schoolYearsRepository: SchoolYearsRepository &
+    MockedSchoolYearsRepository;
 
   const createDto: CreateTermDto = {
     schoolYearId: 1,
@@ -68,7 +69,9 @@ describe('TermsService', () => {
       },
     ]);
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('creates a term and lists it successfully', async () => {
@@ -109,8 +112,11 @@ describe('TermsService', () => {
 
     const list = await service.findAll({ schoolYearId: 1 });
     expect(list).toEqual([savedTerm]);
-    expect(qb.andWhere).toHaveBeenCalledWith('terms.schoolYearId = :schoolYearId', {
-      schoolYearId: '1',
-    });
+    expect(qb.andWhere).toHaveBeenCalledWith(
+      'terms.schoolYearId = :schoolYearId',
+      {
+        schoolYearId: '1',
+      },
+    );
   });
 });

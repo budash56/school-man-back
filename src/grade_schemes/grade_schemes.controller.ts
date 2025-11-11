@@ -55,7 +55,10 @@ export class GradeSchemesController {
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  async update(@Param('id') id: string, @Body() payload: DeepPartial<GradeSchemes>) {
+  async update(
+    @Param('id') id: string,
+    @Body() payload: DeepPartial<GradeSchemes>,
+  ) {
     const entity = await this.findOne(id);
     this.repository.merge(entity, payload);
     return this.repository.save(entity);

@@ -26,7 +26,10 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
-  async signup(dto: SignupDto, requestingUser?: SanitizedUser): Promise<AuthResponse> {
+  async signup(
+    dto: SignupDto,
+    requestingUser?: SanitizedUser,
+  ): Promise<AuthResponse> {
     await this.assertNewUserIsUnique(dto);
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -82,7 +85,9 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('A user with the provided identifiers already exists');
+      throw new ConflictException(
+        'A user with the provided identifiers already exists',
+      );
     }
   }
 

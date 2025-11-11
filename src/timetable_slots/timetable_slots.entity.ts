@@ -14,6 +14,6 @@ export class TimetableSlot {
   startTime: string; // '08:00:00'
 
   @Column({ type: 'time', name: 'end_time' })
-  endTime: string;   // '08:45:00'
+  endTime: string; // '08:45:00'
   timetableAssignments: any;
 }

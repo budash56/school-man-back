@@ -24,7 +24,9 @@ export class CourseInstancesService {
     private readonly schoolYearsRepository: SchoolYearsRepository,
   ) {}
 
-  async findAll(query: CourseInstancesQueryDto): Promise<CourseInstanceResponseDto[]> {
+  async findAll(
+    query: CourseInstancesQueryDto,
+  ): Promise<CourseInstanceResponseDto[]> {
     const qb = this.repository
       .createQueryBuilder('courseInstances')
       .leftJoinAndSelect('courseInstances.subject', 'subject')
@@ -56,8 +58,8 @@ export class CourseInstancesService {
       qb.andWhere(
         new Brackets((searchQb) => {
           searchQb
-            .where('courseInstances.courseCode ILIKE :keyword ESCAPE \'\\\'')
-            .orWhere('courseInstances.courseName ILIKE :keyword ESCAPE \'\\\'');
+            .where("courseInstances.courseCode ILIKE :keyword ESCAPE '\\'")
+            .orWhere("courseInstances.courseName ILIKE :keyword ESCAPE '\\'");
         }),
       ).setParameter('keyword', keyword);
     }
@@ -83,14 +85,20 @@ export class CourseInstancesService {
     return this.toResponseDto(entity);
   }
 
-  async create(dto: CreateCourseInstanceDto): Promise<CourseInstanceResponseDto> {
+  async create(
+    dto: CreateCourseInstanceDto,
+  ): Promise<CourseInstanceResponseDto> {
     this.assertGrade(dto.gradeLevel);
     const subject = await this.loadSubject(dto.subjectId);
     const schoolYear = await this.loadSchoolYear(dto.schoolYearId);
 
     const courseCode = dto.courseCode?.trim()
       ? dto.courseCode.trim()
-      : this.generateCourseCode(subject.subjectCode, dto.gradeLevel, schoolYear.name);
+      : this.generateCourseCode(
+          subject.subjectCode,
+          dto.gradeLevel,
+          schoolYear.name,
+        );
 
     const entity = this.repository.create({
       subjectId: subject.subjectId,
@@ -113,7 +121,10 @@ export class CourseInstancesService {
     }
   }
 
-  async update(id: number, dto: UpdateCourseInstanceDto): Promise<CourseInstanceResponseDto> {
+  async update(
+    id: number,
+    dto: UpdateCourseInstanceDto,
+  ): Promise<CourseInstanceResponseDto> {
     const entity = await this.repository.findOne({
       where: { courseInstanceId: id.toString() },
     });
@@ -130,7 +141,9 @@ export class CourseInstancesService {
       subject = await this.loadSubject(dto.subjectId);
     }
 
-    let schoolYear = await this.loadSchoolYear(Number.parseInt(entity.schoolYearId, 10));
+    let schoolYear = await this.loadSchoolYear(
+      Number.parseInt(entity.schoolYearId, 10),
+    );
     if (dto.schoolYearId !== undefined) {
       schoolYear = await this.loadSchoolYear(dto.schoolYearId);
     }
@@ -205,7 +218,11 @@ export class CourseInstancesService {
     return schoolYear;
   }
 
-  private generateCourseCode(subjectCode: string, gradeLevel: number, yearName: string): string {
+  private generateCourseCode(
+    subjectCode: string,
+    gradeLevel: number,
+    yearName: string,
+  ): string {
     return `${subjectCode}-${gradeLevel}-Y${yearName}`;
   }
 

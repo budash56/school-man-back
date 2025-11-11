@@ -12,7 +12,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
@@ -88,7 +93,10 @@ export class SchoolYearsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin',
   })
-  lock(@Param('id', ParseIntPipe) id: number, @Req() req: { user: { role: string } }) {
+  lock(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: { user: { role: string } },
+  ) {
     return this.service.lock(id, req.user);
   }
 }

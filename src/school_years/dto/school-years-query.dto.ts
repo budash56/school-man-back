@@ -8,7 +8,9 @@ export class SchoolYearsQueryDto {
     example: true,
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : value === 'true' || value === true,
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
   )
   @IsOptional()
   @IsBoolean()

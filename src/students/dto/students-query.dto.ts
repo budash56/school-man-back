@@ -1,13 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
 export class StudentsQueryDto {
   @ApiPropertyOptional({ example: 1, minimum: 1 })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @IsPositive()
@@ -18,7 +27,9 @@ export class StudentsQueryDto {
     minimum: 1,
     maximum: MAX_PAGE_SIZE,
   })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -27,7 +38,8 @@ export class StudentsQueryDto {
 
   @ApiPropertyOptional({
     example: 'Juana',
-    description: 'Filter by partial match in first name, last name, or nationalId',
+    description:
+      'Filter by partial match in first name, last name, or nationalId',
   })
   @IsOptional()
   @IsString()
@@ -36,9 +48,12 @@ export class StudentsQueryDto {
   @ApiPropertyOptional({
     example: 2025,
     minimum: 1,
-    description: 'Filters students who have an enrollment in the given school year',
+    description:
+      'Filters students who have an enrollment in the given school year',
   })
-  @Transform(({ value }) => (value !== undefined ? parseInt(value, 10) : undefined))
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
   @IsOptional()
   @IsInt()
   @Min(1)

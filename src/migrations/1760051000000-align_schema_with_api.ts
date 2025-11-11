@@ -13,9 +13,7 @@ export class AlignSchemaWithApi1760051000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "public"."grades" ADD "mark" "public"."grades_mark_enum" NOT NULL DEFAULT 'A'`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "public"."grades" ADD "comment" text`,
-    );
+    await queryRunner.query(`ALTER TABLE "public"."grades" ADD "comment" text`);
 
     await queryRunner.query(
       `ALTER TABLE "public"."notifications" ADD "title" character varying(120)`,
@@ -78,12 +76,8 @@ export class AlignSchemaWithApi1760051000000 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "public"."grades" DROP COLUMN "comment"`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "public"."grades" DROP COLUMN "mark"`,
-    );
-    await queryRunner.query(
-      `DROP TYPE "public"."grades_mark_enum"`,
-    );
+    await queryRunner.query(`ALTER TABLE "public"."grades" DROP COLUMN "mark"`);
+    await queryRunner.query(`DROP TYPE "public"."grades_mark_enum"`);
     await queryRunner.query(
       `ALTER TABLE "public"."grades" ALTER COLUMN "scheme_value_id" SET NOT NULL`,
     );

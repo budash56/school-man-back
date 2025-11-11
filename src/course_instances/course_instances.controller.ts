@@ -11,7 +11,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CourseInstancesService } from './course_instances.service';
 import { CourseInstancesQueryDto } from './dto/course-instances-query.dto';
 import { CreateCourseInstanceDto } from './dto/create-course-instance.dto';
@@ -26,7 +32,9 @@ import { RolesGuard } from '../auth/roles.guard';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('course-instances')
 export class CourseInstancesController {
-  constructor(private readonly courseInstancesService: CourseInstancesService) {}
+  constructor(
+    private readonly courseInstancesService: CourseInstancesService,
+  ) {}
 
   @Get()
   @ApiQuery({ name: 'schoolYearId', required: false, example: 3 })

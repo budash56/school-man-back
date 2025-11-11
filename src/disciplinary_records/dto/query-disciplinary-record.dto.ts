@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 type Category = 'green' | 'yellow' | 'red' | 'last_notice';
 
@@ -10,22 +18,34 @@ export class QueryDisciplinaryRecordDto {
   @Min(1)
   studentId?: number;
 
-  @ApiPropertyOptional({ example: 'PRINCIPAL01', description: 'Filter by recordedBy national id' })
+  @ApiPropertyOptional({
+    example: 'PRINCIPAL01',
+    description: 'Filter by recordedBy national id',
+  })
   @IsOptional()
   @IsString()
   recordedBy?: string;
 
-  @ApiPropertyOptional({ example: 'yellow', enum: ['green', 'yellow', 'red', 'last_notice'] })
+  @ApiPropertyOptional({
+    example: 'yellow',
+    enum: ['green', 'yellow', 'red', 'last_notice'],
+  })
   @IsOptional()
   @IsEnum(['green', 'yellow', 'red', 'last_notice'])
   category?: Category;
 
-  @ApiPropertyOptional({ example: '2025-01-01', description: 'Start date (inclusive)' })
+  @ApiPropertyOptional({
+    example: '2025-01-01',
+    description: 'Start date (inclusive)',
+  })
   @IsOptional()
   @IsDateString()
   from?: string;
 
-  @ApiPropertyOptional({ example: '2025-01-31', description: 'End date (inclusive)' })
+  @ApiPropertyOptional({
+    example: '2025-01-31',
+    description: 'End date (inclusive)',
+  })
   @IsOptional()
   @IsDateString()
   to?: string;

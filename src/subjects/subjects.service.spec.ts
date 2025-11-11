@@ -5,7 +5,9 @@ import { SubjectsRepository } from './subjects.repository';
 import { SubjectAreasRepository } from '../subject_areas/subject_areas.repository';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 
-type MockedSubjectsRepository = Partial<Record<keyof SubjectsRepository, jest.Mock>>;
+type MockedSubjectsRepository = Partial<
+  Record<keyof SubjectsRepository, jest.Mock>
+>;
 type MockedSubjectAreasRepository = Partial<
   Record<keyof SubjectAreasRepository, jest.Mock>
 >;
@@ -13,7 +15,8 @@ type MockedSubjectAreasRepository = Partial<
 describe('SubjectsService', () => {
   let service: SubjectsService;
   let subjectsRepository: SubjectsRepository & MockedSubjectsRepository;
-  let subjectAreasRepository: SubjectAreasRepository & MockedSubjectAreasRepository;
+  let subjectAreasRepository: SubjectAreasRepository &
+    MockedSubjectAreasRepository;
 
   const createDto: CreateSubjectDto = {
     areaId: 99,
@@ -41,7 +44,9 @@ describe('SubjectsService', () => {
   it('throws NotFoundException when creating a subject with a missing area', async () => {
     (subjectAreasRepository.findOne as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('creates a subject successfully', async () => {

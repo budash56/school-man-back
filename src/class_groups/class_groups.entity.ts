@@ -18,7 +18,7 @@ import { Enrollments } from '../enrollments/enrollments.entity';
 @Index(
   'class_groups_school_year_id_grade_level_section_key',
   ['gradeLevel', 'schoolYearId', 'section'],
-  { unique: true }
+  { unique: true },
 )
 @Index('uniq_class_groups_year_code', ['schoolYearId'], { unique: true })
 @Entity('class_groups', { schema: 'public' })

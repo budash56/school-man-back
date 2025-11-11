@@ -11,7 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { SubjectsQueryDto } from './dto/subjects-query.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
@@ -65,10 +70,7 @@ export class SubjectsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateSubjectDto,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSubjectDto) {
     return this.subjectsService.update(id, dto);
   }
 

@@ -16,7 +16,7 @@ import { Terms } from '../terms/terms.entity';
 @Index(
   'grades_student_id_course_id_term_id_key',
   ['courseId', 'studentId', 'termId'],
-  { unique: true }
+  { unique: true },
 )
 @Index('grades_pkey', ['gradeId'], { unique: true })
 @Entity('grades', { schema: 'public' })
@@ -59,7 +59,7 @@ export class Grades {
   @ManyToOne(
     () => GradeSchemeValues,
     (gradeSchemeValues) => gradeSchemeValues.grades,
-    { onDelete: 'RESTRICT' }
+    { onDelete: 'RESTRICT' },
   )
   @JoinColumn([{ name: 'scheme_value_id', referencedColumnName: 'valueId' }])
   schemeValue: GradeSchemeValues;

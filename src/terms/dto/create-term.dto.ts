@@ -4,9 +4,14 @@ import { IsDateString, IsEnum, IsInt, IsPositive } from 'class-validator';
 import { TermName } from './term-name.enum';
 
 export class CreateTermDto {
-  @ApiProperty({ example: 1, description: 'Identifier of the parent school year' })
+  @ApiProperty({
+    example: 1,
+    description: 'Identifier of the parent school year',
+  })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsInt()
   @IsPositive()

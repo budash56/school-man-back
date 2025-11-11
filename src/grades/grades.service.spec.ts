@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ValidationPipe,
+} from '@nestjs/common';
 import type { ArgumentMetadata } from '@nestjs/common/interfaces/features/arguments.interface';
 import { QueryFailedError } from 'typeorm';
 import { GradesService } from './grades.service';
@@ -19,8 +23,10 @@ describe('GradesService', () => {
   let studentsRepository: StudentsRepository & Mocked<StudentsRepository>;
   let coursesRepository: CoursesRepository & Mocked<CoursesRepository>;
   let termsRepository: TermsRepository & Mocked<TermsRepository>;
-  let enrollmentsRepository: EnrollmentsRepository & Mocked<EnrollmentsRepository>;
-  let schoolYearsRepository: SchoolYearsRepository & Mocked<SchoolYearsRepository>;
+  let enrollmentsRepository: EnrollmentsRepository &
+    Mocked<EnrollmentsRepository>;
+  let schoolYearsRepository: SchoolYearsRepository &
+    Mocked<SchoolYearsRepository>;
   let accessService: {
     courseIdsForTeacher: jest.Mock<Promise<number[]>, [number]>;
     isTeacherOfCourse: jest.Mock<Promise<boolean>, [number, number]>;
@@ -68,7 +74,9 @@ describe('GradesService', () => {
       isTeacherOfCourse: jest.fn().mockResolvedValue(true),
     };
 
-    (studentsRepository.findOne as jest.Mock).mockResolvedValue({ studentId: '1' });
+    (studentsRepository.findOne as jest.Mock).mockResolvedValue({
+      studentId: '1',
+    });
     (coursesRepository.findOne as jest.Mock).mockResolvedValue({
       courseId: '10',
       classGroup: { classGroupId: '20' },
@@ -78,7 +86,9 @@ describe('GradesService', () => {
       termId: '3',
       schoolYearId: '99',
     });
-    (enrollmentsRepository.findOne as jest.Mock).mockResolvedValue({ enrollmentId: '55' });
+    (enrollmentsRepository.findOne as jest.Mock).mockResolvedValue({
+      enrollmentId: '55',
+    });
     (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({
       schoolYearId: '99',
       isActive: true,

@@ -55,15 +55,21 @@ describe('ClassGroupsService', () => {
   });
 
   it('creates a class group successfully', async () => {
-    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({ schoolYearId: '1' });
+    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({
+      schoolYearId: '1',
+    });
     (classroomsRepository.findOne as jest.Mock).mockResolvedValue({
       classroomId: '2',
       name: 'Room 202',
       capacity: 30,
     });
     (classGroupsRepository.create as jest.Mock).mockReturnValue({});
-    (classGroupsRepository.save as jest.Mock).mockResolvedValue({ classGroupId: '5' });
-    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(mockClassGroup);
+    (classGroupsRepository.save as jest.Mock).mockResolvedValue({
+      classGroupId: '5',
+    });
+    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(
+      mockClassGroup,
+    );
 
     const result = await service.create(createDto);
 
@@ -79,14 +85,23 @@ describe('ClassGroupsService', () => {
   });
 
   it('throws ConflictException on duplicate unique key', async () => {
-    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({ schoolYearId: '1' });
-    (classroomsRepository.findOne as jest.Mock).mockResolvedValue({ classroomId: '2' });
+    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({
+      schoolYearId: '1',
+    });
+    (classroomsRepository.findOne as jest.Mock).mockResolvedValue({
+      classroomId: '2',
+    });
     (classGroupsRepository.create as jest.Mock).mockReturnValue({});
     (classGroupsRepository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505', detail: 'uniq_cg_year_grade_section' }),
+      new QueryFailedError('', [], {
+        code: '23505',
+        detail: 'uniq_cg_year_grade_section',
+      }),
     );
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('paginates and sorts findAll', async () => {
@@ -100,13 +115,25 @@ describe('ClassGroupsService', () => {
       getManyAndCount: jest.fn().mockResolvedValue([[mockClassGroup], 1]),
     };
 
-    (classGroupsRepository.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+    (classGroupsRepository.createQueryBuilder as jest.Mock).mockReturnValue(
+      mockQueryBuilder,
+    );
 
-    const query: QueryClassGroupDto = { page: 1, pageSize: 20, schoolYearId: 1 };
+    const query: QueryClassGroupDto = {
+      page: 1,
+      pageSize: 20,
+      schoolYearId: 1,
+    };
     const result = await service.findAll(query);
 
-    expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('classGroups.gradeLevel', 'ASC');
-    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('classGroups.section', 'ASC');
+    expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+      'classGroups.gradeLevel',
+      'ASC',
+    );
+    expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+      'classGroups.section',
+      'ASC',
+    );
     expect(result.data).toHaveLength(1);
     expect(result.total).toBe(1);
   });

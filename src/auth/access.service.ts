@@ -9,7 +9,9 @@ export class AccessService {
     const count = await this.coursesRepository
       .createQueryBuilder('course')
       .where('course.teacherId = :teacherId', { teacherId: userId.toString() })
-      .andWhere('course.courseId = :courseId', { courseId: courseId.toString() })
+      .andWhere('course.courseId = :courseId', {
+        courseId: courseId.toString(),
+      })
       .getCount();
 
     return count > 0;

@@ -5,7 +5,10 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData, SeedResult } from './helpers/seed';
 
-async function login(app: INestApplication, creds: { nationalId: string; password: string }) {
+async function login(
+  app: INestApplication,
+  creds: { nationalId: string; password: string },
+) {
   const { body } = await request(app.getHttpServer())
     .post('/auth/login')
     .send(creds)

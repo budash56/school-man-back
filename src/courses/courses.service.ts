@@ -48,7 +48,10 @@ export class CoursesService {
     private readonly schoolYearsRepository: SchoolYearsRepository,
   ) {}
 
-  async findAll(query: CoursesQueryDto, currentUser?: ActingUser): Promise<CourseSummary[]> {
+  async findAll(
+    query: CoursesQueryDto,
+    currentUser?: ActingUser,
+  ): Promise<CourseSummary[]> {
     const qb = this.coursesRepository
       .createQueryBuilder('course')
       .innerJoinAndSelect('course.courseInstance', 'courseInstance')
@@ -81,7 +84,9 @@ export class CoursesService {
     }
 
     if (currentUser?.role === 'teacher') {
-      const teacherCourseIds = await this.access.courseIdsForTeacher(currentUser.userId);
+      const teacherCourseIds = await this.access.courseIdsForTeacher(
+        currentUser.userId,
+      );
 
       if (teacherCourseIds.length === 0) {
         return [];
@@ -92,7 +97,10 @@ export class CoursesService {
       });
     }
 
-    qb.orderBy('courseInstance.courseName', 'ASC').addOrderBy('classGroup.section', 'ASC');
+    qb.orderBy('courseInstance.courseName', 'ASC').addOrderBy(
+      'classGroup.section',
+      'ASC',
+    );
 
     const courses = await qb.getMany();
     return courses.map((course) => this.toSummary(course));
@@ -122,9 +130,15 @@ export class CoursesService {
       dto.teacherId,
     );
 
-    this.assertGradeLevelMatch(courseInstance.gradeLevel, classGroup.gradeLevel);
+    this.assertGradeLevelMatch(
+      courseInstance.gradeLevel,
+      classGroup.gradeLevel,
+    );
     this.assertTeacherRole(teacher.role);
-    await this.assertSchoolYearWritable(courseInstance.schoolYearId, classGroup.schoolYearId);
+    await this.assertSchoolYearWritable(
+      courseInstance.schoolYearId,
+      classGroup.schoolYearId,
+    );
 
     const entity = this.coursesRepository.create({
       courseInstanceId: dto.courseInstanceId.toString(),
@@ -146,7 +160,8 @@ export class CoursesService {
   async update(id: number, dto: UpdateCourseDto): Promise<CourseSummary> {
     const course = await this.getCourseEntity(id);
 
-    const nextCourseInstanceId = dto.courseInstanceId ?? Number(course.courseInstanceId);
+    const nextCourseInstanceId =
+      dto.courseInstanceId ?? Number(course.courseInstanceId);
     const nextClassGroupId = dto.classGroupId ?? Number(course.classGroupId);
     const nextTeacherId = dto.teacherId ?? Number(course.teacherId);
 
@@ -156,9 +171,15 @@ export class CoursesService {
       nextTeacherId,
     );
 
-    this.assertGradeLevelMatch(courseInstance.gradeLevel, classGroup.gradeLevel);
+    this.assertGradeLevelMatch(
+      courseInstance.gradeLevel,
+      classGroup.gradeLevel,
+    );
     this.assertTeacherRole(teacher.role);
-    await this.assertSchoolYearWritable(courseInstance.schoolYearId, classGroup.schoolYearId);
+    await this.assertSchoolYearWritable(
+      courseInstance.schoolYearId,
+      classGroup.schoolYearId,
+    );
 
     course.courseInstanceId = courseInstance.courseInstanceId;
     course.classGroupId = classGroup.classGroupId;
@@ -233,9 +254,14 @@ export class CoursesService {
     return { courseInstance, classGroup, teacher };
   }
 
-  private assertGradeLevelMatch(courseInstanceGrade: number, classGroupGrade: number) {
+  private assertGradeLevelMatch(
+    courseInstanceGrade: number,
+    classGroupGrade: number,
+  ) {
     if (courseInstanceGrade !== classGroupGrade) {
-      throw new ConflictException('Course instance grade level must match class group grade level');
+      throw new ConflictException(
+        'Course instance grade level must match class group grade level',
+      );
     }
   }
 
@@ -251,16 +277,22 @@ export class CoursesService {
   ): Promise<void> {
     const instanceYear = Number(courseInstanceYearId);
     if (!Number.isFinite(instanceYear)) {
-      throw new BadRequestException('Course instance is missing a valid school year');
+      throw new BadRequestException(
+        'Course instance is missing a valid school year',
+      );
     }
 
     const classYear = Number(classGroupYearId);
     if (!Number.isFinite(classYear)) {
-      throw new BadRequestException('Class group is missing a valid school year');
+      throw new BadRequestException(
+        'Class group is missing a valid school year',
+      );
     }
 
     if (instanceYear !== classYear) {
-      throw new ConflictException('Course instance and class group must share the same school year');
+      throw new ConflictException(
+        'Course instance and class group must share the same school year',
+      );
     }
 
     const schoolYear = await this.schoolYearsRepository.findOne({
@@ -282,7 +314,10 @@ export class CoursesService {
     const teacher = course.teacher;
 
     const teacherName = teacher
-      ? [teacher.firstName, teacher.lastName].filter(Boolean).join(' ').trim() || null
+      ? [teacher.firstName, teacher.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || null
       : null;
 
     return {
@@ -291,9 +326,12 @@ export class CoursesService {
       classGroupId: Number(course.classGroupId),
       teacherId: Number(course.teacherId),
       schoolYearId: Number(course.courseInstance?.schoolYearId ?? 0),
-      gradeLevel: classGroup?.gradeLevel ?? course.courseInstance?.gradeLevel ?? 0,
+      gradeLevel:
+        classGroup?.gradeLevel ?? course.courseInstance?.gradeLevel ?? 0,
       section: classGroup?.section ?? '',
-      classGroupCode: classGroup ? `${classGroup.gradeLevel}${classGroup.section}` : '',
+      classGroupCode: classGroup
+        ? `${classGroup.gradeLevel}${classGroup.section}`
+        : '',
       subjectCode: subject?.subjectCode ?? '',
       subjectName: subject?.name ?? course.courseInstance?.courseName ?? '',
       teacherName,

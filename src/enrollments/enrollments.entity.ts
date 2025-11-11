@@ -14,7 +14,7 @@ import { Students } from '../students/students.entity';
 @Index(
   'enrollments_student_id_class_group_id_school_year_id_key',
   ['classGroupId', 'schoolYearId', 'studentId'],
-  { unique: true }
+  { unique: true },
 )
 @Index('enrollments_pkey', ['enrollmentId'], { unique: true })
 @Index('idx_enrollments_year', ['schoolYearId'], {})

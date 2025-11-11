@@ -17,7 +17,7 @@ import { TimetableAssignments } from '../timetable_assignments/timetable_assignm
 @Index(
   'attendance_student_id_course_id_date_key',
   ['courseId', 'date', 'studentId'],
-  { unique: true }
+  { unique: true },
 )
 @Index('idx_attendance_student_date', ['date', 'studentId'], {})
 @Index('uniq_attendance_student_date_slot', ['date', 'slotId', 'studentId'], {
@@ -81,7 +81,7 @@ export class Attendance {
 
   @ManyToOne(
     () => TimetableAssignments,
-    (timetableAssignments) => timetableAssignments.attendances
+    (timetableAssignments) => timetableAssignments.attendances,
   )
   @JoinColumn([
     { name: 'course_id', referencedColumnName: 'courseId' },

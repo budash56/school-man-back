@@ -21,11 +21,13 @@ export class SchoolYearsService {
     qb.where('1=1');
 
     if (query.active !== undefined) {
-      qb.andWhere('schoolYears.isActive = :isActive', { isActive: query.active });
+      qb.andWhere('schoolYears.isActive = :isActive', {
+        isActive: query.active,
+      });
     }
 
     if (query.name?.trim()) {
-      qb.andWhere('schoolYears.name ILIKE :name ESCAPE \'\\\'', {
+      qb.andWhere("schoolYears.name ILIKE :name ESCAPE '\\'", {
         name: this.buildNameSearch(query.name),
       });
     }
@@ -48,7 +50,12 @@ export class SchoolYearsService {
   }
 
   async create(dto: CreateSchoolYearDto): Promise<SchoolYears> {
-    this.assertChronologicalOrder(dto.startDate, dto.endDate, 'startDate', 'endDate');
+    this.assertChronologicalOrder(
+      dto.startDate,
+      dto.endDate,
+      'startDate',
+      'endDate',
+    );
 
     const entity = this.repository.create({
       name: dto.name,
@@ -60,7 +67,10 @@ export class SchoolYearsService {
     try {
       return await this.repository.save(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'A school year with this name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'A school year with this name already exists',
+      );
     }
   }
 
@@ -87,7 +97,10 @@ export class SchoolYearsService {
     try {
       return await this.repository.save(schoolYear);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'A school year with this name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'A school year with this name already exists',
+      );
     }
   }
 
@@ -102,10 +115,17 @@ export class SchoolYearsService {
     user: { role: string },
   ): Promise<{ previous: SchoolYears | null; current: SchoolYears }> {
     if (user.role !== 'admin') {
-      throw new ForbiddenException('Only administrators can rollover school years');
+      throw new ForbiddenException(
+        'Only administrators can rollover school years',
+      );
     }
 
-    this.assertChronologicalOrder(dto.startDate, dto.endDate, 'startDate', 'endDate');
+    this.assertChronologicalOrder(
+      dto.startDate,
+      dto.endDate,
+      'startDate',
+      'endDate',
+    );
 
     return this.repository.manager.transaction(async (manager) => {
       const repo = manager.getRepository(SchoolYears);
@@ -120,7 +140,8 @@ export class SchoolYearsService {
         await repo.save(previous);
       }
 
-      const nextName = dto.name?.trim() || this.deriveName(dto.startDate, dto.endDate);
+      const nextName =
+        dto.name?.trim() || this.deriveName(dto.startDate, dto.endDate);
       const nextYear = repo.create({
         name: nextName,
         yearStart: dto.startDate,
@@ -132,16 +153,23 @@ export class SchoolYearsService {
       try {
         current = await repo.save(nextYear);
       } catch (error) {
-        DbErrorMapper.throwConflict(error, 'A school year with this name already exists');
+        DbErrorMapper.throwConflict(
+          error,
+          'A school year with this name already exists',
+        );
       }
 
       const activeCount = await repo.count({ where: { isActive: true } });
       if (activeCount !== 1) {
-        throw new ConflictException('Exactly one active school year must exist after rollover');
+        throw new ConflictException(
+          'Exactly one active school year must exist after rollover',
+        );
       }
 
       if (!current) {
-        throw new ConflictException('Failed to create the new active school year');
+        throw new ConflictException(
+          'Failed to create the new active school year',
+        );
       }
 
       return {
@@ -171,11 +199,15 @@ export class SchoolYearsService {
     const end = new Date(endDate);
 
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      throw new BadRequestException(`Invalid date values for ${startKey} or ${endKey}`);
+      throw new BadRequestException(
+        `Invalid date values for ${startKey} or ${endKey}`,
+      );
     }
 
     if (start >= end) {
-      throw new BadRequestException('School year startDate must be before endDate');
+      throw new BadRequestException(
+        'School year startDate must be before endDate',
+      );
     }
   }
 

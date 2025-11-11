@@ -13,11 +13,15 @@ type MockedRepository<T> = Partial<Record<keyof T, jest.Mock>>;
 
 describe('CoursesService', () => {
   let service: CoursesService;
-  let coursesRepository: CoursesRepository & MockedRepository<CoursesRepository>;
-  let courseInstancesRepository: CourseInstancesRepository & MockedRepository<CourseInstancesRepository>;
-  let classGroupsRepository: ClassGroupsRepository & MockedRepository<ClassGroupsRepository>;
+  let coursesRepository: CoursesRepository &
+    MockedRepository<CoursesRepository>;
+  let courseInstancesRepository: CourseInstancesRepository &
+    MockedRepository<CourseInstancesRepository>;
+  let classGroupsRepository: ClassGroupsRepository &
+    MockedRepository<ClassGroupsRepository>;
   let usersRepository: UsersRepository & MockedRepository<UsersRepository>;
-  let schoolYearsRepository: SchoolYearsRepository & MockedRepository<SchoolYearsRepository>;
+  let schoolYearsRepository: SchoolYearsRepository &
+    MockedRepository<SchoolYearsRepository>;
   let accessService: {
     courseIdsForTeacher: jest.Mock;
     classGroupIdsForTeacher: jest.Mock;
@@ -41,11 +45,13 @@ describe('CoursesService', () => {
 
     courseInstancesRepository = {
       findOne: jest.fn(),
-    } as unknown as CourseInstancesRepository & MockedRepository<CourseInstancesRepository>;
+    } as unknown as CourseInstancesRepository &
+      MockedRepository<CourseInstancesRepository>;
 
     classGroupsRepository = {
       findOne: jest.fn(),
-    } as unknown as ClassGroupsRepository & MockedRepository<ClassGroupsRepository>;
+    } as unknown as ClassGroupsRepository &
+      MockedRepository<ClassGroupsRepository>;
 
     usersRepository = {
       findOne: jest.fn(),
@@ -53,7 +59,8 @@ describe('CoursesService', () => {
 
     schoolYearsRepository = {
       findOne: jest.fn(),
-    } as unknown as SchoolYearsRepository & MockedRepository<SchoolYearsRepository>;
+    } as unknown as SchoolYearsRepository &
+      MockedRepository<SchoolYearsRepository>;
 
     (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({
       schoolYearId: '3',
@@ -93,7 +100,9 @@ describe('CoursesService', () => {
       role: 'teacher',
     });
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('throws ForbiddenException when assigning non-teacher user', async () => {
@@ -113,7 +122,9 @@ describe('CoursesService', () => {
       role: 'admin',
     });
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it('throws ConflictException on duplicate course assignment', async () => {
@@ -141,7 +152,9 @@ describe('CoursesService', () => {
       new QueryFailedError('', [], { code: '23505' }),
     );
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('throws ConflictException when course and class group school years differ', async () => {
@@ -161,7 +174,9 @@ describe('CoursesService', () => {
       role: 'teacher',
     });
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(schoolYearsRepository.findOne).not.toHaveBeenCalled();
   });
 
@@ -186,7 +201,9 @@ describe('CoursesService', () => {
       isActive: false,
     });
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('creates a course and returns summary', async () => {
@@ -210,7 +227,9 @@ describe('CoursesService', () => {
       lastName: 'Teacher',
     };
 
-    (courseInstancesRepository.findOne as jest.Mock).mockResolvedValue(courseInstance);
+    (courseInstancesRepository.findOne as jest.Mock).mockResolvedValue(
+      courseInstance,
+    );
     (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(classGroup);
     (usersRepository.findOne as jest.Mock).mockResolvedValue(teacher);
     (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({

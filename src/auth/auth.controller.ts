@@ -1,6 +1,12 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 // Exposes authentication endpoints for login, signup, and profile retrieval.
-import { Body, Controller, Get, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { AuthResponse, SanitizedUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';

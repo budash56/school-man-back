@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsPositive,
+} from 'class-validator';
 import { TermName } from './term-name.enum';
 
 export class TermsQueryDto {
@@ -9,7 +15,9 @@ export class TermsQueryDto {
     example: true,
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : value === 'true' || value === true,
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
   )
   @IsOptional()
   @IsBoolean()
@@ -28,7 +36,9 @@ export class TermsQueryDto {
     example: 1,
   })
   @Transform(({ value }) =>
-    value === undefined || value === null ? undefined : Number.parseInt(value, 10),
+    value === undefined || value === null
+      ? undefined
+      : Number.parseInt(value, 10),
   )
   @IsOptional()
   @IsInt()

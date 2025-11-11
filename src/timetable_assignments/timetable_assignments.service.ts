@@ -5,23 +5,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
 import { TimetableAssignments } from './timetable_assignments.entity';
 import { TimetableAssignmentsRepository } from './timetable_assignments.repository';
 import { CoursesRepository } from '../courses/courses.repository';
 import { AccessService } from '../auth/access.service';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
+import { CreateTimetableAssignmentDto } from './dto/create-timetable-assignment.dto';
+import { UpdateTimetableAssignmentDto } from './dto/update-timetable-assignment.dto';
+import { TimetableAssignmentsQueryDto } from './dto/timetable-assignments-query.dto';
 
 type ActingUser = {
   userId: number;
   role: string;
-};
-
-export type TimetableAssignmentsQuery = {
-  courseId?: number;
-  classGroupId?: number;
-  teacherId?: number;
-  slotId?: number;
 };
 
 @Injectable()
@@ -33,7 +28,7 @@ export class TimetableAssignmentsService {
   ) {}
 
   async findAll(
-    query: TimetableAssignmentsQuery,
+    query: TimetableAssignmentsQueryDto,
     currentUser?: ActingUser,
   ): Promise<TimetableAssignments[]> {
     const qb = this.assignmentsRepository
@@ -56,7 +51,7 @@ export class TimetableAssignmentsService {
 
     if (query.teacherId !== undefined) {
       qb.andWhere('assignment.teacherId = :teacherId', {
-        teacherId: query.teacherId.toString(),
+        teacherId: query.teacherId,
       });
     }
 
@@ -68,7 +63,9 @@ export class TimetableAssignmentsService {
 
     if (currentUser?.role === 'teacher') {
       const accessService = new AccessService(this.coursesRepository);
-      const classGroupIds = await accessService.classGroupIdsForTeacher(currentUser.userId);
+      const classGroupIds = await accessService.classGroupIdsForTeacher(
+        currentUser.userId,
+      );
 
       if (classGroupIds.length === 0) {
         return [];
@@ -83,7 +80,7 @@ export class TimetableAssignmentsService {
   }
 
   async create(
-    dto: DeepPartial<TimetableAssignments>,
+    dto: CreateTimetableAssignmentDto,
     user?: { role?: string },
   ): Promise<TimetableAssignments> {
     const courseId = dto.courseId ?? null;
@@ -94,13 +91,27 @@ export class TimetableAssignmentsService {
     const schoolYearId = await this.resolveCourseYear(courseId);
     await this.assertYearWritable(schoolYearId, user);
 
-    const entity = this.assignmentsRepository.create(dto);
+    const entityPayload: Partial<TimetableAssignments> = {
+      courseId: courseId.toString(),
+      slotId: dto.slotId !== undefined ? dto.slotId.toString() : null,
+      teacherId: dto.teacherId ?? null,
+      classGroupId:
+        dto.classGroupId !== undefined ? dto.classGroupId.toString() : null,
+    };
+
+    if (dto.classroomId !== undefined) {
+      entityPayload.classroom = {
+        classroomId: dto.classroomId.toString(),
+      } as TimetableAssignments['classroom'];
+    }
+
+    const entity = this.assignmentsRepository.create(entityPayload);
     return this.assignmentsRepository.save(entity);
   }
 
   async update(
     id: string,
-    dto: DeepPartial<TimetableAssignments>,
+    dto: UpdateTimetableAssignmentDto,
     user?: { role?: string },
   ): Promise<TimetableAssignments> {
     const entity = await this.assignmentsRepository.findOne({
@@ -119,8 +130,51 @@ export class TimetableAssignmentsService {
     const schoolYearId = await this.resolveCourseYear(nextCourseId);
     await this.assertYearWritable(schoolYearId, user);
 
-    this.assignmentsRepository.merge(entity, dto);
+    const updatedFields: Partial<TimetableAssignments> = {};
+
+    if (dto.courseId !== undefined) {
+      updatedFields.courseId = dto.courseId.toString();
+    }
+
+    if (dto.slotId !== undefined) {
+      updatedFields.slotId = dto.slotId.toString();
+    }
+
+    if (dto.teacherId !== undefined) {
+      updatedFields.teacherId = dto.teacherId ?? null;
+    }
+
+    if (dto.classGroupId !== undefined) {
+      updatedFields.classGroupId = dto.classGroupId.toString();
+    }
+
+    if (dto.classroomId !== undefined) {
+      updatedFields.classroom = {
+        classroomId: dto.classroomId.toString(),
+      } as TimetableAssignments['classroom'];
+    }
+
+    this.assignmentsRepository.merge(entity, updatedFields);
     return this.assignmentsRepository.save(entity);
+  }
+
+  async remove(
+    id: string,
+    user?: { role?: string },
+  ): Promise<{ deleted: true }> {
+    const assignment = await this.assignmentsRepository.findOne({
+      where: { assignmentId: id },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('TimetableAssignments record not found');
+    }
+
+    const schoolYearId = await this.resolveCourseYear(assignment.courseId);
+    await this.assertYearWritable(schoolYearId, user);
+
+    await this.assignmentsRepository.remove(assignment);
+    return { deleted: true };
   }
 
   private async resolveCourseYear(courseId: string | number): Promise<number> {

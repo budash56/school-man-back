@@ -6,13 +6,19 @@ import { SubjectAreasRepository } from './subject_areas.repository';
 import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';
 import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 
 @Injectable()
 export class SubjectAreasService {
   constructor(private readonly repository: SubjectAreasRepository) {}
 
-  async findAll(query: SubjectAreasQueryDto): Promise<PaginatedResult<SubjectAreas>> {
+  async findAll(
+    query: SubjectAreasQueryDto,
+  ): Promise<PaginatedResult<SubjectAreas>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
     const qb = this.repository.createQueryBuilder('subjectAreas');
 
@@ -23,8 +29,8 @@ export class SubjectAreasService {
       qb.where(
         new Brackets((searchQb) => {
           searchQb
-            .where('subjectAreas.code ILIKE :keyword ESCAPE \'\\\'')
-            .orWhere('subjectAreas.name ILIKE :keyword ESCAPE \'\\\'');
+            .where("subjectAreas.code ILIKE :keyword ESCAPE '\\'")
+            .orWhere("subjectAreas.name ILIKE :keyword ESCAPE '\\'");
         }),
       ).setParameter('keyword', keyword);
     }
@@ -57,7 +63,10 @@ export class SubjectAreasService {
     try {
       return await this.repository.save(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Subject area with this code or name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Subject area with this code or name already exists',
+      );
     }
   }
 
@@ -68,7 +77,10 @@ export class SubjectAreasService {
     try {
       return await this.repository.save(area);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Subject area with this code or name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Subject area with this code or name already exists',
+      );
     }
   }
 

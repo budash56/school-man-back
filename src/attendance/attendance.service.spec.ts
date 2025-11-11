@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { AttendanceService } from './attendance.service';
 import { AttendanceRepository } from './attendance.repository';
@@ -16,7 +20,8 @@ const pgUniqueQueryFailed = () =>
   new QueryFailedError('', [], {
     code: '23505',
     constraint: 'uniq_attendance_student_date_slot',
-    detail: 'Key (student_id, date, slot_id)=(1, 2025-02-10, 3) already exists.',
+    detail:
+      'Key (student_id, date, slot_id)=(1, 2025-02-10, 3) already exists.',
   });
 
 describe('AttendanceService', () => {
@@ -24,9 +29,12 @@ describe('AttendanceService', () => {
   let attendanceRepository: AttendanceRepository & Mocked<AttendanceRepository>;
   let studentsRepository: StudentsRepository & Mocked<StudentsRepository>;
   let coursesRepository: CoursesRepository & Mocked<CoursesRepository>;
-  let timetableSlotRepository: TimetableSlotRepository & Mocked<TimetableSlotRepository>;
-  let enrollmentsRepository: EnrollmentsRepository & Mocked<EnrollmentsRepository>;
-  let schoolYearsRepository: SchoolYearsRepository & Mocked<SchoolYearsRepository>;
+  let timetableSlotRepository: TimetableSlotRepository &
+    Mocked<TimetableSlotRepository>;
+  let enrollmentsRepository: EnrollmentsRepository &
+    Mocked<EnrollmentsRepository>;
+  let schoolYearsRepository: SchoolYearsRepository &
+    Mocked<SchoolYearsRepository>;
 
   const baseCreateDto: CreateAttendanceDto = {
     studentId: 1,
@@ -63,10 +71,14 @@ describe('AttendanceService', () => {
     } as unknown as EnrollmentsRepository & Mocked<EnrollmentsRepository>;
 
     schoolYearsRepository = {
-      findOne: jest.fn().mockResolvedValue({ schoolYearId: '99', isActive: true }),
+      findOne: jest
+        .fn()
+        .mockResolvedValue({ schoolYearId: '99', isActive: true }),
     } as unknown as SchoolYearsRepository & Mocked<SchoolYearsRepository>;
 
-    (studentsRepository.findOne as jest.Mock).mockResolvedValue({ studentId: '1' });
+    (studentsRepository.findOne as jest.Mock).mockResolvedValue({
+      studentId: '1',
+    });
     (coursesRepository.findOne as jest.Mock).mockResolvedValue({
       courseId: '5',
       classGroup: { classGroupId: '20' },
@@ -98,16 +110,26 @@ describe('AttendanceService', () => {
     });
 
     await expect(
-      service.create(baseCreateDto, { userId: 1, nationalId: 'admin-seed', role: 'admin' }),
+      service.create(baseCreateDto, {
+        userId: 1,
+        nationalId: 'admin-seed',
+        role: 'admin',
+      }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('throws ConflictException on duplicate attendance for student/date/slot', async () => {
     (attendanceRepository.create as jest.Mock).mockReturnValue({});
-    (attendanceRepository.save as jest.Mock).mockRejectedValue(pgUniqueQueryFailed());
+    (attendanceRepository.save as jest.Mock).mockRejectedValue(
+      pgUniqueQueryFailed(),
+    );
 
     await expect(
-      service.create(baseCreateDto, { userId: 1, nationalId: 'admin-seed', role: 'admin' }),
+      service.create(baseCreateDto, {
+        userId: 1,
+        nationalId: 'admin-seed',
+        role: 'admin',
+      }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -129,11 +151,11 @@ describe('AttendanceService', () => {
     };
 
     await expect(
-      service.update(
-        10,
-        dto,
-        { userId: 2, nationalId: 'teacher-123', role: 'teacher' },
-      ),
+      service.update(10, dto, {
+        userId: 2,
+        nationalId: 'teacher-123',
+        role: 'teacher',
+      }),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

@@ -25,7 +25,8 @@
 - **I6**: Attendance: `(student, date, slot)` unique; date’s weekday equals slot’s weekday
 - **I7**: Class-group code unique per year: `(school_year_id, grade_level || section)`; `section` matches `^[0-9]{2}$`
 - **I8**: Guardian phone is **required**
-- **Policy v1**: Only the recording teacher may change `A` → `AE`
+- **I9**: Archived school years become read-only for teachers; admins may override globally, coordinators only within enrollment workflows.
+- **Policy v1**: Only the recording teacher may change `A` → `AE`; delete operations follow the same ownership + school-year guard.
 
 > DB guardrails exist (constraints/triggers); backend must validate for UX and clearer errors.
 
@@ -41,8 +42,8 @@
   **Unique**: (course_instance_id, class_group_id, teacher_id)
 - `timetable_slots` (day_of_week, start_time, end_time)  
   **Unique**: (day_of_week, start_time, end_time)
-- `timetable_assignments` (course_id ↔ slot_id, optional classroom override)
-- `students` (national_id, guardian_* required)
+- `timetable_assignments` (course_id ↔ slot_id, optional classroom override; `teacher_id` stores the teacher’s `national_id` string)
+- `students` (national_id, guardian_* required, soft-deleted via `deleted_at`)
 - `enrollments` (student → class_group per year; one active)
 - `grades` (student, course, term, SABJ)
 - `attendance` (student, course, date, slot, status, recorded_by)
@@ -85,7 +86,8 @@
 - Assign courses to slots; reject double-bookings (I4) and room conflicts (I5)
 
 ### F6. Enrollment
-- One active enrollment per `(student, year)` (I1); soft-delete allowed later
+- One active enrollment per `(student, year)` (I1); delete/deactivate keep historical audit trail
+- Admins + coordinators may adjust archived school years when policy requires corrections
 - Capacity warning vs classroom capacity
 
 ### F7. Grades
@@ -95,7 +97,7 @@
 ### F8. Attendance
 - Unique `(student, date, slot)` (I6)
 - Weekday matches slot’s weekday
-- A→AE only by `recorded_by` (policy v1)
+- A→AE only by `recorded_by`; deletes must pass the same teacher ownership + school-year lock guard (admins bypass, coordinators only when policy allows)
 
 ### F9. Reports
 - “Grades by academic year” per student: subjects, P1–P4, Final

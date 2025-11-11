@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';

@@ -9,7 +9,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -46,7 +51,8 @@ export class UsersController {
         value: {
           nationalId: '199001011234',
           username: 'jdoe',
-          passwordHash: '$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e',
+          passwordHash:
+            '$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e',
           role: 'teacher',
           firstName: 'John',
           lastName: 'Doe',

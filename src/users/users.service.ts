@@ -5,7 +5,11 @@ import { Users } from './users.entity';
 import { CreateUsersDto } from './dto/create-users.dto';
 import { UpdateUsersDto } from './dto/update-users.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 
 @Injectable()
@@ -29,10 +33,10 @@ export class UsersService {
       qb.andWhere(
         new Brackets((sub) => {
           sub
-            .where('users.username ILIKE :keyword ESCAPE \\\'')
-            .orWhere('users.national_id ILIKE :keyword ESCAPE \\\'')
-            .orWhere('users.first_name ILIKE :keyword ESCAPE \\\'')
-            .orWhere('users.last_name ILIKE :keyword ESCAPE \\\'');
+            .where("users.username ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.national_id ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.first_name ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.last_name ILIKE :keyword ESCAPE \\'");
         }),
       ).setParameter('keyword', keyword);
     }
@@ -73,7 +77,10 @@ export class UsersService {
     try {
       return await this.repository.save(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'User with this national ID or username already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'User with this national ID or username already exists',
+      );
     }
   }
 
@@ -93,7 +100,7 @@ export class UsersService {
     }
 
     if (dto.role !== undefined) {
-      entity.role = dto.role as Users['role'];
+      entity.role = dto.role;
     }
 
     if (dto.firstName !== undefined) {
@@ -119,7 +126,10 @@ export class UsersService {
     try {
       return await this.repository.save(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'User with this national ID or username already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'User with this national ID or username already exists',
+      );
     }
   }
 

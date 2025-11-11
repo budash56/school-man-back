@@ -9,11 +9,19 @@ import {
   MinLength,
 } from 'class-validator';
 
-export const USER_ROLES = ['admin', 'registrar', 'teacher', 'coordinator'] as const;
+export const USER_ROLES = [
+  'admin',
+  'registrar',
+  'teacher',
+  'coordinator',
+] as const;
 type UserRole = (typeof USER_ROLES)[number];
 
 export class CreateUsersDto {
-  @ApiProperty({ example: '199001011234', description: 'Unique national identifier' })
+  @ApiProperty({
+    example: '199001011234',
+    description: 'Unique national identifier',
+  })
   @IsString()
   @MinLength(4)
   @MaxLength(50)
@@ -42,7 +50,10 @@ export class CreateUsersDto {
   @IsIn(USER_ROLES)
   role: UserRole;
 
-  @ApiPropertyOptional({ example: 'John', description: 'First name of the user' })
+  @ApiPropertyOptional({
+    example: 'John',
+    description: 'First name of the user',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)
@@ -54,19 +65,28 @@ export class CreateUsersDto {
   @MaxLength(80)
   lastName?: string;
 
-  @ApiPropertyOptional({ example: 'john.doe@example.edu', description: 'Contact email address' })
+  @ApiPropertyOptional({
+    example: 'john.doe@example.edu',
+    description: 'Contact email address',
+  })
   @IsOptional()
   @IsEmail()
   @MaxLength(150)
   email?: string;
 
-  @ApiPropertyOptional({ example: '+1-202-555-0199', description: 'Contact phone number' })
+  @ApiPropertyOptional({
+    example: '+1-202-555-0199',
+    description: 'Contact phone number',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(30)
   phone?: string;
 
-  @ApiPropertyOptional({ example: true, description: 'Whether the user is active' })
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether the user is active',
+  })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

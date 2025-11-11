@@ -43,7 +43,7 @@ export class SchoolYears {
 
   @OneToMany(
     () => CourseInstances,
-    (courseInstances) => courseInstances.schoolYear
+    (courseInstances) => courseInstances.schoolYear,
   )
   courseInstances: CourseInstances[];
 

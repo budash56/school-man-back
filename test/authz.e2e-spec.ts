@@ -23,9 +23,18 @@ describe('Authorization flows (e2e)', () => {
   let dataSource: DataSource;
 
   const adminCredentials = { nationalId: '900001', password: 'Admin#12345' };
-  const coordinatorCredentials = { nationalId: '900002', password: 'Coord#12345' };
-  const teacherOneCredentials = { nationalId: '800001', password: 'Teach1#123' };
-  const teacherTwoCredentials = { nationalId: '800002', password: 'Teach2#123' };
+  const coordinatorCredentials = {
+    nationalId: '900002',
+    password: 'Coord#12345',
+  };
+  const teacherOneCredentials = {
+    nationalId: '800001',
+    password: 'Teach1#123',
+  };
+  const teacherTwoCredentials = {
+    nationalId: '800002',
+    password: 'Teach2#123',
+  };
 
   let coordinatorToken: string;
   let teacherOneToken: string;
@@ -47,10 +56,22 @@ describe('Authorization flows (e2e)', () => {
 
     await seedDatabase();
 
-    coordinatorToken = await login(adminCredentials.nationalId, adminCredentials.password); // ensure admin exists for future use
-    coordinatorToken = await login(coordinatorCredentials.nationalId, coordinatorCredentials.password);
-    teacherOneToken = await login(teacherOneCredentials.nationalId, teacherOneCredentials.password);
-    teacherTwoToken = await login(teacherTwoCredentials.nationalId, teacherTwoCredentials.password);
+    coordinatorToken = await login(
+      adminCredentials.nationalId,
+      adminCredentials.password,
+    ); // ensure admin exists for future use
+    coordinatorToken = await login(
+      coordinatorCredentials.nationalId,
+      coordinatorCredentials.password,
+    );
+    teacherOneToken = await login(
+      teacherOneCredentials.nationalId,
+      teacherOneCredentials.password,
+    );
+    teacherTwoToken = await login(
+      teacherTwoCredentials.nationalId,
+      teacherTwoCredentials.password,
+    );
   });
 
   afterAll(async () => {
@@ -148,9 +169,18 @@ describe('Authorization flows (e2e)', () => {
     await wipe(slotsRepo);
 
     const adminPasswordHash = await bcrypt.hash(adminCredentials.password, 10);
-    const coordinatorPasswordHash = await bcrypt.hash(coordinatorCredentials.password, 10);
-    const teacherOnePasswordHash = await bcrypt.hash(teacherOneCredentials.password, 10);
-    const teacherTwoPasswordHash = await bcrypt.hash(teacherTwoCredentials.password, 10);
+    const coordinatorPasswordHash = await bcrypt.hash(
+      coordinatorCredentials.password,
+      10,
+    );
+    const teacherOnePasswordHash = await bcrypt.hash(
+      teacherOneCredentials.password,
+      10,
+    );
+    const teacherTwoPasswordHash = await bcrypt.hash(
+      teacherTwoCredentials.password,
+      10,
+    );
 
     await usersRepo.save([
       usersRepo.create({

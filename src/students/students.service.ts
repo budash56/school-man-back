@@ -1,11 +1,19 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Brackets } from 'typeorm';
 import { Students } from './students.entity';
 import { StudentsRepository } from './students.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentsQueryDto } from './dto/students-query.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 
 @Injectable()
 export class StudentsService {
@@ -22,9 +30,9 @@ export class StudentsService {
       qb.andWhere(
         new Brackets((searchQb) => {
           searchQb
-            .where('students.first_name ILIKE :keyword ESCAPE \'\\\'')
-            .orWhere('students.last_name ILIKE :keyword ESCAPE \'\\\'')
-            .orWhere('students.national_id ILIKE :keyword ESCAPE \'\\\'');
+            .where("students.first_name ILIKE :keyword ESCAPE '\\'")
+            .orWhere("students.last_name ILIKE :keyword ESCAPE '\\'")
+            .orWhere("students.national_id ILIKE :keyword ESCAPE '\\'");
         }),
       ).setParameter('keyword', keyword);
     }
@@ -54,7 +62,7 @@ export class StudentsService {
       where: { studentId: id.toString() },
     });
 
-    if (!student) {
+    if (!student || student.deletedAt) {
       throw new NotFoundException('Student not found');
     }
 
@@ -97,7 +105,9 @@ export class StudentsService {
 
   async remove(id: number): Promise<{ deleted: true }> {
     const student = await this.findOne(id);
-    await this.repository.remove(student);
+    student.deletedAt = new Date();
+    student.isActive = false;
+    await this.repository.save(student);
     return { deleted: true };
   }
 
@@ -121,8 +131,9 @@ export class StudentsService {
     });
 
     if (existing && existing.studentId !== currentStudentId) {
-      throw new ConflictException('A student with this national ID already exists');
+      throw new ConflictException(
+        'A student with this national ID already exists',
+      );
     }
   }
-
 }

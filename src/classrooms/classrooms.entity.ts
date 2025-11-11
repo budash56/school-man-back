@@ -37,7 +37,7 @@ export class Classrooms {
 
   @OneToMany(
     () => TimetableAssignments,
-    (timetableAssignments) => timetableAssignments.classroom
+    (timetableAssignments) => timetableAssignments.classroom,
   )
   timetableAssignments: TimetableAssignments[];
 }

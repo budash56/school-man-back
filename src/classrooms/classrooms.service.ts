@@ -4,7 +4,11 @@ import { ClassroomsRepository } from './classrooms.repository';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { QueryClassroomDto } from './dto/query-classroom.dto';
-import { buildPaginationResult, PaginatedResult, resolvePagination } from '../shared/pagination';
+import {
+  buildPaginationResult,
+  PaginatedResult,
+  resolvePagination,
+} from '../shared/pagination';
 import { Classrooms } from './classrooms.entity';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 
@@ -20,21 +24,27 @@ export type ClassroomResponse = {
 export class ClassroomsService {
   constructor(private readonly repository: ClassroomsRepository) {}
 
-  async findAll(query: QueryClassroomDto): Promise<PaginatedResult<ClassroomResponse>> {
+  async findAll(
+    query: QueryClassroomDto,
+  ): Promise<PaginatedResult<ClassroomResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
-    const qb = this.repository.createQueryBuilder('classrooms').orderBy('classrooms.name', 'ASC');
+    const qb = this.repository
+      .createQueryBuilder('classrooms')
+      .orderBy('classrooms.name', 'ASC');
 
     if (query.building?.trim()) {
       const keyword = `%${query.building.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
-      qb.andWhere('classrooms.building ILIKE :building ESCAPE \\\'', { building: keyword });
+      qb.andWhere("classrooms.building ILIKE :building ESCAPE \\'", {
+        building: keyword,
+      });
     }
 
     if (query.q?.trim()) {
       const keyword = `%${query.q.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`;
       qb.andWhere(
         new Brackets((sub) => {
-          sub.where('classrooms.name ILIKE :keyword ESCAPE \\\'', { keyword });
+          sub.where("classrooms.name ILIKE :keyword ESCAPE \\'", { keyword });
         }),
       );
     }
@@ -75,11 +85,17 @@ export class ClassroomsService {
       const saved = await this.repository.save(entity);
       return this.findOne(Number(saved.classroomId));
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Classroom with this name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Classroom with this name already exists',
+      );
     }
   }
 
-  async update(id: number, dto: UpdateClassroomDto): Promise<ClassroomResponse> {
+  async update(
+    id: number,
+    dto: UpdateClassroomDto,
+  ): Promise<ClassroomResponse> {
     const entity = await this.getEntity(id);
 
     if (dto.name !== undefined) {
@@ -98,7 +114,10 @@ export class ClassroomsService {
       await this.repository.save(entity);
       return this.toResponse(entity);
     } catch (error) {
-      DbErrorMapper.throwConflict(error, 'Classroom with this name already exists');
+      DbErrorMapper.throwConflict(
+        error,
+        'Classroom with this name already exists',
+      );
     }
   }
 

@@ -12,7 +12,8 @@ describe('CourseInstancesService', () => {
   let service: CourseInstancesService;
   let repository: CourseInstancesRepository & Mocked<CourseInstancesRepository>;
   let subjectsRepository: SubjectsRepository & Mocked<SubjectsRepository>;
-  let schoolYearsRepository: SchoolYearsRepository & Mocked<SchoolYearsRepository>;
+  let schoolYearsRepository: SchoolYearsRepository &
+    Mocked<SchoolYearsRepository>;
 
   const subject = {
     subjectId: '1',
@@ -44,7 +45,8 @@ describe('CourseInstancesService', () => {
       remove: jest.fn(),
       createQueryBuilder: jest.fn(),
       find: jest.fn(),
-    } as unknown as CourseInstancesRepository & Mocked<CourseInstancesRepository>;
+    } as unknown as CourseInstancesRepository &
+      Mocked<CourseInstancesRepository>;
 
     subjectsRepository = {
       findOne: jest.fn(),
@@ -54,7 +56,11 @@ describe('CourseInstancesService', () => {
       findOne: jest.fn(),
     } as unknown as SchoolYearsRepository & Mocked<SchoolYearsRepository>;
 
-    service = new CourseInstancesService(repository, subjectsRepository, schoolYearsRepository);
+    service = new CourseInstancesService(
+      repository,
+      subjectsRepository,
+      schoolYearsRepository,
+    );
 
     (subjectsRepository.findOne as jest.Mock).mockResolvedValue(subject);
     (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue(schoolYear);
@@ -66,7 +72,9 @@ describe('CourseInstancesService', () => {
       new QueryFailedError('', [], { code: '23505' }),
     );
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('throws BadRequestException when grade level is out of range', async () => {

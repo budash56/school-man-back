@@ -81,7 +81,7 @@ export class Users {
 
   @OneToMany(
     () => DisciplinaryRecords,
-    (disciplinaryRecords) => disciplinaryRecords.recordedBy
+    (disciplinaryRecords) => disciplinaryRecords.recordedBy,
   )
   disciplinaryRecords: DisciplinaryRecords[];
 

@@ -11,7 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateSubjectAreaDto } from './dto/create-subject-area.dto';
 import { SubjectAreasQueryDto } from './dto/subject-areas-query.dto';
 import { UpdateSubjectAreaDto } from './dto/update-subject-area.dto';

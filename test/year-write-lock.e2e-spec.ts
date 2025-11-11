@@ -44,8 +44,14 @@ describe('Year write lock (e2e)', () => {
 
     await seedDatabase();
 
-    adminToken = await login(adminCredentials.nationalId, adminCredentials.password);
-    teacherToken = await login(teacherCredentials.nationalId, teacherCredentials.password);
+    adminToken = await login(
+      adminCredentials.nationalId,
+      adminCredentials.password,
+    );
+    teacherToken = await login(
+      teacherCredentials.nationalId,
+      teacherCredentials.password,
+    );
   });
 
   afterAll(async () => {
@@ -130,7 +136,10 @@ describe('Year write lock (e2e)', () => {
     await wipe(subjectAreasRepo);
 
     const adminPasswordHash = await bcrypt.hash(adminCredentials.password, 10);
-    const teacherPasswordHash = await bcrypt.hash(teacherCredentials.password, 10);
+    const teacherPasswordHash = await bcrypt.hash(
+      teacherCredentials.password,
+      10,
+    );
 
     const savedUsers = await usersRepo.save([
       usersRepo.create({

@@ -3,7 +3,9 @@ import { StudentsService } from './students.service';
 import { StudentsRepository } from './students.repository';
 import { CreateStudentDto } from './dto/create-student.dto';
 
-type MockedStudentsRepository = Partial<Record<keyof StudentsRepository, jest.Mock>>;
+type MockedStudentsRepository = Partial<
+  Record<keyof StudentsRepository, jest.Mock>
+>;
 
 describe('StudentsService', () => {
   let service: StudentsService;
@@ -44,6 +46,8 @@ describe('StudentsService', () => {
 
     (repository.findOne as jest.Mock).mockResolvedValueOnce(savedStudent);
 
-    await expect(service.create(createDto)).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.create(createDto)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 });

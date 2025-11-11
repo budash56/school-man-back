@@ -8,15 +8,26 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
-import type { DeepPartial } from 'typeorm';
 import { TimetableAssignments } from './timetable_assignments.entity';
 import { TimetableAssignmentsRepository } from './timetable_assignments.repository';
-import { TimetableAssignmentsService, TimetableAssignmentsQuery } from './timetable_assignments.service';
+import { TimetableAssignmentsService } from './timetable_assignments.service';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { Request } from 'express';
-import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiForbiddenResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { CreateTimetableAssignmentDto } from './dto/create-timetable-assignment.dto';
+import { UpdateTimetableAssignmentDto } from './dto/update-timetable-assignment.dto';
+import { TimetableAssignmentsQueryDto } from './dto/timetable-assignments-query.dto';
 
 type RequestWithUser = Request & {
   user?: { userId?: number; nationalId?: string; role?: string };
@@ -25,6 +36,7 @@ type RequestWithUser = Request & {
 @ApiTags('timetable-assignments')
 @Roles(...READ_ROLES)
 @ApiBearerAuth('bearer')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('timetable-assignments')
 export class TimetableAssignmentsController {
   constructor(
@@ -33,8 +45,10 @@ export class TimetableAssignmentsController {
   ) {}
 
   @Get()
-  findAll(@Req() req: RequestWithUser) {
-    const query = this.parseQuery(req) as TimetableAssignmentsQuery;
+  findAll(
+    @Query() query: TimetableAssignmentsQueryDto,
+    @Req() req: RequestWithUser,
+  ) {
     return this.assignmentsService.findAll(query, this.toActingUser(req));
   }
 
@@ -53,40 +67,26 @@ export class TimetableAssignmentsController {
 
   @Roles(...WRITE_ROLES)
   @Post()
-  @ApiBody({
-    schema: {
-      example: {
-        courseId: 15,
-        slotId: 3,
-        teacherId: 'teacher-001',
-        classGroupId: 9,
-        classroomId: 2,
-      },
-    },
-  })
+  @ApiBody({ type: CreateTimetableAssignmentDto })
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  create(@Body() payload: DeepPartial<TimetableAssignments>, @Req() req: RequestWithUser) {
+  create(
+    @Body() payload: CreateTimetableAssignmentDto,
+    @Req() req: RequestWithUser,
+  ) {
     return this.assignmentsService.create(payload, req.user);
   }
 
   @Roles(...WRITE_ROLES)
   @Patch(':id')
-  @ApiBody({
-    schema: {
-      example: {
-        teacherId: 'teacher-002',
-        classroomId: 4,
-      },
-    },
-  })
+  @ApiBody({ type: UpdateTimetableAssignmentDto })
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
   update(
     @Param('id') id: string,
-    @Body() payload: DeepPartial<TimetableAssignments>,
+    @Body() payload: UpdateTimetableAssignmentDto,
     @Req() req: RequestWithUser,
   ) {
     return this.assignmentsService.update(id, payload, req.user);
@@ -97,27 +97,17 @@ export class TimetableAssignmentsController {
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  async remove(@Param('id') id: string) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
-  }
-
-  private parseQuery(req: RequestWithUser): TimetableAssignmentsQuery {
-    const { courseId, classGroupId, teacherId, slotId } = req.query;
-    return {
-      courseId: courseId !== undefined ? Number(courseId) : undefined,
-      classGroupId: classGroupId !== undefined ? Number(classGroupId) : undefined,
-      teacherId: teacherId !== undefined ? Number(teacherId) : undefined,
-      slotId: slotId !== undefined ? Number(slotId) : undefined,
-    };
+  remove(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.assignmentsService.remove(id, req.user);
   }
 
   private toActingUser(req: RequestWithUser) {
     if (!req.user) {
       return undefined;
     }
-    const rawId = req.user.userId ?? (req.user.nationalId ? Number(req.user.nationalId) : NaN);
+    const rawId =
+      req.user.userId ??
+      (req.user.nationalId ? Number(req.user.nationalId) : NaN);
     return {
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
       role: req.user.role ?? 'teacher',

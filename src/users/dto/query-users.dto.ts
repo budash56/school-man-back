@@ -12,17 +12,28 @@ import {
 import { USER_ROLES } from './create-users.dto';
 
 export class QueryUsersDto {
-  @ApiPropertyOptional({ example: 'john', description: 'Search keyword matched against username, name, or national ID' })
+  @ApiPropertyOptional({
+    example: 'john',
+    description:
+      'Search keyword matched against username, name, or national ID',
+  })
   @IsOptional()
   @IsString()
   q?: string;
 
-  @ApiPropertyOptional({ example: 'teacher', enum: USER_ROLES, description: 'Filter by user role' })
+  @ApiPropertyOptional({
+    example: 'teacher',
+    enum: USER_ROLES,
+    description: 'Filter by user role',
+  })
   @IsOptional()
   @IsIn(USER_ROLES)
   role?: string;
 
-  @ApiPropertyOptional({ example: true, description: 'Filter by active status' })
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Filter by active status',
+  })
   @IsOptional()
   @Transform(({ value }) => {
     if (value === undefined || value === null || value === '') {
@@ -44,14 +55,22 @@ export class QueryUsersDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ example: 1, default: 1, description: 'Page number (1+)' })
+  @ApiPropertyOptional({
+    example: 1,
+    default: 1,
+    description: 'Page number (1+)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ example: 25, default: 25, description: 'Page size (1-100)' })
+  @ApiPropertyOptional({
+    example: 25,
+    default: 25,
+    description: 'Page size (1-100)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

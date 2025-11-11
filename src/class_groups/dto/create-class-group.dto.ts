@@ -19,7 +19,10 @@ export class CreateClassGroupDto {
   })
   section: string;
 
-  @ApiPropertyOptional({ example: 3, description: 'Optional default classroom id' })
+  @ApiPropertyOptional({
+    example: 3,
+    description: 'Optional default classroom id',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

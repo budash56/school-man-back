@@ -11,7 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiForbiddenResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateTermDto } from './dto/create-term.dto';
 import { UpdateTermDto } from './dto/update-term.dto';
 import { TermsQueryDto } from './dto/terms-query.dto';
