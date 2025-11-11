@@ -84,6 +84,7 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - CRUD with guardian data requirements (`guardianPhone` non-null), soft constraints on uniqueness by `nationalId`.
   - Listing supports search keyword and filtering by school year (via enrollment existence).
   - Deletes mark the record as inactive/soft-deleted so historical enrollments, attendance, and grades remain intact.
+  - `PATCH /students/:id/restore` reactivates a previously deleted student (admin/coordinator only); restored records immediately become visible to GET endpoints.
 
 - **Enrollments (`/enrollments`)**
   - Manage student membership in class groups per school year.

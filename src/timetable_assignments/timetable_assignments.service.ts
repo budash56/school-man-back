@@ -91,6 +91,13 @@ export class TimetableAssignmentsService {
     const schoolYearId = await this.resolveCourseYear(courseId);
     await this.assertYearWritable(schoolYearId, user);
 
+    await this.assertNoConflicts({
+      courseId,
+      slotId: dto.slotId,
+      classGroupId: dto.classGroupId,
+      teacherId: dto.teacherId,
+    });
+
     const entityPayload: Partial<TimetableAssignments> = {
       courseId: courseId.toString(),
       slotId: dto.slotId !== undefined ? dto.slotId.toString() : null,
@@ -129,6 +136,29 @@ export class TimetableAssignmentsService {
 
     const schoolYearId = await this.resolveCourseYear(nextCourseId);
     await this.assertYearWritable(schoolYearId, user);
+
+    const nextSlotId =
+      dto.slotId !== undefined
+        ? dto.slotId
+        : entity.slotId
+        ? Number(entity.slotId)
+        : undefined;
+    const nextClassGroupId =
+      dto.classGroupId !== undefined
+        ? dto.classGroupId
+        : entity.classGroupId
+        ? Number(entity.classGroupId)
+        : undefined;
+    const nextTeacherId =
+      dto.teacherId !== undefined ? dto.teacherId : entity.teacherId ?? undefined;
+
+    await this.assertNoConflicts({
+      courseId: Number(nextCourseId),
+      slotId: nextSlotId,
+      classGroupId: nextClassGroupId,
+      teacherId: nextTeacherId,
+      ignoreAssignmentId: entity.assignmentId,
+    });
 
     const updatedFields: Partial<TimetableAssignments> = {};
 
@@ -214,6 +244,108 @@ export class TimetableAssignmentsService {
     const role = user?.role ?? 'admin';
     if (role !== 'admin') {
       throw new ForbiddenException('Past years are read-only');
+    }
+  }
+
+  private async assertNoConflicts(args: {
+    courseId: number;
+    slotId?: number;
+    classGroupId?: number;
+    teacherId?: string;
+    ignoreAssignmentId?: string;
+  }): Promise<void> {
+    const { courseId, slotId, classGroupId, teacherId, ignoreAssignmentId } = args;
+    if (!slotId) {
+      return;
+    }
+
+    const slotIdStr = slotId.toString();
+
+    await Promise.all([
+      this.checkClassGroupSlotConflict(classGroupId, slotIdStr, ignoreAssignmentId),
+      this.checkTeacherSlotConflict(teacherId, slotIdStr, ignoreAssignmentId),
+      this.checkCourseSlotConflict(courseId, slotIdStr, ignoreAssignmentId),
+    ]);
+  }
+
+  private async checkClassGroupSlotConflict(
+    classGroupId: number | undefined,
+    slotId: string,
+    ignoreAssignmentId?: string,
+  ): Promise<void> {
+    if (classGroupId === undefined) {
+      return;
+    }
+
+    const qb = this.assignmentsRepository
+      .createQueryBuilder('assignment')
+      .where('assignment.slotId = :slotId', { slotId })
+      .andWhere('assignment.classGroupId = :classGroupId', {
+        classGroupId: classGroupId.toString(),
+      });
+
+    if (ignoreAssignmentId) {
+      qb.andWhere('assignment.assignmentId != :ignoreAssignmentId', {
+        ignoreAssignmentId,
+      });
+    }
+
+    const count = await qb.getCount();
+
+    if (count > 0) {
+      throw new ConflictException('Another timetable entry already uses this slot for the class group');
+    }
+  }
+
+  private async checkTeacherSlotConflict(
+    teacherId: string | undefined,
+    slotId: string,
+    ignoreAssignmentId?: string,
+  ): Promise<void> {
+    if (!teacherId) {
+      return;
+    }
+
+    const qb = this.assignmentsRepository
+      .createQueryBuilder('assignment')
+      .where('assignment.slotId = :slotId', { slotId })
+      .andWhere('assignment.teacherId = :teacherId', { teacherId });
+
+    if (ignoreAssignmentId) {
+      qb.andWhere('assignment.assignmentId != :ignoreAssignmentId', {
+        ignoreAssignmentId,
+      });
+    }
+
+    const count = await qb.getCount();
+
+    if (count > 0) {
+      throw new ConflictException('Teacher already has an assignment at this slot');
+    }
+  }
+
+  private async checkCourseSlotConflict(
+    courseId: number,
+    slotId: string,
+    ignoreAssignmentId?: string,
+  ): Promise<void> {
+    const qb = this.assignmentsRepository
+      .createQueryBuilder('assignment')
+      .where('assignment.slotId = :slotId', { slotId })
+      .andWhere('assignment.courseId = :courseId', {
+        courseId: courseId.toString(),
+      });
+
+    if (ignoreAssignmentId) {
+      qb.andWhere('assignment.assignmentId != :ignoreAssignmentId', {
+        ignoreAssignmentId,
+      });
+    }
+
+    const count = await qb.getCount();
+
+    if (count > 0) {
+      throw new ConflictException('Course already has a timetable entry for this slot');
     }
   }
 }

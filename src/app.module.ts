@@ -63,6 +63,7 @@ import { TermsController } from './terms/terms.controller';
 import { TimetableAssignmentsController } from './timetable_assignments/timetable_assignments.controller';
 import { TimetableAssignmentsService } from './timetable_assignments/timetable_assignments.service';
 import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
+import { TimetableSlotsService } from './timetable_slots/timetable_slots.service';
 import { UsersController } from './users/users.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -160,6 +161,7 @@ const typeOrmConfig: TypeOrmModuleOptions = {
     SchoolYearsService,
     TermsService,
     UsersService,
+    TimetableSlotsService,
   ],
 })
 export class AppModule {}

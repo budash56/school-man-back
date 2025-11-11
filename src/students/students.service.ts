@@ -58,15 +58,7 @@ export class StudentsService {
   }
 
   async findOne(id: number): Promise<Students> {
-    const student = await this.repository.findOne({
-      where: { studentId: id.toString() },
-    });
-
-    if (!student || student.deletedAt) {
-      throw new NotFoundException('Student not found');
-    }
-
-    return student;
+    return this.loadStudent(id);
   }
 
   async create(dto: CreateStudentDto): Promise<Students> {
@@ -104,11 +96,23 @@ export class StudentsService {
   }
 
   async remove(id: number): Promise<{ deleted: true }> {
-    const student = await this.findOne(id);
+    const student = await this.loadStudent(id);
     student.deletedAt = new Date();
     student.isActive = false;
     await this.repository.save(student);
     return { deleted: true };
+  }
+
+  async restore(id: number): Promise<Students> {
+    const student = await this.loadStudent(id, { includeDeleted: true });
+
+    if (!student.deletedAt) {
+      return student;
+    }
+
+    student.deletedAt = null;
+    student.isActive = true;
+    return this.repository.save(student);
   }
 
   private buildSearchKeyword(raw: string): string {
@@ -135,5 +139,24 @@ export class StudentsService {
         'A student with this national ID already exists',
       );
     }
+  }
+
+  private async loadStudent(
+    id: number,
+    options?: { includeDeleted?: boolean },
+  ): Promise<Students> {
+    const student = await this.repository.findOne({
+      where: { studentId: id.toString() },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    if (!options?.includeDeleted && student.deletedAt) {
+      throw new NotFoundException('Student not found');
+    }
+
+    return student;
   }
 }

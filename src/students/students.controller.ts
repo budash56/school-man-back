@@ -83,4 +83,13 @@ export class StudentsController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.studentsService.remove(id);
   }
+
+  @Roles('admin', 'coordinator')
+  @Patch(':id/restore')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
+  restore(@Param('id', ParseIntPipe) id: number) {
+    return this.studentsService.restore(id);
+  }
 }

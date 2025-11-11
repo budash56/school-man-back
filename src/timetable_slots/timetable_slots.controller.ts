@@ -4,25 +4,13 @@ import {
   ApiForbiddenResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Patch,
-  Post,
-  ParseIntPipe,
-  UseGuards,
-} from '@nestjs/common';
-import { TimetableSlot } from './timetable_slots.entity';
-import { TimetableSlotRepository } from './timetable_slots.repository';
+import { Body, Controller, Delete, Get, Param, Patch, Post, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateTimetableSlotDto } from './dto/create-timetable-slot.dto';
 import { UpdateTimetableSlotDto } from './dto/update-timetable-slot.dto';
+import { TimetableSlotsService } from './timetable_slots.service';
 
 @ApiTags('timetable-slots')
 @Roles(...READ_ROLES)
@@ -30,22 +18,16 @@ import { UpdateTimetableSlotDto } from './dto/update-timetable-slot.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('timetable-slots')
 export class TimetableSlotsController {
-  constructor(private readonly repository: TimetableSlotRepository) {}
+  constructor(private readonly service: TimetableSlotsService) {}
 
   @Get()
   findAll() {
-    return this.repository.find();
+    return this.service.findAll();
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const entity = await this.repository.findOne({
-      where: { slotId: id },
-    });
-    if (!entity) {
-      throw new NotFoundException('TimetableSlot not found');
-    }
-    return entity;
+    return this.service.findOne(id);
   }
 
   @Roles(...WRITE_ROLES)
@@ -63,8 +45,7 @@ export class TimetableSlotsController {
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
   async create(@Body() payload: CreateTimetableSlotDto) {
-    const entity = this.repository.create(payload as Partial<TimetableSlot>);
-    return this.repository.save(entity);
+    return this.service.create(payload);
   }
 
   @Roles(...WRITE_ROLES)
@@ -85,9 +66,7 @@ export class TimetableSlotsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() payload: UpdateTimetableSlotDto,
   ) {
-    const entity = await this.findOne(id);
-    this.repository.merge(entity, payload);
-    return this.repository.save(entity);
+    return this.service.update(id, payload);
   }
 
   @Roles(...WRITE_ROLES)
@@ -96,8 +75,6 @@ export class TimetableSlotsController {
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
   async remove(@Param('id', ParseIntPipe) id: number) {
-    const entity = await this.findOne(id);
-    await this.repository.remove(entity);
-    return { deleted: true };
+    return this.service.remove(id);
   }
 }
