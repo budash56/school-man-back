@@ -18,8 +18,9 @@ import { Students } from '../students/students.entity';
 )
 @Index('enrollments_pkey', ['enrollmentId'], { unique: true })
 @Index('idx_enrollments_year', ['schoolYearId'], {})
-@Index('uniq_active_enrollment_per_year', ['schoolYearId', 'studentId'], {
+@Index('uniq_enrollment_student_year_active', ['schoolYearId', 'studentId'], {
   unique: true,
+  where: '"active" = true',
 })
 @Index('idx_enrollments_student', ['studentId'], {})
 @Entity('enrollments', { schema: 'public' })

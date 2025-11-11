@@ -119,3 +119,24 @@ export class TimetableSlot {
   @Column({ type: 'time', name: 'start_time' }) startTime: string;
   @Column({ type: 'time', name: 'end_time' }) endTime: string;
 }
+
+## 6) Roles & Access Matrix
+
+| Feature / Operation | Admin | Coordinator | Registrar | Teacher | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Students – list/read | ✓ | ✓ | ✓ | ✓ | All GET routes require JWT + `READ_ROLES`. |
+| Students – create/update/delete/restore | ✓ | ✓ | ✗ | ✗ | Soft delete via `DELETE` + `PATCH /restore`. |
+| Enrollments – list | ✓ | ✓ | ✓ | ✓ | Teachers are scoped to their class groups. |
+| Enrollments – create/update/deactivate/delete | ✓ | ✓ | ✗ | ✗ | Coordinators may edit archived years; others blocked once `isActive=false`. |
+| Attendance – create/update | ✓ | ✓ | ✗ | ✓ | Teachers limited to owned courses; coordinators/admins bypass course scope. |
+| Attendance – delete | ✓ | ✓ | ✗ | ✓ (only recording teacher) | Past-year deletes blocked unless role = admin. |
+| Grades – create/update/delete | ✓ | ✗ | ✗ | ✓ | Coordinators explicitly forbidden from grade mutations. |
+| Timetable slots – CRUD | ✓ | ✓ | ✗ | ✗ | Auth guards now enforced across slots/assignments. |
+| Timetable assignments – CRUD | ✓ | ✓ | ✗ | ✗ | Teachers read-only; collisions validated in service. |
+| Notifications – CRUD | ✓ | ✓ | ✗ | ✗ | Teachers can only read; create/update/delete restricted. |
+| Auth – login/signup/me | Public (login/signup) | Public | Public | Public | `GET /auth/me` requires JWT for any role. |
+
+**Policy clarifications**
+- **Attendance delete policy:** only the teacher who recorded the entry may delete or excuse their attendance; coordinators/admins can intervene when policy requires, but other teachers are blocked even if they belong to the same grade.
+- **Coordinator overrides:** coordinators share most write privileges with admins and may edit archived-year enrollments and attendance/ timetable records when the business office requests retroactive fixes. They cannot modify grades, users, or school-year locks.
+- **Teachers:** read everything (`READ_ROLES`) but limit writes to attendance + grades (own courses only). They never manage enrollments, students, or timetable definitions.

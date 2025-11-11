@@ -1,4 +1,4 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 // Exposes authentication endpoints for login, signup, and profile retrieval.
 import {
   Body,
@@ -13,7 +13,9 @@ import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import { CurrentUser } from './current-user.decorator';
 import { Public } from './public.decorator';
+import { AuthResponseDto, AuthUserDto } from './dto/auth-response.dto';
 
+@ApiTags('auth')
 @ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
@@ -21,12 +23,22 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @ApiBody({ type: LoginDto })
+  @ApiCreatedResponse({
+    description: 'Returns an access token and the sanitized user profile',
+    type: AuthResponseDto,
+  })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
     return this.authService.login(loginDto);
   }
 
   @Public()
   @Post('signup')
+  @ApiBody({ type: SignupDto })
+  @ApiCreatedResponse({
+    description: 'Creates a new user and returns access token + profile',
+    type: AuthResponseDto,
+  })
   async signup(
     @Body() signupDto: SignupDto,
     @CurrentUser() user?: SanitizedUser,
@@ -35,6 +47,10 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiOkResponse({
+    description: 'Returns the authenticated user',
+    type: AuthUserDto,
+  })
   async me(@CurrentUser() user?: SanitizedUser): Promise<SanitizedUser> {
     if (!user) {
       throw new UnauthorizedException('Authentication required');

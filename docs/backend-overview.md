@@ -78,6 +78,7 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 - **Timetable (`/timetable-slots`, `/timetable-assignments`)**
   - Slots define weekly schedule positions (day-of-week, start/end).
   - Timetable assignments bind courses to slots (and optional room overrides) with teacher/class-group conflict checks delegated to database constraints and `AccessService` for teacher visibility.
+  - Classroom/slot combinations are unique whenever a classroom is set, preventing double-booking shared rooms.
   - Write operations inherit school-year write locks through course associations.
 
 - **Students (`/students`)**
@@ -91,6 +92,7 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Service validates student, class group, and school year alignment; ensures one active enrollment per `(student, year)`.
   - Teacher queries scoped to their class groups via `AccessService`.
   - Admins and coordinators can continue adjusting archived-year enrollments when business rules require corrections; other roles are blocked once a year is locked.
+  - Database enforces the “single active enrollment” rule via a partial unique index (only `active = true` rows participate), allowing historical/inactive enrollments to coexist.
   - Includes `deactivate` logic (not exposed via controller yet) and delete endpoints.
 
 - **Grades (`/grades`)**

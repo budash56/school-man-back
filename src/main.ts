@@ -16,6 +16,7 @@ async function bootstrap() {
     .setTitle('SchoolMan API')
     .setDescription('API documentation for the SchoolMan application')
     .setVersion('1.0')
+    .addServer(process.env.API_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`)
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);

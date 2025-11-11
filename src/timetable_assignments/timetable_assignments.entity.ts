@@ -19,6 +19,10 @@ import { TimetableSlot } from '../timetable_slots/timetable_slots.entity';
   unique: true,
 })
 @Index('uniq_teacher_slot', ['slotId', 'teacherId'], { unique: true })
+@Index('uniq_timetable_classroom_slot', ['slotId', 'classroomId'], {
+  unique: true,
+  where: '"classroom_id" IS NOT NULL',
+})
 @Entity('timetable_assignments', { schema: 'public' })
 export class TimetableAssignments {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'assignment_id' })

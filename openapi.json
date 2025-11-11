@@ -7,7 +7,15 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Basic health message indicating the API is online",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": "Hello World!"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16,7 +24,7 @@
           }
         ],
         "tags": [
-          "App"
+          "root"
         ]
       }
     },
@@ -2750,6 +2758,34 @@
         ]
       }
     },
+    "/students/{id}/restore": {
+      "patch": {
+        "operationId": "StudentsController_restore",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "students"
+        ]
+      }
+    },
     "/subject-areas": {
       "get": {
         "operationId": "SubjectAreasController_findAll",
@@ -3273,7 +3309,44 @@
     "/timetable-assignments": {
       "get": {
         "operationId": "TimetableAssignmentsController_findAll",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "courseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "classGroupId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "teacherId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "900100",
+              "type": "string"
+            }
+          },
+          {
+            "name": "slotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 8,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -3296,13 +3369,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "example": {
-                  "courseId": 15,
-                  "slotId": 3,
-                  "teacherId": "teacher-001",
-                  "classGroupId": 9,
-                  "classroomId": 2
-                }
+                "$ref": "#/components/schemas/CreateTimetableAssignmentDto"
               }
             }
           }
@@ -3366,10 +3433,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "example": {
-                  "teacherId": "teacher-002",
-                  "classroomId": 4
-                }
+                "$ref": "#/components/schemas/UpdateTimetableAssignmentDto"
               }
             }
           }
@@ -3430,12 +3494,32 @@
           }
         ],
         "tags": [
-          "TimetableSlots"
+          "timetable-slots"
         ]
       },
       "post": {
         "operationId": "TimetableSlotsController_create",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTimetableSlotDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create slot",
+                  "value": {
+                    "dayOfWeek": 1,
+                    "startTime": "08:00",
+                    "endTime": "09:00"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "403": {
             "description": "Forbidden: requires role admin, coordinator"
@@ -3447,7 +3531,7 @@
           }
         ],
         "tags": [
-          "TimetableSlots"
+          "timetable-slots"
         ]
       }
     },
@@ -3475,7 +3559,7 @@
           }
         ],
         "tags": [
-          "TimetableSlots"
+          "timetable-slots"
         ]
       },
       "patch": {
@@ -3490,6 +3574,25 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTimetableSlotDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Update slot time",
+                  "value": {
+                    "startTime": "09:00",
+                    "endTime": "10:00"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "403": {
             "description": "Forbidden: requires role admin, coordinator"
@@ -3501,7 +3604,7 @@
           }
         ],
         "tags": [
-          "TimetableSlots"
+          "timetable-slots"
         ]
       },
       "delete": {
@@ -3527,7 +3630,7 @@
           }
         ],
         "tags": [
-          "TimetableSlots"
+          "timetable-slots"
         ]
       }
     },
@@ -3768,7 +3871,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Returns an access token and the sanitized user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3777,7 +3887,7 @@
           }
         ],
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -3797,7 +3907,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Creates a new user and returns access token + profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3806,7 +3923,7 @@
           }
         ],
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     },
@@ -3816,7 +3933,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns the authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUserDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3825,7 +3949,7 @@
           }
         ],
         "tags": [
-          "Auth"
+          "auth"
         ]
       }
     }
@@ -4461,6 +4585,118 @@
         "type": "object",
         "properties": {}
       },
+      "CreateTimetableAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "number",
+            "example": 12,
+            "description": "Course identifier"
+          },
+          "slotId": {
+            "type": "number",
+            "example": 4,
+            "description": "Timetable slot identifier"
+          },
+          "teacherId": {
+            "type": "string",
+            "example": "900100",
+            "description": "Teacher national ID"
+          },
+          "classGroupId": {
+            "type": "number",
+            "example": 7,
+            "description": "Class group identifier"
+          },
+          "classroomId": {
+            "type": "number",
+            "example": 2,
+            "description": "Classroom identifier"
+          }
+        },
+        "required": [
+          "courseId"
+        ]
+      },
+      "UpdateTimetableAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "number",
+            "example": 12,
+            "description": "Course identifier"
+          },
+          "slotId": {
+            "type": "number",
+            "example": 4,
+            "description": "Timetable slot identifier"
+          },
+          "teacherId": {
+            "type": "string",
+            "example": "900100",
+            "description": "Teacher national ID"
+          },
+          "classGroupId": {
+            "type": "number",
+            "example": 7,
+            "description": "Class group identifier"
+          },
+          "classroomId": {
+            "type": "number",
+            "example": 2,
+            "description": "Classroom identifier"
+          }
+        }
+      },
+      "CreateTimetableSlotDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "maximum": 7,
+            "description": "ISO day of week (1=Mon ... 7=Sun)"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "08:00",
+            "description": "Start time in HH:MM (24h)"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "09:00",
+            "description": "End time in HH:MM (24h)"
+          }
+        },
+        "required": [
+          "dayOfWeek",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "UpdateTimetableSlotDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "example": 1,
+            "minimum": 1,
+            "maximum": 7,
+            "description": "ISO day of week (1=Mon ... 7=Sun)"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "08:00",
+            "description": "Start time in HH:MM (24h)"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "09:00",
+            "description": "End time in HH:MM (24h)"
+          }
+        }
+      },
       "CreateUsersDto": {
         "type": "object",
         "properties": {
@@ -4530,6 +4766,73 @@
       "LoginDto": {
         "type": "object",
         "properties": {}
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "nationalId": {
+            "type": "string",
+            "example": "CC-1234567"
+          },
+          "username": {
+            "type": "string",
+            "example": "jdoe"
+          },
+          "role": {
+            "type": "string",
+            "example": "teacher",
+            "enum": [
+              "admin",
+              "coordinator",
+              "registrar",
+              "teacher"
+            ]
+          },
+          "firstName": {
+            "type": "object",
+            "example": "Juana"
+          },
+          "lastName": {
+            "type": "object",
+            "example": "García"
+          },
+          "email": {
+            "type": "object",
+            "example": "juana@example.edu",
+            "nullable": true
+          },
+          "phone": {
+            "type": "object",
+            "example": "+57 3001234567",
+            "nullable": true
+          }
+        },
+        "required": [
+          "nationalId",
+          "username",
+          "role",
+          "firstName",
+          "lastName",
+          "email",
+          "phone"
+        ]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Signed JWT bearer token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "user"
+        ]
       },
       "SignupDto": {
         "type": "object",
