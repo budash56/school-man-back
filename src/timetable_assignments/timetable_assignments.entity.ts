@@ -51,6 +51,9 @@ export class TimetableAssignments {
   @Column('bigint', { name: 'class_group_id', nullable: true })
   classGroupId: string | null;
 
+  @Column('bigint', { name: 'classroom_id', nullable: true })
+  classroomId: string | null;
+
   @OneToMany(() => Attendance, (attendance) => attendance.timetableAssignments)
   attendances: Attendance[];
 

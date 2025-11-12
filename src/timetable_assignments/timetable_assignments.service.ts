@@ -88,25 +88,36 @@ export class TimetableAssignmentsService {
       throw new BadRequestException('courseId is required');
     }
 
-    const schoolYearId = await this.resolveCourseYear(courseId);
+    if (dto.slotId === undefined) {
+      throw new BadRequestException('slotId is required');
+    }
+
+    const { schoolYearId, classGroupId: courseClassGroupId } =
+      await this.resolveCourseContext(courseId);
     await this.assertYearWritable(schoolYearId, user);
+
+    const effectiveClassGroupId =
+      dto.classGroupId ?? courseClassGroupId ?? undefined;
 
     await this.assertNoConflicts({
       courseId,
       slotId: dto.slotId,
-      classGroupId: dto.classGroupId,
+      classGroupId: effectiveClassGroupId,
       teacherId: dto.teacherId,
+      classroomId: dto.classroomId,
     });
 
     const entityPayload: Partial<TimetableAssignments> = {
       courseId: courseId.toString(),
-      slotId: dto.slotId !== undefined ? dto.slotId.toString() : null,
+      slotId: dto.slotId.toString(),
       teacherId: dto.teacherId ?? null,
-      classGroupId:
-        dto.classGroupId !== undefined ? dto.classGroupId.toString() : null,
+      classGroupId: effectiveClassGroupId
+        ? effectiveClassGroupId.toString()
+        : null,
     };
 
     if (dto.classroomId !== undefined) {
+      entityPayload.classroomId = dto.classroomId.toString();
       entityPayload.classroom = {
         classroomId: dto.classroomId.toString(),
       } as TimetableAssignments['classroom'];
@@ -129,12 +140,14 @@ export class TimetableAssignmentsService {
       throw new NotFoundException('TimetableAssignments record not found');
     }
 
-    const nextCourseId = dto.courseId ?? entity.courseId;
-    if (!nextCourseId) {
+    const nextCourseIdValue =
+      dto.courseId !== undefined ? dto.courseId : Number(entity.courseId);
+    if (!Number.isFinite(nextCourseIdValue)) {
       throw new BadRequestException('courseId is required');
     }
 
-    const schoolYearId = await this.resolveCourseYear(nextCourseId);
+    const { schoolYearId, classGroupId: courseClassGroupId } =
+      await this.resolveCourseContext(nextCourseIdValue);
     await this.assertYearWritable(schoolYearId, user);
 
     const nextSlotId =
@@ -143,20 +156,30 @@ export class TimetableAssignmentsService {
         : entity.slotId
         ? Number(entity.slotId)
         : undefined;
+    if (!Number.isFinite(nextSlotId)) {
+      throw new BadRequestException('slotId is required');
+    }
     const nextClassGroupId =
       dto.classGroupId !== undefined
         ? dto.classGroupId
         : entity.classGroupId
         ? Number(entity.classGroupId)
-        : undefined;
+        : courseClassGroupId;
     const nextTeacherId =
       dto.teacherId !== undefined ? dto.teacherId : entity.teacherId ?? undefined;
+    const nextClassroomId =
+      dto.classroomId !== undefined
+        ? dto.classroomId
+        : entity.classroomId
+        ? Number(entity.classroomId)
+        : undefined;
 
     await this.assertNoConflicts({
-      courseId: Number(nextCourseId),
+      courseId: Number(nextCourseIdValue),
       slotId: nextSlotId,
       classGroupId: nextClassGroupId,
       teacherId: nextTeacherId,
+      classroomId: nextClassroomId,
       ignoreAssignmentId: entity.assignmentId,
     });
 
@@ -174,14 +197,18 @@ export class TimetableAssignmentsService {
       updatedFields.teacherId = dto.teacherId ?? null;
     }
 
-    if (dto.classGroupId !== undefined) {
-      updatedFields.classGroupId = dto.classGroupId.toString();
+    if (nextClassGroupId !== undefined) {
+      updatedFields.classGroupId = nextClassGroupId
+        ? nextClassGroupId.toString()
+        : null;
     }
 
     if (dto.classroomId !== undefined) {
-      updatedFields.classroom = {
-        classroomId: dto.classroomId.toString(),
-      } as TimetableAssignments['classroom'];
+      updatedFields.classroomId =
+        dto.classroomId !== null ? dto.classroomId?.toString() ?? null : null;
+      updatedFields.classroom = dto.classroomId
+        ? ({ classroomId: dto.classroomId.toString() } as TimetableAssignments['classroom'])
+        : null;
     }
 
     this.assignmentsRepository.merge(entity, updatedFields);
@@ -200,17 +227,21 @@ export class TimetableAssignmentsService {
       throw new NotFoundException('TimetableAssignments record not found');
     }
 
-    const schoolYearId = await this.resolveCourseYear(assignment.courseId);
+    const { schoolYearId } = await this.resolveCourseContext(
+      Number(assignment.courseId),
+    );
     await this.assertYearWritable(schoolYearId, user);
 
     await this.assignmentsRepository.remove(assignment);
     return { deleted: true };
   }
 
-  private async resolveCourseYear(courseId: string | number): Promise<number> {
+  private async resolveCourseContext(
+    courseId: string | number,
+  ): Promise<{ schoolYearId: number; classGroupId?: number }> {
     const course = await this.coursesRepository.findOne({
       where: { courseId: courseId.toString() },
-      relations: { courseInstance: true },
+      relations: { courseInstance: true, classGroup: true },
     });
 
     if (!course || !course.courseInstance?.schoolYearId) {
@@ -222,7 +253,11 @@ export class TimetableAssignmentsService {
       throw new ConflictException('Course is missing schedule information');
     }
 
-    return schoolYearId;
+    const classGroupId = course.classGroup?.classGroupId
+      ? Number(course.classGroup.classGroupId)
+      : undefined;
+
+    return { schoolYearId, classGroupId };
   }
 
   private async assertYearWritable(
@@ -252,9 +287,17 @@ export class TimetableAssignmentsService {
     slotId?: number;
     classGroupId?: number;
     teacherId?: string;
+    classroomId?: number;
     ignoreAssignmentId?: string;
   }): Promise<void> {
-    const { courseId, slotId, classGroupId, teacherId, ignoreAssignmentId } = args;
+    const {
+      courseId,
+      slotId,
+      classGroupId,
+      teacherId,
+      classroomId,
+      ignoreAssignmentId,
+    } = args;
     if (!slotId) {
       return;
     }
@@ -265,6 +308,13 @@ export class TimetableAssignmentsService {
       this.checkClassGroupSlotConflict(classGroupId, slotIdStr, ignoreAssignmentId),
       this.checkTeacherSlotConflict(teacherId, slotIdStr, ignoreAssignmentId),
       this.checkCourseSlotConflict(courseId, slotIdStr, ignoreAssignmentId),
+      this.checkClassroomSlotConflict(classroomId, slotIdStr, ignoreAssignmentId),
+      this.checkTeacherClassGroupSlotConflict(
+        teacherId,
+        classGroupId,
+        slotIdStr,
+        ignoreAssignmentId,
+      ),
     ]);
   }
 
@@ -293,7 +343,9 @@ export class TimetableAssignmentsService {
     const count = await qb.getCount();
 
     if (count > 0) {
-      throw new ConflictException('Another timetable entry already uses this slot for the class group');
+      throw new ConflictException(
+        'This class group already has an assignment for the selected slot',
+      );
     }
   }
 
@@ -320,7 +372,9 @@ export class TimetableAssignmentsService {
     const count = await qb.getCount();
 
     if (count > 0) {
-      throw new ConflictException('Teacher already has an assignment at this slot');
+      throw new ConflictException(
+        'Teacher already has an assignment in this slot',
+      );
     }
   }
 
@@ -345,7 +399,73 @@ export class TimetableAssignmentsService {
     const count = await qb.getCount();
 
     if (count > 0) {
-      throw new ConflictException('Course already has a timetable entry for this slot');
+      throw new ConflictException(
+        'This course already has an assignment for the selected slot',
+      );
+    }
+  }
+
+  private async checkClassroomSlotConflict(
+    classroomId: number | undefined,
+    slotId: string,
+    ignoreAssignmentId?: string,
+  ): Promise<void> {
+    if (classroomId === undefined) {
+      return;
+    }
+
+    const qb = this.assignmentsRepository
+      .createQueryBuilder('assignment')
+      .where('assignment.slotId = :slotId', { slotId })
+      .andWhere('assignment.classroomId = :classroomId', {
+        classroomId: classroomId.toString(),
+      });
+
+    if (ignoreAssignmentId) {
+      qb.andWhere('assignment.assignmentId != :ignoreAssignmentId', {
+        ignoreAssignmentId,
+      });
+    }
+
+    const count = await qb.getCount();
+
+    if (count > 0) {
+      throw new ConflictException(
+        'Classroom already has an assignment for this slot',
+      );
+    }
+  }
+
+  private async checkTeacherClassGroupSlotConflict(
+    teacherId: string | undefined,
+    classGroupId: number | undefined,
+    slotId: string,
+    ignoreAssignmentId?: string,
+  ): Promise<void> {
+    if (!teacherId || classGroupId === undefined) {
+      return;
+    }
+
+    const qb = this.assignmentsRepository
+      .createQueryBuilder('assignment')
+      .where('assignment.slotId = :slotId', { slotId })
+      .andWhere('assignment.teacherId = :teacherId', { teacherId })
+      .andWhere('assignment.classGroupId = :classGroupId', {
+        classGroupId: classGroupId.toString(),
+      });
+
+    if (ignoreAssignmentId) {
+      qb.andWhere('assignment.assignmentId != :ignoreAssignmentId', {
+        ignoreAssignmentId,
+      });
+    }
+
+    const count = await qb.getCount();
+
+    if (count > 0) {
+      throw new ConflictException(
+        'This teacher already teaches the class group in the selected slot',
+      );
     }
   }
 }

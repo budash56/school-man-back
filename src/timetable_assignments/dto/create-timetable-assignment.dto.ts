@@ -7,11 +7,10 @@ export class CreateTimetableAssignmentDto {
   @Min(1)
   courseId: number;
 
-  @ApiPropertyOptional({ example: 4, description: 'Timetable slot identifier' })
-  @IsOptional()
+  @ApiProperty({ example: 4, description: 'Timetable slot identifier' })
   @IsInt()
   @Min(1)
-  slotId?: number;
+  slotId: number;
 
   @ApiPropertyOptional({
     example: '900100',

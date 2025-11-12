@@ -37,7 +37,12 @@ export class TimetableSlotsController {
     examples: {
       default: {
         summary: 'Create slot',
-        value: { dayOfWeek: 1, startTime: '08:00', endTime: '09:00' },
+        value: {
+          dayOfWeek: 1,
+          startTime: '08:00',
+          endTime: '09:00',
+          durationMinutes: 60,
+        },
       },
     },
   })

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, Matches, Max, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, Matches, Max, Min, IsOptional } from 'class-validator';
 
 export class CreateTimetableSlotDto {
   @ApiProperty({
@@ -24,4 +24,14 @@ export class CreateTimetableSlotDto {
     message: 'endTime must be in HH:MM 24h format',
   })
   endTime: string;
+
+  @ApiPropertyOptional({
+    example: 60,
+    description:
+      'Optional duration override; defaults to the difference between endTime and startTime',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  durationMinutes?: number;
 }

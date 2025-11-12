@@ -15,5 +15,9 @@ export class TimetableSlot {
 
   @Column({ type: 'time', name: 'end_time' })
   endTime: string; // '08:45:00'
+
+  @Column({ type: 'integer', name: 'duration_minutes' })
+  durationMinutes: number;
+
   timetableAssignments: any;
 }
