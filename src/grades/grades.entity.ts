@@ -40,8 +40,11 @@ export class Grades {
   })
   createdAt: Date | null;
 
-  @Column('enum', { name: 'mark', enum: ['S', 'A', 'B', 'J'] })
-  mark: 'S' | 'A' | 'B' | 'J';
+  @Column('smallint', {
+    name: 'mark',
+    comment: 'Numeric mark domain: 5=S, 4=A, 3=B, 1=J. Values 2 and 0 are unused.',
+  })
+  mark: number;
 
   @Column('text', { name: 'comment', nullable: true })
   comment: string | null;

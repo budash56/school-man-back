@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { appDataSourceOptions } from './data-source';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import configuration from './config/configuration';
+import { buildDataSourceOptions } from './data-source';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -64,27 +66,40 @@ import { TimetableAssignmentsController } from './timetable_assignments/timetabl
 import { TimetableAssignmentsService } from './timetable_assignments/timetable_assignments.service';
 import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
 import { TimetableSlotsService } from './timetable_slots/timetable_slots.service';
+import { ReportsModule } from './reports/reports.module';
 import { UsersController } from './users/users.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 
-const isOpenApiExport = process.env.OPENAPI_EXPORT === '1';
-
-const typeOrmConfig: TypeOrmModuleOptions = {
-  ...appDataSourceOptions,
-  autoLoadEntities: true,
-  ...(isOpenApiExport
-    ? {
-        logging: false,
-        retryAttempts: 0,
-        connectTimeoutMS: 1000,
-      }
-    : {}),
-};
-
 @Module({
   imports: [
-    TypeOrmModule.forRoot(typeOrmConfig),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
+        const options = buildDataSourceOptions({
+          databaseUrl: configService.get<string>('database.url') ?? undefined,
+          ssl: configService.get<boolean>('database.ssl') ?? undefined,
+        });
+        const isOpenApiExport =
+          configService.get<boolean>('app.isOpenApiExport') ?? false;
+        return {
+          ...options,
+          autoLoadEntities: true,
+          ...(isOpenApiExport
+            ? {
+                logging: false,
+                retryAttempts: 0,
+                connectTimeoutMS: 1000,
+              }
+            : {}),
+        };
+      },
+    }),
     TypeOrmModule.forFeature([
       Attendance,
       AuditLogs,
@@ -110,6 +125,7 @@ const typeOrmConfig: TypeOrmModuleOptions = {
     AuthModule,
     RepositoriesModule,
     SharedModule,
+    ReportsModule,
   ],
   controllers: [
     AppController,

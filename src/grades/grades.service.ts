@@ -22,6 +22,16 @@ import {
 } from '../shared/pagination';
 import { AccessService } from '../auth/access.service';
 
+type NumericMark = 5 | 4 | 3 | 1;
+type LetterMark = 'S' | 'A' | 'B' | 'J';
+const NUMERIC_MARK_DOMAIN: NumericMark[] = [5, 4, 3, 1];
+const NUMERIC_TO_LETTER: Record<NumericMark, LetterMark> = {
+  5: 'S',
+  4: 'A',
+  3: 'B',
+  1: 'J',
+};
+
 type ActingUser = {
   userId: number;
   role: string;
@@ -33,7 +43,7 @@ export type GradeResponse = {
   courseId: number;
   termId: number;
   schoolYearId: number | null;
-  mark: 'S' | 'A' | 'B' | 'J';
+  mark: LetterMark;
   comment: string | null;
 };
 
@@ -315,9 +325,25 @@ export class GradesService {
       schoolYearId: grade.term?.schoolYearId
         ? Number(grade.term.schoolYearId)
         : null,
-      mark: grade.mark,
+      mark: this.toLetterMark(Number(grade.mark)),
       comment: grade.comment ?? null,
     };
+  }
+
+  static calculateFinalLetterMark(termMarks: number[]): LetterMark {
+    if (termMarks.length === 0) {
+      throw new Error('At least one term mark is required');
+    }
+    const mean =
+      termMarks.reduce((acc, mark) => acc + mark, 0) / termMarks.length;
+    const rounded = Math.round(mean);
+    const normalized = GradesService.normalizeNumericMark(rounded);
+    return NUMERIC_TO_LETTER[normalized];
+  }
+
+  private toLetterMark(mark: number): LetterMark {
+    const normalized = GradesService.normalizeNumericMark(Number(mark));
+    return NUMERIC_TO_LETTER[normalized];
   }
 
   private async assertYearWritable(
@@ -339,5 +365,23 @@ export class GradesService {
     if (user.role !== 'admin') {
       throw new ForbiddenException('Past years are read-only');
     }
+  }
+
+  private static normalizeNumericMark(value: number): NumericMark {
+    if (NUMERIC_MARK_DOMAIN.includes(value as NumericMark)) {
+      return value as NumericMark;
+    }
+
+    return NUMERIC_MARK_DOMAIN.reduce((closest, candidate) => {
+      const candidateDiff = Math.abs(candidate - value);
+      const closestDiff = Math.abs(closest - value);
+      if (candidateDiff < closestDiff) {
+        return candidate;
+      }
+      if (candidateDiff === closestDiff && candidate > closest) {
+        return candidate;
+      }
+      return closest;
+    }, NUMERIC_MARK_DOMAIN[NUMERIC_MARK_DOMAIN.length - 1]);
   }
 }

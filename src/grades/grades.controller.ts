@@ -59,7 +59,7 @@ export class GradesController {
           studentId: 2201,
           courseId: 15,
           termId: 3,
-          mark: 'A',
+          mark: 4,
           comment: 'Excellent performance',
         },
       },

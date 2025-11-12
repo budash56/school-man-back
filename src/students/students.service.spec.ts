@@ -50,4 +50,30 @@ describe('StudentsService', () => {
       ConflictException,
     );
   });
+
+  it('soft deletes a student by toggling deletedAt/isActive', async () => {
+    const student = { studentId: '1', deletedAt: null, isActive: true };
+    (repository.findOne as jest.Mock).mockResolvedValue(student);
+
+    await service.remove(1);
+
+    expect(student.deletedAt).toBeInstanceOf(Date);
+    expect(student.isActive).toBe(false);
+    expect(repository.save).toHaveBeenCalledWith(student);
+  });
+
+  it('restores a soft-deleted student', async () => {
+    const student = {
+      studentId: '2',
+      deletedAt: new Date(),
+      isActive: false,
+    };
+    (repository.findOne as jest.Mock).mockResolvedValue(student);
+
+    await service.restore(2);
+
+    expect(student.deletedAt).toBeNull();
+    expect(student.isActive).toBe(true);
+    expect(repository.save).toHaveBeenCalledWith(student);
+  });
 });

@@ -158,4 +158,49 @@ describe('AttendanceService', () => {
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
+
+  it('prevents teachers from deleting attendance outside their scope', async () => {
+    (attendanceRepository.findOne as jest.Mock).mockResolvedValue({
+      attendanceId: '11',
+      courseId: '5',
+      course: { courseId: '5', courseInstance: { schoolYearId: '99' } },
+    });
+
+    jest
+      .spyOn<any, any>(service as any, 'createAccessHelper')
+      .mockReturnValue({
+        isTeacherOfCourse: jest.fn().mockResolvedValue(false),
+      });
+
+    await expect(
+      service.remove(11, {
+        userId: 20,
+        nationalId: 'teacher-123',
+        role: 'teacher',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('allows admins to delete attendance from archived year', async () => {
+    (attendanceRepository.findOne as jest.Mock).mockResolvedValue({
+      attendanceId: '12',
+      courseId: '5',
+      course: {
+        courseId: '5',
+        courseInstance: { schoolYearId: '77' },
+      },
+    });
+    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValueOnce({
+      schoolYearId: '77',
+      isActive: false,
+    });
+
+    await service.remove(12, {
+      userId: 1,
+      nationalId: 'admin',
+      role: 'admin',
+    });
+
+    expect(attendanceRepository.remove).toHaveBeenCalled();
+  });
 });

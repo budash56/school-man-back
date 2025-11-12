@@ -36,7 +36,7 @@ describe('GradesService', () => {
     studentId: 1,
     courseId: 10,
     termId: 3,
-    mark: 'S',
+    mark: 5,
   };
 
   beforeEach(() => {
@@ -132,7 +132,7 @@ describe('GradesService', () => {
       termId: '3',
       term: { schoolYearId: '99' },
       course: { courseId: '10' },
-      mark: 'S',
+      mark: 5,
       comment: null,
     };
 
@@ -168,10 +168,20 @@ describe('GradesService', () => {
           studentId: 1,
           courseId: 10,
           termId: 3,
-          mark: 'X',
+          mark: 2,
         },
         metadata,
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  describe('calculateFinalLetterMark', () => {
+    it('maps [5,4,3,1] -> mean 3.25 -> rounds to 3 -> B', () => {
+      expect(GradesService.calculateFinalLetterMark([5, 4, 3, 1])).toBe('B');
+    });
+
+    it('maps [1,1,1,1] -> J (fail)', () => {
+      expect(GradesService.calculateFinalLetterMark([1, 1, 1, 1])).toBe('J');
+    });
   });
 });

@@ -30,12 +30,13 @@ export class CreateGradeDto {
   termId: number;
 
   @ApiProperty({
-    description: 'Letter mark assigned to the student',
-    example: 'A',
-    enum: ['S', 'A', 'B', 'J'],
+    description: 'Numeric mark assigned to the student (5=S, 4=A, 3=B, 1=J)',
+    example: 4,
+    enum: [5, 4, 3, 1],
   })
-  @IsIn(['S', 'A', 'B', 'J'])
-  mark: 'S' | 'A' | 'B' | 'J';
+  @IsInt()
+  @IsIn([5, 4, 3, 1])
+  mark: 5 | 4 | 3 | 1;
 
   @ApiPropertyOptional({
     description: 'Optional comment that accompanies the grade',
