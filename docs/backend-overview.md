@@ -147,8 +147,8 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 
 - **Notifications (`/notifications`)**
   - Web-only notification center (no outbound email/SMS yet).
-  - Absence monitor (`/notifications/suggestions/absence/run`) scans attendance for three consecutive unexcused days and emits coordinator suggestions with category `attendance-absence-streak`.
-  - Coordinators resolve/dismiss suggestions via `PATCH /notifications/:id/resolve`; teachers have read-only access.
+  - Absence monitor (`/notifications/suggestions/absence/run`) inspects the three most recent *school* days prior to the requested run date (weekends skipped). A day counts as “absent without excuse” if the student has at least one `A` status slot and zero `AE` slots that day. When all three days meet that rule, the monitor emits (or leaves untouched) an active coordinator suggestion with category `attendance-absence-streak`.
+  - Coordinators resolve/dismiss suggestions via `PATCH /notifications/:id/resolve`; teachers have read-only access. Notifications now persist the scalar `student_id` column so services can query by student without loading the relation.
 
 ### Cross-Cutting Behaviours
 - **Pagination:** All list endpoints return `{ data, total, page, pageSize }` using `shared/pagination.ts`.
@@ -235,7 +235,7 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
   - `test/year-write-lock.e2e-spec.ts` verifies rollover and archived-year immutability.
   - `test/attendance-uniqueness.e2e-spec.ts`, `test/timetable-collisions.e2e-spec.ts`, `test/timetable-guards.e2e-spec.ts` cover invariants for scheduling.
   - `test/students-soft-delete.e2e-spec.ts`, `test/enrollments-*.e2e-spec.ts`, `test/student-roster.e2e-spec.ts` ensure student lifecycle + roster logic.
-  - `test/notifications*.e2e-spec.ts` and `test/reports.e2e-spec.ts` guard the absence monitor and printable outputs.
+  - `test/notifications*.e2e-spec.ts` and `test/reports.e2e-spec.ts` guard the absence monitor (verifying the three-day window/weekend skipping rules) and printable outputs.
   - Seeder utilities live inline within tests (`await repository.delete({})` resets tables).
 - **Coverage:** `npm run test:cov`.
 

@@ -70,13 +70,13 @@ export class AttendanceService {
 
     if (query.studentId !== undefined) {
       qb.andWhere('attendance.studentId = :studentId', {
-        studentId: query.studentId.toString(),
+        studentId: Number(query.studentId),
       });
     }
 
     if (query.courseId !== undefined) {
       qb.andWhere('attendance.courseId = :courseId', {
-        courseId: query.courseId.toString(),
+        courseId: Number(query.courseId),
       });
     }
 
@@ -112,14 +112,14 @@ export class AttendanceService {
           return buildPaginationResult([], 0, page, pageSize);
         }
         qb.andWhere('course.classGroupId IN (:...allowedClassGroupIds)', {
-          allowedClassGroupIds: classGroupIds.map((id) => id.toString()),
+          allowedClassGroupIds: classGroupIds.map((id) => Number(id)),
         });
       } else {
         if (teacherCourseIds.length === 0) {
           return buildPaginationResult([], 0, page, pageSize);
         }
         qb.andWhere('attendance.courseId IN (:...allowedCourseIds)', {
-          allowedCourseIds: teacherCourseIds.map((id) => id.toString()),
+          allowedCourseIds: teacherCourseIds.map((id) => Number(id)),
         });
       }
     }
@@ -141,7 +141,7 @@ export class AttendanceService {
     currentUser: ActingUser,
   ): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
-      where: { attendanceId: id.toString() },
+      where: { attendanceId: id }, // numeric now
       relations: { recordedBy: true, course: true },
     });
 
@@ -158,6 +158,7 @@ export class AttendanceService {
     dto: CreateAttendanceDto,
     currentUser: ActingUser,
   ): Promise<AttendanceResponse> {
+    // Students & Courses repositories still expose string PKs → compare with strings
     const student = await this.studentsRepository.findOne({
       where: { studentId: dto.studentId.toString() },
     });
@@ -223,22 +224,30 @@ export class AttendanceService {
     const recordedBy = course.teacher ?? null;
 
     const entity = this.attendanceRepository.create({
-      studentId: student.studentId,
-      courseId: course.courseId,
-      slotId: slot.slotId.toString(),
-      date: dto.date,
-      status: dto.status,
-      recordedBy,
+      studentId: Number(student.studentId), // number
+      courseId: Number(dto.courseId), // number
+      date: dto.date, // 'YYYY-MM-DD'
+      status: dto.status, // 'P' | 'A' | 'AE'
+      slotId: dto.slotId ?? null, // number | null
+      // reasonNote: dto.reasonNote ?? null,
+      // relation (Users). If no course.teacher, fallback to currentUser if present.
+      recordedBy:
+        recordedBy ??
+        (currentUser?.nationalId
+          ? ({ nationalId: currentUser.nationalId } as any)
+          : null),
     });
 
     try {
       const saved = await this.attendanceRepository.save(entity);
-      return this.findOne(Number(saved.attendanceId), currentUser);
+      return this.findOne(saved.attendanceId, currentUser);
     } catch (error) {
       DbErrorMapper.throwConflict(
         error,
         'Attendance already recorded for this student, slot, and date',
       );
+      // TypeScript: to satisfy return type if mapper didn’t throw for some reason
+      throw error;
     }
   }
 
@@ -248,7 +257,7 @@ export class AttendanceService {
     currentUser: ActingUser,
   ): Promise<AttendanceResponse> {
     const attendance = await this.attendanceRepository.findOne({
-      where: { attendanceId: id.toString() },
+      where: { attendanceId: id }, // numeric
       relations: { recordedBy: true, course: true },
     });
 
@@ -288,8 +297,9 @@ export class AttendanceService {
       attendance.excusedAt = this.parseDate(dto.excusedAt);
     }
 
+    // Courses repo still uses string PK → compare with string
     const course = await this.coursesRepository.findOne({
-      where: { courseId: attendance.courseId },
+      where: { courseId: attendance.courseId.toString() },
       relations: { courseInstance: true },
     });
 
@@ -313,7 +323,7 @@ export class AttendanceService {
     currentUser: ActingUser,
   ): Promise<{ deleted: true }> {
     const attendance = await this.attendanceRepository.findOne({
-      where: { attendanceId: id.toString() },
+      where: { attendanceId: id }, // numeric
       relations: { course: { courseInstance: true } },
     });
 
@@ -326,7 +336,7 @@ export class AttendanceService {
     const course =
       attendance.course ??
       (await this.coursesRepository.findOne({
-        where: { courseId: attendance.courseId },
+        where: { courseId: attendance.courseId.toString() }, // Courses PK still string
         relations: { courseInstance: true },
       }));
 
@@ -375,6 +385,7 @@ export class AttendanceService {
     schoolYearId: number,
     user: { role: string },
   ): Promise<void> {
+    // School years repo still string PK → compare with string
     const year = await this.schoolYearsRepository.findOne({
       where: { schoolYearId: schoolYearId.toString() },
     });
@@ -469,7 +480,7 @@ export class AttendanceService {
       attendanceId: Number(record.attendanceId),
       studentId: Number(record.studentId),
       courseId: Number(record.courseId),
-      slotId: record.slotId ? Number(record.slotId) : null,
+      slotId: record.slotId != null ? Number(record.slotId) : null,
       date: record.date,
       status: record.status,
       recordedById: record.recordedBy?.nationalId ?? null,

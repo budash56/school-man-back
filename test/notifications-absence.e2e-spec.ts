@@ -41,18 +41,21 @@ describe('Attendance absence suggestions (e2e)', () => {
 
     dataSource = app.get(DataSource);
     seedData = await seedBasicData(dataSource);
+
     await dataSource
       .getRepository(Notifications)
       .createQueryBuilder()
       .delete()
       .where('1=1')
       .execute();
+
     await dataSource
       .getRepository(Attendance)
       .createQueryBuilder()
       .delete()
       .where('1=1')
       .execute();
+
     coordinatorToken = await login(app, seedData.users.coordinator);
     classGroupId = Number(seedData.classGroup.classGroupId);
     courseId = Number(seedData.course.courseId);
@@ -102,6 +105,7 @@ describe('Attendance absence suggestions (e2e)', () => {
       }),
     );
 
+    // TimetableAssignments fields are still strings in the entity → keep as strings
     await assignmentsRepo.save(
       assignmentsRepo.create({
         courseId: seedData.course.courseId.toString(),
@@ -112,11 +116,12 @@ describe('Attendance absence suggestions (e2e)', () => {
       }),
     );
 
+    // Attendance entity now uses numeric IDs → pass numbers
     await attendanceRepo().save(
       attendanceRepo().create({
-        studentId: studentId.toString(),
-        courseId: courseId.toString(),
-        slotId: slot.slotId.toString(),
+        studentId,                   // number
+        courseId,                    // number
+        slotId: Number(slot.slotId), // number
         date,
         status: 'A',
       }),
@@ -124,30 +129,22 @@ describe('Attendance absence suggestions (e2e)', () => {
   }
 
   const runMonitor = async (date: string) => {
-    // const { body } = await request(app.getHttpServer())
-    //   .post('/notifications/suggestions/absence/run')
-    //   .query({ date })
-    //   .set('Authorization', `Bearer ${coordinatorToken}`)
-    //   .expect(201);
-    // return body.created as number;
     const res = await request(app.getHttpServer())
-    .post('/notifications/suggestions/absence/run')
-    .query({ date })
-    .set('Authorization', `Bearer ${coordinatorToken}`)
-    .set('Accept', 'application/json');
+      .post('/notifications/suggestions/absence/run')
+      .query({ date })
+      .set('Authorization', `Bearer ${coordinatorToken}`)
+      .set('Accept', 'application/json');
 
-  console.log('[RUN MONITOR] status', res.status, 'body', res.body); // <— show the error
-  // while debugging, don’t assert here; return the whole response:
-  return res;
+    console.log('[RUN MONITOR] status', res.status, 'body', res.body);
+    return res;
   };
 
   it('creates suggestion only after three consecutive days', async () => {
     await addAbsence('2025-02-10');
     await addAbsence('2025-02-11');
     await addAbsence('2025-02-12');
-    let created = await runMonitor('2025-02-13');
+
     const res = await runMonitor('2025-02-13');
-    // expect(created).toBe(1);
     expect(res.status).toBe(201);
 
     const { body } = await request(app.getHttpServer())

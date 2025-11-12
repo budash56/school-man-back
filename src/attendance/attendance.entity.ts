@@ -1,4 +1,8 @@
 // ORM mapping for the attendance table generated from the current database schema.
+// Edited to use numeric IDs and partial unique indexes that model:
+//  - legacy daily uniqueness when slot_id IS NULL
+//  - per-slot uniqueness when slot_id IS NOT NULL
+
 import {
   Column,
   Entity,
@@ -13,31 +17,41 @@ import { Students } from '../students/students.entity';
 import { TimetableAssignments } from '../timetable_assignments/timetable_assignments.entity';
 
 @Index('attendance_pkey', ['attendanceId'], { unique: true })
-@Index('idx_attendance_course_date', ['courseId', 'date'], {})
+@Index('idx_attendance_course_date', ['courseId', 'date'])
+@Index('idx_attendance_student_date', ['studentId', 'date'])
+// ✅ legacy: only one record per (student, course, date) when there is NO slot
 @Index(
-  'attendance_student_id_course_id_date_key',
-  ['courseId', 'date', 'studentId'],
-  { unique: true },
+  'ux_attendance_legacy_daily',
+  ['studentId', 'courseId', 'date'],
+  { unique: true, where: 'slot_id IS NULL' },
 )
-@Index('idx_attendance_student_date', ['date', 'studentId'], {})
-@Index('uniq_attendance_student_date_slot', ['date', 'slotId', 'studentId'], {
-  unique: true,
-})
+// ✅ modern: only one record per (student, course, date, slot) when there IS a slot
+@Index(
+  'ux_attendance_per_slot',
+  ['studentId', 'courseId', 'date', 'slotId'],
+  { unique: true, where: 'slot_id IS NOT NULL' },
+)
 @Entity('attendance', { schema: 'public' })
 export class Attendance {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'attendance_id' })
-  attendanceId: string;
+  attendanceId: number;
 
   @Column('bigint', { name: 'student_id' })
-  studentId: string;
+  studentId: number;
 
   @Column('bigint', { name: 'course_id' })
-  courseId: string;
+  courseId: number;
 
+  // Stored as DATE in DB; keep string 'YYYY-MM-DD' here
   @Column('date', { name: 'date' })
   date: string;
 
-  @Column('enum', { name: 'status', enum: ['P', 'A', 'AE'] })
+  @Column({
+    type: 'enum',
+    enum: ['P', 'A', 'AE'],
+    enumName: 'attendance_status',
+    name: 'status',
+  })
   status: 'P' | 'A' | 'AE';
 
   @Column('text', { name: 'reason_note', nullable: true })
@@ -57,7 +71,7 @@ export class Attendance {
   deletedAt: Date | null;
 
   @Column('bigint', { name: 'slot_id', nullable: true })
-  slotId: string | null;
+  slotId: number | null;
 
   @ManyToOne(() => Courses, (courses) => courses.attendances, {
     onDelete: 'CASCADE',
