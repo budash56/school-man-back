@@ -20,6 +20,7 @@ describe('Students soft delete + restore (e2e)', () => {
   let app: INestApplication;
   let adminToken: string;
   let dataSource: DataSource;
+  let schoolYearId: number;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -33,6 +34,7 @@ describe('Students soft delete + restore (e2e)', () => {
 
     const seeds = await seedBasicData(dataSource);
     adminToken = await login(app, seeds.users.admin);
+    schoolYearId = Number(seeds.schoolYear.schoolYearId);
   });
 
   afterAll(async () => {
@@ -70,7 +72,8 @@ describe('Students soft delete + restore (e2e)', () => {
       .expect(404);
 
     const restoreResponse = await request(app.getHttpServer())
-      .patch(`/students/${studentId}/restore`)
+      .post(`/students/${studentId}/restore`)
+      .query({ year: schoolYearId })
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(200);
 

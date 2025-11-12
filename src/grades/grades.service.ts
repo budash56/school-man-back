@@ -129,14 +129,29 @@ export class GradesService {
     );
   }
 
-  async findOne(id: number): Promise<GradeResponse> {
+  async findOne(
+    id: number,
+    currentUser: ActingUser,
+  ): Promise<GradeResponse> {
     const grade = await this.gradesRepository.findOne({
       where: { gradeId: id.toString() },
-      relations: { term: true },
+      relations: { term: true, course: true },
     });
 
     if (!grade) {
       throw new NotFoundException('Grade not found');
+    }
+
+    if (currentUser.role === 'teacher') {
+      const canAccess = await this.access.isTeacherOfCourse(
+        currentUser.userId,
+        Number(grade.courseId),
+      );
+      if (!canAccess) {
+        throw new ForbiddenException(
+          'You are not allowed to access this grade',
+        );
+      }
     }
 
     return this.toResponse(grade);

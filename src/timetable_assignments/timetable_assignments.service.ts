@@ -13,10 +13,17 @@ import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { CreateTimetableAssignmentDto } from './dto/create-timetable-assignment.dto';
 import { UpdateTimetableAssignmentDto } from './dto/update-timetable-assignment.dto';
 import { TimetableAssignmentsQueryDto } from './dto/timetable-assignments-query.dto';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 
 type ActingUser = {
   userId: number;
   role: string;
+};
+
+type TimetableAssignmentResult = {
+  assignment: TimetableAssignments;
+  warnings: string[];
 };
 
 @Injectable()
@@ -25,6 +32,9 @@ export class TimetableAssignmentsService {
     private readonly assignmentsRepository: TimetableAssignmentsRepository,
     private readonly coursesRepository: CoursesRepository,
     private readonly schoolYearsRepository: SchoolYearsRepository,
+    private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly classroomsRepository: ClassroomsRepository,
+    private readonly accessService: AccessService,
   ) {}
 
   async findAll(
@@ -62,9 +72,8 @@ export class TimetableAssignmentsService {
     }
 
     if (currentUser?.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const classGroupIds = await accessService.classGroupIdsForTeacher(
-        currentUser.userId,
+      const classGroupIds = await this.accessService.classGroupIdsForTeacher(
+        currentUser.userId ?? 0,
       );
 
       if (classGroupIds.length === 0) {
@@ -79,10 +88,38 @@ export class TimetableAssignmentsService {
     return qb.getMany();
   }
 
+  async findOneOrThrow(
+    id: string,
+    currentUser?: ActingUser,
+  ): Promise<TimetableAssignments> {
+    const assignment = await this.assignmentsRepository.findOne({
+      where: { assignmentId: id },
+      relations: { course: true },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('TimetableAssignments record not found');
+    }
+
+    if (currentUser?.role === 'teacher') {
+      const canAccess = await this.accessService.isTeacherOfCourse(
+        currentUser.userId ?? 0,
+        Number(assignment.courseId),
+      );
+      if (!canAccess) {
+        throw new ForbiddenException(
+          'You are not allowed to access this timetable assignment',
+        );
+      }
+    }
+
+    return assignment;
+  }
+
   async create(
     dto: CreateTimetableAssignmentDto,
     user?: { role?: string },
-  ): Promise<TimetableAssignments> {
+  ): Promise<TimetableAssignmentResult> {
     const courseId = dto.courseId ?? null;
     if (!courseId) {
       throw new BadRequestException('courseId is required');
@@ -124,14 +161,19 @@ export class TimetableAssignmentsService {
     }
 
     const entity = this.assignmentsRepository.create(entityPayload);
-    return this.assignmentsRepository.save(entity);
+    const saved = await this.assignmentsRepository.save(entity);
+    const warnings = await this.buildWarnings(
+      effectiveClassGroupId,
+      dto.classroomId,
+    );
+    return { assignment: saved, warnings };
   }
 
   async update(
     id: string,
     dto: UpdateTimetableAssignmentDto,
     user?: { role?: string },
-  ): Promise<TimetableAssignments> {
+  ): Promise<TimetableAssignmentResult> {
     const entity = await this.assignmentsRepository.findOne({
       where: { assignmentId: id },
     });
@@ -159,6 +201,10 @@ export class TimetableAssignmentsService {
     if (!Number.isFinite(nextSlotId)) {
       throw new BadRequestException('slotId is required');
     }
+    const requestedClassroomId = (
+      dto as UpdateTimetableAssignmentDto & { classroomId?: number | null }
+    ).classroomId;
+
     const nextClassGroupId =
       dto.classGroupId !== undefined
         ? dto.classGroupId
@@ -168,8 +214,8 @@ export class TimetableAssignmentsService {
     const nextTeacherId =
       dto.teacherId !== undefined ? dto.teacherId : entity.teacherId ?? undefined;
     const nextClassroomId =
-      dto.classroomId !== undefined
-        ? dto.classroomId
+      requestedClassroomId !== undefined
+        ? requestedClassroomId ?? undefined
         : entity.classroomId
         ? Number(entity.classroomId)
         : undefined;
@@ -203,16 +249,24 @@ export class TimetableAssignmentsService {
         : null;
     }
 
-    if (dto.classroomId !== undefined) {
+    if (requestedClassroomId !== undefined) {
       updatedFields.classroomId =
-        dto.classroomId !== null ? dto.classroomId?.toString() ?? null : null;
-      updatedFields.classroom = dto.classroomId
-        ? ({ classroomId: dto.classroomId.toString() } as TimetableAssignments['classroom'])
-        : null;
+        requestedClassroomId === null ? null : requestedClassroomId.toString();
+      updatedFields.classroom =
+        requestedClassroomId === null
+          ? undefined
+          : ({
+              classroomId: requestedClassroomId.toString(),
+            } as TimetableAssignments['classroom']);
     }
 
     this.assignmentsRepository.merge(entity, updatedFields);
-    return this.assignmentsRepository.save(entity);
+    const saved = await this.assignmentsRepository.save(entity);
+    const warnings = await this.buildWarnings(
+      nextClassGroupId,
+      nextClassroomId,
+    );
+    return { assignment: saved, warnings };
   }
 
   async remove(
@@ -280,6 +334,37 @@ export class TimetableAssignmentsService {
     if (role !== 'admin') {
       throw new ForbiddenException('Past years are read-only');
     }
+  }
+
+  private async buildWarnings(
+    classGroupId?: number,
+    classroomId?: number,
+  ): Promise<string[]> {
+    if (!classGroupId || !classroomId) {
+      return [];
+    }
+
+    const [activeStudents, classroom] = await Promise.all([
+      this.enrollmentsRepository.count({
+        where: {
+          classGroupId: classGroupId.toString(),
+          active: true,
+        },
+      }),
+      this.classroomsRepository.findOne({
+        where: { classroomId: classroomId.toString() },
+      }),
+    ]);
+
+    if (!classroom || classroom.capacity === null || classroom.capacity === undefined) {
+      return [];
+    }
+
+    if (activeStudents > classroom.capacity) {
+      return ['CLASSROOM_CAPACITY_EXCEEDED'];
+    }
+
+    return [];
   }
 
   private async assertNoConflicts(args: {

@@ -5,6 +5,7 @@ import { EnrollmentsRepository } from './enrollments.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
+import { CoursesRepository } from '../courses/courses.repository';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 
 type MockedEnrollmentsRepository = Partial<
@@ -23,6 +24,10 @@ type MockedSchoolYearsRepository = Partial<
   Record<keyof SchoolYearsRepository, jest.Mock>
 >;
 
+const createDriverError = (
+  overrides: Partial<{ code?: string; constraint?: string }>,
+) => Object.assign(new Error(), overrides);
+
 describe('EnrollmentsService', () => {
   let service: EnrollmentsService;
   let enrollmentsRepository: EnrollmentsRepository &
@@ -32,6 +37,7 @@ describe('EnrollmentsService', () => {
     MockedClassGroupsRepository;
   let schoolYearsRepository: SchoolYearsRepository &
     MockedSchoolYearsRepository;
+  let coursesRepository: jest.Mocked<CoursesRepository>;
 
   const createDto: CreateEnrollmentDto = {
     studentId: 1,
@@ -60,6 +66,10 @@ describe('EnrollmentsService', () => {
       findOne: jest.fn(),
     } as unknown as SchoolYearsRepository & MockedSchoolYearsRepository;
 
+    coursesRepository = {
+      findOne: jest.fn(),
+    } as unknown as jest.Mocked<CoursesRepository>;
+
     (studentsRepository.findOne as jest.Mock).mockResolvedValue({
       studentId: '1',
     });
@@ -76,6 +86,7 @@ describe('EnrollmentsService', () => {
       studentsRepository,
       classGroupsRepository,
       schoolYearsRepository,
+      coursesRepository,
     );
   });
 
@@ -90,7 +101,9 @@ describe('EnrollmentsService', () => {
         active: true,
         enrolledAt: null,
       })
-      .mockRejectedValueOnce(new QueryFailedError('', [], { code: '23505' }));
+      .mockRejectedValueOnce(
+        new QueryFailedError('', [], createDriverError({ code: '23505' })),
+      );
 
     (enrollmentsRepository.findOne as jest.Mock).mockResolvedValueOnce({
       enrollmentId: '100',

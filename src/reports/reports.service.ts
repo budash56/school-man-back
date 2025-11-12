@@ -15,7 +15,7 @@ import { FinalGradeReportDto } from './dto/final-grade-report.dto';
 import { GradesService } from '../grades/grades.service';
 import type { SanitizedUser } from '../auth/auth.types';
 
-type ActingUser = Pick<SanitizedUser, 'role'> & { userId?: number };
+export type ActingUser = Pick<SanitizedUser, 'role'> & { userId?: number };
 
 @Injectable()
 export class ReportsService {

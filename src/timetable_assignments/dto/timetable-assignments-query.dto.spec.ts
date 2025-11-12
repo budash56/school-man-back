@@ -8,7 +8,7 @@ describe('TimetableAssignmentsQueryDto', () => {
       courseId: '10',
       classGroupId: '5',
       slotId: '2',
-      teacherId: 'teach-002',
+      teacherId: '800002',
     });
 
     await expect(validate(dto)).resolves.toHaveLength(0);

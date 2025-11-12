@@ -11,6 +11,7 @@ import { RepositoriesModule } from './repositories/repositories.module';
 import { SharedModule } from './shared/shared.module';
 import { Attendance } from './attendance/attendance.entity';
 import { AttendanceService } from './attendance/attendance.service';
+import { AttendanceRosterService } from './attendance/attendance-roster.service';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { ClassGroupsService } from './class_groups/class_groups.service';
@@ -30,6 +31,7 @@ import { GradeSchemes } from './grade_schemes/grade_schemes.entity';
 import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.entity';
 import { Notifications } from './notifications/notifications.entity';
 import { NotificationsService } from './notifications/notifications.service';
+import { NotificationsAbsenceMonitorService } from './notifications/absence-monitor.service';
 import { SchoolYears } from './school_years/school_years.entity';
 import { SchoolYearsService } from './school_years/school_years.service';
 import { Students } from './students/students.entity';
@@ -70,6 +72,8 @@ import { ReportsModule } from './reports/reports.module';
 import { UsersController } from './users/users.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
+import { DashboardsService } from './dashboards/dashboards.service';
+import { DashboardsController } from './dashboards/dashboards.controller';
 
 @Module({
   imports: [
@@ -149,6 +153,7 @@ import { RolesGuard } from './auth/roles.guard';
     TimetableAssignmentsController,
     TimetableSlotsController,
     UsersController,
+    DashboardsController,
   ],
   providers: [
     {
@@ -161,6 +166,7 @@ import { RolesGuard } from './auth/roles.guard';
     },
     AppService,
     AttendanceService,
+    AttendanceRosterService,
     AuditLogsService,
     ClassGroupsService,
     ClassroomsService,
@@ -170,6 +176,7 @@ import { RolesGuard } from './auth/roles.guard';
     EnrollmentsService,
     GradesService,
     NotificationsService,
+    NotificationsAbsenceMonitorService,
     TimetableAssignmentsService,
     StudentsService,
     SubjectAreasService,
@@ -178,6 +185,7 @@ import { RolesGuard } from './auth/roles.guard';
     TermsService,
     UsersService,
     TimetableSlotsService,
+    DashboardsService,
   ],
 })
 export class AppModule {}

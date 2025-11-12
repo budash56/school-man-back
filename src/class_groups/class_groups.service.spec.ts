@@ -14,6 +14,10 @@ const createDto: CreateClassGroupDto = {
   defaultClassroomId: 2,
 };
 
+const createDriverError = (
+  overrides: Partial<{ code?: string; constraint?: string }>,
+) => Object.assign(new Error(), overrides);
+
 const mockClassGroup = {
   classGroupId: '5',
   schoolYearId: '1',
@@ -93,10 +97,14 @@ describe('ClassGroupsService', () => {
     });
     (classGroupsRepository.create as jest.Mock).mockReturnValue({});
     (classGroupsRepository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], {
-        code: '23505',
-        detail: 'uniq_cg_year_grade_section',
-      }),
+      new QueryFailedError(
+        '',
+        [],
+        createDriverError({
+          code: '23505',
+          constraint: 'uniq_cg_year_grade_section',
+        }),
+      ),
     );
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(
@@ -137,4 +145,5 @@ describe('ClassGroupsService', () => {
     expect(result.data).toHaveLength(1);
     expect(result.total).toBe(1);
   });
+  
 });

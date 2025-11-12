@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ReportsService } from '../reports.service';
+import type { ActingUser } from '../reports.service';
 import { TermGradeReportDto } from '../dto/term-grade-report.dto';
 import { FinalGradeReportDto } from '../dto/final-grade-report.dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -44,7 +45,7 @@ export class GradesReportsController {
     );
   }
 
-  private toActingUser(req: RequestWithUser) {
+  private toActingUser(req: RequestWithUser): ActingUser {
     if (!req.user) {
       return { role: 'teacher', userId: 0 };
     }
@@ -53,8 +54,12 @@ export class GradesReportsController {
       req.user.userId ??
       (req.user.nationalId ? Number(req.user.nationalId) : NaN);
 
+    const defaultRole: SanitizedUser['role'] = 'teacher';
+    const role: SanitizedUser['role'] =
+      (req.user.role as SanitizedUser['role'] | undefined) ?? defaultRole;
+
     return {
-      role: (req.user.role as SanitizedUser['role']) ?? 'teacher',
+      role,
       userId: Number.isFinite(rawId) ? Number(rawId) : 0,
     };
   }

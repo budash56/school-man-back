@@ -44,8 +44,8 @@ export class GradesController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.gradesService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Req() req: RequestWithUser) {
+    return this.gradesService.findOne(id, this.toActingUser(req));
   }
 
   @Roles('teacher', 'admin')

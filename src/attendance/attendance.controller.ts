@@ -17,10 +17,12 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import type { SanitizedUser } from '../auth/auth.types';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
-import { ApiBearerAuth, ApiBody, ApiForbiddenResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiForbiddenResponse, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
+import { AttendanceRosterService } from './attendance-roster.service';
+import { AttendanceSheetQueryDto } from './dto/attendance-sheet-query.dto';
 
 type ActingUser = {
   userId: number;
@@ -37,7 +39,10 @@ type RequestWithUser = Request & {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('attendance')
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(
+    private readonly attendanceService: AttendanceService,
+    private readonly attendanceRosterService: AttendanceRosterService,
+  ) {}
 
   @Get()
   findAll(
@@ -53,6 +58,16 @@ export class AttendanceController {
     return this.attendanceService.findAll(
       normalizedQuery,
       this.toActingUser(req),
+    );
+  }
+
+  @Get('sheet')
+  @ApiQuery({ name: 'classGroupId', required: true, example: 10 })
+  @ApiQuery({ name: 'date', required: true, example: '2025-02-15' })
+  buildRoster(@Query() query: AttendanceSheetQueryDto) {
+    return this.attendanceRosterService.buildRoster(
+      query.classGroupId,
+      query.date,
     );
   }
 

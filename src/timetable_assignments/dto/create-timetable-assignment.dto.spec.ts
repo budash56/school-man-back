@@ -7,7 +7,7 @@ describe('CreateTimetableAssignmentDto', () => {
     const dto = plainToInstance(CreateTimetableAssignmentDto, {
       courseId: 10,
       slotId: 4,
-      teacherId: 'teach-001',
+      teacherId: '800001',
       classGroupId: 5,
       classroomId: 2,
     });

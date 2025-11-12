@@ -17,6 +17,8 @@ export type NotificationResponse = {
   message: string | null;
   isActive: boolean;
   createdAt: string | null;
+  category: string;
+  studentId: number | null;
 };
 
 @Injectable()
@@ -123,6 +125,45 @@ export class NotificationsService {
     return { deleted: true };
   }
 
+  async resolve(id: number): Promise<NotificationResponse> {
+    const entity = await this.getEntity(id);
+    entity.isActive = false;
+    await this.repository.save(entity);
+    return this.toResponse(entity);
+  }
+
+  async createStudentSuggestion(input: {
+    studentId: number;
+    category: string;
+    title: string;
+    message?: string | null;
+  }): Promise<boolean> {
+    const existing = await this.repository.findOne({
+      where: {
+        studentId: input.studentId.toString(),
+        category: input.category,
+        isActive: true,
+      },
+    });
+
+    if (existing) {
+      return false;
+    }
+
+    const entity = this.repository.create({
+      title: input.title,
+      message: input.message ?? null,
+      isActive: true,
+      category: input.category,
+      student: {
+        studentId: input.studentId.toString(),
+      } as Notifications['student'],
+    });
+
+    await this.repository.save(entity);
+    return true;
+  }
+
   private async getEntity(id: number): Promise<Notifications> {
     const entity = await this.repository.findOne({
       where: { notificationId: id.toString() },
@@ -142,6 +183,8 @@ export class NotificationsService {
       message: entity.message ?? null,
       isActive: entity.isActive,
       createdAt: entity.createdAt ? entity.createdAt.toISOString() : null,
+      category: entity.category,
+      studentId: entity.studentId ? Number(entity.studentId) : null,
     };
   }
 }

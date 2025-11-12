@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -23,6 +25,8 @@ import { NotificationsService } from './notifications.service';
 import { QueryNotificationDto } from './dto/query-notification.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { NotificationsAbsenceMonitorService } from './absence-monitor.service';
+import { Logger } from '@nestjs/common';
 
 @ApiTags('notifications')
 @Roles('admin', 'coordinator')
@@ -30,7 +34,11 @@ import { UpdateNotificationDto } from './dto/update-notification.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly service: NotificationsService) {}
+  private readonly logger = new Logger(NotificationsController.name);
+  constructor(
+    private readonly service: NotificationsService,
+    private readonly absenceMonitor: NotificationsAbsenceMonitorService,
+  ) {}
 
   @Get()
   findAll(@Query() query: QueryNotificationDto) {
@@ -96,4 +104,25 @@ export class NotificationsController {
     await this.service.remove(id);
     return { deleted: true };
   }
+
+  @Roles('admin', 'coordinator')
+  @Patch(':id/resolve')
+  resolve(@Param('id', ParseIntPipe) id: number) {
+    return this.service.resolve(id);
+  }
+
+  @Roles('admin', 'coordinator')
+  @Post('suggestions/absence/run')
+  @HttpCode(HttpStatus.CREATED)
+  async runAbsence(@Query('date') date: string) {
+  try {
+      const created = await this.absenceMonitor.run(date);
+      this.logger.debug(`absence-run ok: date=${date} created=${created}`);
+      return { created };
+    } catch (e) {
+      this.logger.error(`absence-run failed: date=${date}`, (e as any)?.stack ?? String(e));
+      throw e;
+    }
+  }
 }
+

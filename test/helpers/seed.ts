@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, ObjectLiteral } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Users } from '../../src/users/users.entity';
 import { SchoolYears } from '../../src/school_years/school_years.entity';
@@ -12,6 +12,8 @@ import { Attendance } from '../../src/attendance/attendance.entity';
 import { Grades } from '../../src/grades/grades.entity';
 import { TimetableAssignments } from '../../src/timetable_assignments/timetable_assignments.entity';
 import { Enrollments } from '../../src/enrollments/enrollments.entity';
+import { Students } from '../../src/students/students.entity';
+import { TimetableSlot } from '../../src/timetable_slots/timetable_slots.entity';
 
 type SeedUserKey = 'admin' | 'coordinator' | 'registrar' | 'teacher';
 
@@ -20,9 +22,13 @@ export type SeedResult = {
   schoolYear: SchoolYears;
   classGroup: ClassGroups;
   course: Courses;
+  student: Students;
+  classroom: Classrooms;
+  timetableSlot: TimetableSlot;
+  timetableAssignment: TimetableAssignments;
 };
 
-async function wipe(repo: Repository<unknown>): Promise<void> {
+async function wipe(repo: Repository<ObjectLiteral>): Promise<void> {
   await repo.createQueryBuilder().delete().where('1=1').execute();
 }
 
@@ -33,6 +39,7 @@ export async function seedBasicData(
   const gradesRepo = dataSource.getRepository(Grades);
   const timetableAssignmentsRepo =
     dataSource.getRepository(TimetableAssignments);
+  const timetableSlotsRepo = dataSource.getRepository(TimetableSlot);
   const coursesRepo = dataSource.getRepository(Courses);
   const courseInstancesRepo = dataSource.getRepository(CourseInstances);
   const enrollmentsRepo = dataSource.getRepository(Enrollments);
@@ -42,6 +49,7 @@ export async function seedBasicData(
   const subjectsRepo = dataSource.getRepository(Subjects);
   const subjectAreasRepo = dataSource.getRepository(SubjectAreas);
   const usersRepo = dataSource.getRepository(Users);
+  const studentsRepo = dataSource.getRepository(Students);
 
   await wipe(attendanceRepo);
   await wipe(gradesRepo);
@@ -55,6 +63,8 @@ export async function seedBasicData(
   await wipe(subjectsRepo);
   await wipe(subjectAreasRepo);
   await wipe(usersRepo);
+  await wipe(studentsRepo);
+  await wipe(timetableSlotsRepo);
 
   const userSeeds: Array<{
     key: SeedUserKey;
@@ -86,7 +96,7 @@ export async function seedBasicData(
     },
     {
       key: 'teacher',
-      nationalId: 'teach-001',
+      nationalId: '800001',
       username: 'teacher',
       password: 'Teach#123',
       role: 'teacher',
@@ -190,10 +200,55 @@ export async function seedBasicData(
     }),
   );
 
+  const student = await studentsRepo.save(
+    studentsRepo.create({
+      studentId: '1',
+      nationalId: 'seed-student',
+      firstName: 'Seed',
+      lastName: 'Student',
+      guardianName: 'Seed Guardian',
+      guardianRelationship: 'Parent',
+      guardianPhone: '555123456',
+      isActive: true,
+    }),
+  );
+
+  await enrollmentsRepo.save(
+    enrollmentsRepo.create({
+      studentId: student.studentId,
+      classGroupId: classGroup.classGroupId,
+      schoolYearId: schoolYear.schoolYearId,
+      active: true,
+    }),
+  );
+
+  const timetableSlot = await timetableSlotsRepo.save(
+    timetableSlotsRepo.create({
+      dayOfWeek: 1,
+      startTime: '08:00:00',
+      endTime: '08:45:00',
+      durationMinutes: 45,
+    }),
+  );
+
+  const timetableAssignment = await timetableAssignmentsRepo.save(
+    timetableAssignmentsRepo.create({
+      courseId: course.courseId.toString(),
+      slotId: timetableSlot.slotId.toString(),
+      teacherId: usersByKey.teacher.nationalId,
+      classGroupId: classGroup.classGroupId.toString(),
+      classroomId: classroom.classroomId.toString(),
+    }),
+  );
+
   return {
     users: credentials,
     schoolYear,
     classGroup,
     course,
+    student,
+    classroom,
+    timetableSlot,
+    timetableAssignment,
   };
 }

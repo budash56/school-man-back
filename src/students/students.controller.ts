@@ -4,6 +4,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -85,11 +87,21 @@ export class StudentsController {
   }
 
   @Roles('admin', 'coordinator')
-  @Patch(':id/restore')
+  @Post(':id/restore')
+  @ApiQuery({
+    name: 'year',
+    required: true,
+    description: 'School year identifier to restore the student enrollment into',
+    example: 3,
+  })
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  restore(@Param('id', ParseIntPipe) id: number) {
-    return this.studentsService.restore(id);
+  @HttpCode(HttpStatus.OK)
+  restore(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('year', ParseIntPipe) year: number,
+  ) {
+    return this.studentsService.restoreForYear(id, year);
   }
 }

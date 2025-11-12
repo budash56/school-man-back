@@ -8,6 +8,10 @@ type MockedSubjectAreasRepository = Partial<
   Record<keyof SubjectAreasRepository, jest.Mock>
 >;
 
+const createDriverError = (
+  overrides: Partial<{ code?: string; constraint?: string }>,
+) => Object.assign(new Error(), overrides);
+
 describe('SubjectAreasService', () => {
   let service: SubjectAreasService;
   let repository: SubjectAreasRepository & MockedSubjectAreasRepository;
@@ -33,7 +37,7 @@ describe('SubjectAreasService', () => {
   it('throws ConflictException on duplicate area code', async () => {
     (repository.create as jest.Mock).mockReturnValue(createDto);
     (repository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
+      new QueryFailedError('', [], createDriverError({ code: '23505' })),
     );
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(

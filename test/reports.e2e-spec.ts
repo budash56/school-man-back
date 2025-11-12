@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import * as bcrypt from 'bcrypt';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData, SeedResult } from './helpers/seed';
 import { Students } from '../src/students/students.entity';
@@ -58,17 +58,14 @@ describe('Reports (e2e)', () => {
     const termsRepo = dataSource.getRepository(Terms);
     const gradesRepo = dataSource.getRepository(Grades);
 
-    student = await studentsRepo.save(
-      studentsRepo.create({
-        nationalId: 'STU-900',
-        firstName: 'Report',
-        lastName: 'Student',
-        guardianName: 'Guardian',
-        guardianRelationship: 'Parent',
-        guardianPhone: '5550000',
-        isActive: true,
-      }),
-    );
+    const existingStudent = await studentsRepo.findOne({
+      where: { studentId: seedData.student.studentId },
+    });
+
+    if (!existingStudent) {
+      throw new Error('Seed student missing for reports tests');
+    }
+    student = existingStudent;
 
     terms = await Promise.all(
       ['P1', 'P2', 'P3', 'P4'].map((name, index) =>
@@ -102,7 +99,7 @@ describe('Reports (e2e)', () => {
     const usersRepo = dataSource.getRepository(Users);
     const outsider = await usersRepo.save(
       usersRepo.create({
-        nationalId: 'teach-999',
+        nationalId: '800999',
         username: 'teach-999',
         passwordHash: await bcrypt.hash('Teach#999', 10),
         role: 'teacher',
@@ -116,7 +113,7 @@ describe('Reports (e2e)', () => {
   }
 
   it('generates active-student certificate with incremental print ids', async () => {
-    await dataSource.query(`SELECT setval('print_generation_seq', 0, false);`);
+    await dataSource.query(`SELECT setval('print_generation_seq', 1, false);`);
 
     const payload = {
       studentId: Number(student.studentId),
@@ -159,7 +156,7 @@ describe('Reports (e2e)', () => {
   });
 
   it('returns consecutive print ids for term reports', async () => {
-    await dataSource.query(`SELECT setval('print_generation_seq', 0, false);`);
+    await dataSource.query(`SELECT setval('print_generation_seq', 1, false);`);
 
     const params = {
       studentId: Number(student.studentId),

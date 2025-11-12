@@ -37,7 +37,12 @@ describe('Notifications (e2e)', () => {
     coordinatorToken = await login(app, seed.users.coordinator);
     teacherToken = await login(app, seed.users.teacher);
 
-    await dataSource.getRepository(Notifications).delete({});
+    await dataSource
+      .getRepository(Notifications)
+      .createQueryBuilder()
+      .delete()
+      .where('1=1')
+      .execute();
   });
 
   afterAll(async () => {

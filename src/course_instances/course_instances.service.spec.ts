@@ -8,6 +8,10 @@ import { CreateCourseInstanceDto } from './dto/create-course-instance.dto';
 
 type Mocked<T> = Partial<Record<keyof T, jest.Mock>>;
 
+const createDriverError = (
+  overrides: Partial<{ code?: string; constraint?: string }>,
+) => Object.assign(new Error(), overrides);
+
 describe('CourseInstancesService', () => {
   let service: CourseInstancesService;
   let repository: CourseInstancesRepository & Mocked<CourseInstancesRepository>;
@@ -69,7 +73,7 @@ describe('CourseInstancesService', () => {
   it('throws ConflictException when composite keys already exist', async () => {
     (repository.create as jest.Mock).mockImplementation((payload) => payload);
     (repository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
+      new QueryFailedError('', [], createDriverError({ code: '23505' })),
     );
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(

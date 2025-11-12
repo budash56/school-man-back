@@ -14,10 +14,22 @@ import {
   PaginatedResult,
   resolvePagination,
 } from '../shared/pagination';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { SchoolYearsRepository } from '../school_years/school_years.repository';
+import { GradesRepository } from '../grades/grades.repository';
+import { AttendanceRepository } from '../attendance/attendance.repository';
+import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 
 @Injectable()
 export class StudentsService {
-  constructor(private readonly repository: StudentsRepository) {}
+  constructor(
+    private readonly repository: StudentsRepository,
+    private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly schoolYearsRepository: SchoolYearsRepository,
+    private readonly gradesRepository: GradesRepository,
+    private readonly attendanceRepository: AttendanceRepository,
+    private readonly classGroupsRepository: ClassGroupsRepository,
+  ) {}
 
   async findAll(query: StudentsQueryDto): Promise<PaginatedResult<Students>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
@@ -97,18 +109,70 @@ export class StudentsService {
 
   async remove(id: number): Promise<{ deleted: true }> {
     const student = await this.loadStudent(id);
+    const activeYear = await this.getActiveSchoolYear();
+
+    if (!activeYear) {
+      return { deleted: true };
+    }
+
+    await this.deactivateStudentForYear(
+      student.studentId,
+      activeYear.schoolYearId,
+    );
+
     student.deletedAt = new Date();
     student.isActive = false;
     await this.repository.save(student);
+
     return { deleted: true };
   }
 
-  async restore(id: number): Promise<Students> {
+  async restoreForYear(id: number, year: number): Promise<Students> {
     const student = await this.loadStudent(id, { includeDeleted: true });
+    const schoolYear = await this.schoolYearsRepository.findOne({
+      where: { schoolYearId: year.toString() },
+    });
 
-    if (!student.deletedAt) {
-      return student;
+    if (!schoolYear) {
+      throw new NotFoundException('School year not found');
     }
+
+    let enrollment = await this.enrollmentsRepository.findOne({
+      where: {
+        studentId: student.studentId,
+        schoolYearId: schoolYear.schoolYearId,
+      },
+    });
+
+    if (!enrollment) {
+      const latest = await this.enrollmentsRepository.findOne({
+        where: { studentId: student.studentId },
+        order: { enrolledAt: 'DESC' },
+      });
+
+      const fallbackClassGroupId =
+        latest?.classGroupId ??
+        (
+          await this.classGroupsRepository.findOne({
+            where: { schoolYearId: schoolYear.schoolYearId },
+          })
+        )?.classGroupId;
+
+      if (!fallbackClassGroupId) {
+        throw new NotFoundException('Inactive enrollment not found for year');
+      }
+
+      enrollment = this.enrollmentsRepository.create({
+        studentId: student.studentId,
+        classGroupId: fallbackClassGroupId,
+        schoolYearId: schoolYear.schoolYearId,
+        active: true,
+      });
+    } else if (!enrollment.active) {
+      enrollment.active = true;
+    }
+
+    await this.enrollmentsRepository.save(enrollment);
 
     student.deletedAt = null;
     student.isActive = true;
@@ -147,6 +211,7 @@ export class StudentsService {
   ): Promise<Students> {
     const student = await this.repository.findOne({
       where: { studentId: id.toString() },
+      withDeleted: options?.includeDeleted ?? false,
     });
 
     if (!student) {
@@ -158,5 +223,68 @@ export class StudentsService {
     }
 
     return student;
+  }
+
+  private async getActiveSchoolYear() {
+    return this.schoolYearsRepository.findOne({
+      where: { isActive: true },
+    });
+  }
+
+  private async deactivateStudentForYear(
+    studentId: string,
+    schoolYearId: string,
+  ): Promise<void> {
+    const enrollments = await this.enrollmentsRepository.find({
+      where: {
+        studentId,
+        schoolYearId,
+      },
+    });
+
+    if (enrollments.length > 0) {
+      await this.enrollmentsRepository.save(
+        enrollments.map((enrollment) => ({
+          ...enrollment,
+          active: false,
+        })),
+      );
+    }
+
+    await this.removeGradesForYear(studentId, schoolYearId);
+    await this.removeAttendanceForYear(studentId, schoolYearId);
+  }
+
+  private async removeGradesForYear(
+    studentId: string,
+    schoolYearId: string,
+  ): Promise<void> {
+    const grades = await this.gradesRepository
+      .createQueryBuilder('grade')
+      .innerJoinAndSelect('grade.term', 'term')
+      .where('grade.studentId = :studentId', { studentId })
+      .andWhere('term.schoolYearId = :schoolYearId', { schoolYearId })
+      .getMany();
+
+    if (grades.length > 0) {
+      await this.gradesRepository.remove(grades);
+    }
+  }
+
+  private async removeAttendanceForYear(
+    studentId: string,
+    schoolYearId: string,
+  ): Promise<void> {
+    const attendance = await this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .innerJoinAndSelect('attendance.course', 'course')
+      .innerJoin('course.courseInstance', 'courseInstance')
+      .where('attendance.studentId = :studentId', { studentId })
+      .andWhere('courseInstance.schoolYearId = :schoolYearId', { schoolYearId })
+      .getMany();
+
+    if (attendance.length > 0) {
+      await this.attendanceRepository.remove(attendance);
+    }
   }
 }

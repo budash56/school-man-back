@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { Repository } from 'typeorm';
+import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { Users } from '../src/users/users.entity';
 import { SubjectAreas } from '../src/subject_areas/subject_areas.entity';
@@ -17,6 +16,8 @@ import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
 import { TimetableAssignments } from '../src/timetable_assignments/timetable_assignments.entity';
 import { Attendance } from '../src/attendance/attendance.entity';
 import { Enrollments } from '../src/enrollments/enrollments.entity';
+import { Terms } from '../src/terms/terms.entity';
+import { Grades } from '../src/grades/grades.entity';
 
 describe('Authorization flows (e2e)', () => {
   let app: INestApplication;
@@ -43,6 +44,9 @@ describe('Authorization flows (e2e)', () => {
   let otherCourseId: number;
   let attendanceSlotId: number;
   let attendanceStudentId: number;
+  let timetableAssignmentId: string;
+  let attendanceRecordId: number;
+  let gradeId: number;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -100,7 +104,7 @@ describe('Authorization flows (e2e)', () => {
         studentId: 1,
         courseId: 1,
         termId: 1,
-        mark: 'A',
+        mark: 4,
       })
       .expect(403);
   });
@@ -130,6 +134,38 @@ describe('Authorization flows (e2e)', () => {
     expect(Array.isArray(response.body.data)).toBe(true);
   });
 
+  it('restricts teacher from reading other teachers attendance/grades/timetable assignments', async () => {
+    await request(app.getHttpServer())
+      .get(`/attendance/${attendanceRecordId}`)
+      .set('Authorization', `Bearer ${teacherOneToken}`)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .get(`/attendance/${attendanceRecordId}`)
+      .set('Authorization', `Bearer ${coordinatorToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/grades/${gradeId}`)
+      .set('Authorization', `Bearer ${teacherOneToken}`)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .get(`/grades/${gradeId}`)
+      .set('Authorization', `Bearer ${coordinatorToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get(`/timetable-assignments/${timetableAssignmentId}`)
+      .set('Authorization', `Bearer ${teacherOneToken}`)
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .get(`/timetable-assignments/${timetableAssignmentId}`)
+      .set('Authorization', `Bearer ${coordinatorToken}`)
+      .expect(200);
+  });
+
   async function login(nationalId: string, password: string): Promise<string> {
     const { body } = await request(app.getHttpServer())
       .post('/auth/login')
@@ -138,7 +174,7 @@ describe('Authorization flows (e2e)', () => {
     return body.accessToken;
   }
 
-  async function wipe(repo: Repository<unknown>): Promise<void> {
+  async function wipe(repo: Repository<ObjectLiteral>): Promise<void> {
     await repo.createQueryBuilder().delete().where('1=1').execute();
   }
 
@@ -155,6 +191,8 @@ describe('Authorization flows (e2e)', () => {
     const studentsRepo = dataSource.getRepository(Students);
     const usersRepo = dataSource.getRepository(Users);
     const slotsRepo = dataSource.getRepository(TimetableSlot);
+    const termsRepo = dataSource.getRepository(Terms);
+    const gradesRepo = dataSource.getRepository(Grades);
 
     await wipe(attendanceRepo);
     await wipe(enrollmentsRepo);
@@ -329,17 +367,19 @@ describe('Authorization flows (e2e)', () => {
         dayOfWeek: 1,
         startTime: '08:00:00',
         endTime: '08:45:00',
+        durationMinutes: 45,
       }),
     );
 
-    await assignmentsRepo.save(
+    const assignment = await assignmentsRepo.save(
       assignmentsRepo.create({
-        courseId: teacherTwoCourse.courseId,
-        slotId: slot.slotId,
+        courseId: teacherTwoCourse.courseId.toString(),
+        slotId: slot.slotId.toString(),
         teacherId: teacherTwoCourse.teacherId,
-        classGroupId: teacherTwoCourse.classGroupId,
+        classGroupId: teacherTwoCourse.classGroupId.toString(),
       }),
     );
+    timetableAssignmentId = assignment.assignmentId;
 
     const student = await studentsRepo.save(
       studentsRepo.create({
@@ -364,7 +404,7 @@ describe('Authorization flows (e2e)', () => {
       }),
     );
 
-    await attendanceRepo.save(
+    const attendanceRecord = await attendanceRepo.save(
       attendanceRepo.create({
         studentId: student.studentId,
         courseId: teacherTwoCourse.courseId,
@@ -373,6 +413,28 @@ describe('Authorization flows (e2e)', () => {
         status: 'P',
       }),
     );
+    attendanceRecordId = Number(attendanceRecord.attendanceId);
+
+    const term = await termsRepo.save(
+      termsRepo.create({
+        schoolYearId: schoolYearTwo.schoolYearId,
+        name: 'P1',
+        startDate: '2025-01-01',
+        endDate: '2025-02-01',
+        sortOrder: 1,
+        isFinal: false,
+      }),
+    );
+
+    const grade = await gradesRepo.save(
+      gradesRepo.create({
+        studentId: student.studentId,
+        courseId: teacherTwoCourse.courseId,
+        termId: term.termId,
+        mark: 5,
+      }),
+    );
+    gradeId = Number(grade.gradeId);
 
     otherCourseId = Number(teacherTwoCourse.courseId);
     attendanceSlotId = slot.slotId;

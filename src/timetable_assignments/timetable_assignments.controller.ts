@@ -53,16 +53,8 @@ export class TimetableAssignmentsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    const entity = await this.repository.findOne({
-      where: { assignmentId: id },
-    });
-
-    if (!entity) {
-      throw new NotFoundException('TimetableAssignments record not found');
-    }
-
-    return entity;
+  findOne(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.assignmentsService.findOneOrThrow(id, this.toActingUser(req));
   }
 
   @Roles(...WRITE_ROLES)

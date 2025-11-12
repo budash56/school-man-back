@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { Repository } from 'typeorm';
+import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { Users } from '../src/users/users.entity';
 import { SchoolYears } from '../src/school_years/school_years.entity';
@@ -72,7 +71,7 @@ describe('Year write lock (e2e)', () => {
         studentId: seededIds.studentId,
         courseId: seededIds.courseId,
         termId: seededIds.termId,
-        mark: 'A',
+        mark: 4,
       })
       .expect(403);
 
@@ -83,7 +82,7 @@ describe('Year write lock (e2e)', () => {
         studentId: seededIds.studentId,
         courseId: seededIds.courseId,
         termId: seededIds.termId,
-        mark: 'A',
+        mark: 4,
       })
       .expect(201);
 
@@ -106,7 +105,7 @@ describe('Year write lock (e2e)', () => {
     return body.accessToken;
   }
 
-  async function wipe(repo: Repository<unknown>): Promise<void> {
+  async function wipe(repo: Repository<ObjectLiteral>): Promise<void> {
     await repo.createQueryBuilder().delete().where('1=1').execute();
   }
 

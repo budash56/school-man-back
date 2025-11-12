@@ -2,8 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   ValidationPipe,
+  ArgumentMetadata,
 } from '@nestjs/common';
-import type { ArgumentMetadata } from '@nestjs/common/interfaces/features/arguments.interface';
 import { QueryFailedError } from 'typeorm';
 import { GradesService } from './grades.service';
 import { GradesRepository } from './grades.repository';
@@ -16,6 +16,10 @@ import { AccessService } from '../auth/access.service';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 
 type Mocked<T> = Partial<Record<keyof T, jest.Mock>>;
+
+const createDriverError = (
+  overrides: Partial<{ code?: string; constraint?: string }>,
+) => Object.assign(new Error(), overrides);
 
 describe('GradesService', () => {
   let service: GradesService;
@@ -116,7 +120,7 @@ describe('GradesService', () => {
   it('throws ConflictException when duplicate grade exists', async () => {
     (gradesRepository.create as jest.Mock).mockReturnValue({});
     (gradesRepository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
+      new QueryFailedError('', [], createDriverError({ code: '23505' })),
     );
 
     await expect(
@@ -142,7 +146,7 @@ describe('GradesService', () => {
       courseInstance: { schoolYearId: '99' },
     });
     (gradesRepository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
+      new QueryFailedError('', [], createDriverError({ code: '23505' })),
     );
 
     await expect(
