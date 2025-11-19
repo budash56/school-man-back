@@ -41,6 +41,9 @@ describe('SchoolYearsService', () => {
     service = new SchoolYearsService(repository);
   });
 
+  const uniqueViolation = () =>
+    new QueryFailedError('', [], { code: '23505' } as unknown as Error);
+
   it('throws BadRequestException when start date is after end date', async () => {
     await expect(
       service.create({
@@ -53,9 +56,7 @@ describe('SchoolYearsService', () => {
 
   it('throws ConflictException when name is duplicated', async () => {
     (repository.create as jest.Mock).mockReturnValue(createDto);
-    (repository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
-    );
+    (repository.save as jest.Mock).mockRejectedValue(uniqueViolation());
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(
       ConflictException,
@@ -160,9 +161,7 @@ describe('SchoolYearsService', () => {
   it('throws ConflictException when rollover encounters duplicate name', async () => {
     const transactionRepository = {
       findOne: jest.fn().mockResolvedValue(null),
-      save: jest
-        .fn()
-        .mockRejectedValue(new QueryFailedError('', [], { code: '23505' })),
+      save: jest.fn().mockRejectedValue(uniqueViolation()),
       create: jest.fn().mockImplementation((data) => data),
       count: jest.fn(),
     };

@@ -3,6 +3,7 @@ import { TimetableSlotRepository } from './timetable_slots.repository';
 import { TimetableSlot } from './timetable_slots.entity';
 import { CreateTimetableSlotDto } from './dto/create-timetable-slot.dto';
 import { UpdateTimetableSlotDto } from './dto/update-timetable-slot.dto';
+import type { ScheduleDivision } from './timetable-division.type';
 
 @Injectable()
 export class TimetableSlotsService {
@@ -21,7 +22,12 @@ export class TimetableSlotsService {
   }
 
   async create(dto: CreateTimetableSlotDto): Promise<TimetableSlot> {
-    await this.assertUniqueSlot(dto.dayOfWeek, dto.startTime, dto.endTime);
+    await this.assertUniqueSlot(
+      dto.dayOfWeek,
+      dto.startTime,
+      dto.endTime,
+      dto.division as ScheduleDivision,
+    );
     const durationMinutes = this.calculateDurationMinutes(
       dto.startTime,
       dto.endTime,
@@ -40,7 +46,14 @@ export class TimetableSlotsService {
     const dayOfWeek = dto.dayOfWeek ?? slot.dayOfWeek;
     const startTime = dto.startTime ?? slot.startTime;
     const endTime = dto.endTime ?? slot.endTime;
-    await this.assertUniqueSlot(dayOfWeek, startTime, endTime, slot.slotId);
+    const division = (dto.division ?? slot.division) as ScheduleDivision;
+    await this.assertUniqueSlot(
+      dayOfWeek,
+      startTime,
+      endTime,
+      division,
+      slot.slotId,
+    );
     const durationMinutes = this.calculateDurationMinutes(startTime, endTime);
     this.assertDurationOverride(dto.durationMinutes, durationMinutes);
 
@@ -50,6 +63,7 @@ export class TimetableSlotsService {
       startTime,
       endTime,
       durationMinutes,
+      division,
     });
     return this.repository.save(slot);
   }
@@ -64,13 +78,15 @@ export class TimetableSlotsService {
     dayOfWeek: number,
     startTime: string,
     endTime: string,
+    division: string,
     ignoreSlotId?: number,
   ): Promise<void> {
     const qb = this.repository
       .createQueryBuilder('slot')
       .where('slot.dayOfWeek = :dayOfWeek', { dayOfWeek })
       .andWhere('slot.startTime = :startTime', { startTime })
-      .andWhere('slot.endTime = :endTime', { endTime });
+      .andWhere('slot.endTime = :endTime', { endTime })
+      .andWhere('slot.division = :division', { division });
 
     if (ignoreSlotId) {
       qb.andWhere('slot.slotId != :ignoreSlotId', { ignoreSlotId });

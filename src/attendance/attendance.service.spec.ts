@@ -22,7 +22,7 @@ const pgUniqueQueryFailed = () =>
     constraint: 'uniq_attendance_student_date_slot',
     detail:
       'Key (student_id, date, slot_id)=(1, 2025-02-10, 3) already exists.',
-  });
+  } as unknown as Error);
 
 describe('AttendanceService', () => {
   let service: AttendanceService;

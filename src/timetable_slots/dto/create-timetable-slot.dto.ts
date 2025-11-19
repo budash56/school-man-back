@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, Matches, Max, Min, IsOptional } from 'class-validator';
+import { IsIn, IsInt, Matches, Max, Min, IsOptional } from 'class-validator';
+import { SCHEDULE_DIVISIONS } from '../timetable-division.type';
 
 export class CreateTimetableSlotDto {
   @ApiProperty({
@@ -34,4 +35,11 @@ export class CreateTimetableSlotDto {
   @IsInt()
   @Min(1)
   durationMinutes?: number;
+
+  @ApiProperty({
+    description: 'Division this slot belongs to',
+    enum: SCHEDULE_DIVISIONS,
+  })
+  @IsIn(SCHEDULE_DIVISIONS)
+  division: string;
 }

@@ -84,11 +84,19 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Unique composite `(school_year_id, grade_level, section)` constraint; `code` derived as `{grade}{section}`.
   - Services support pagination, keyword search, and default classroom validation.
 
-- **Timetable (`/timetable-slots`, `/timetable-assignments`)**
+- **Timetable (`/timetable-slots`, `/timetable-assignments`, `/timetable-generator`)**
   - Slots define weekly schedule positions (day-of-week, start/end) and persist `durationMinutes` so downstream scheduling aligns with bell times.
+  - When creating slots the user chooses a division (`elementary` grades 1‑5, `secondary` grades 6‑9, `senior` grades 10‑11). Each division maintains its own slot skeleton, so generators can run independently without slot collisions.
   - Timetable assignments bind courses to slots (and optional room overrides) with collision checks across class group, teacher, course, classroom, and teacher+class-group combinations; warnings surface when classroom capacity is exceeded.
   - Classroom/slot combinations are unique whenever a classroom is set, preventing double-booking shared rooms.
   - Write operations inherit school-year write locks through course associations, and teachers may only view assignments tied to their courses.
+  - **Generator:** coordinators call `POST /timetable-generator/preview` per division (`elementary`, `secondary`, `senior`). The payload carries the school year, global teacher weekly-hour cap, division, and optional teacher/course constraints (morning-only, avoid last slot, block size, manual session counts). The generator pulls courses only for the chosen division, expands them into “session demands”, then runs a greedy constraint solver that:
+    1. Decorates slots with shift metadata (morning/afternoon, last-of-day) and groups them per weekday.
+    2. Seeds usage maps with existing assignments so new runs don’t collide.
+    3. Sorts demands by block length + strictness, then scans each day for the earliest block of consecutive slots that fits the teacher/class-group availability, shift preferences, and the shared weekly-hour cap.
+    4. Returns the proposed slot placements plus a queue of unassigned sessions (with reasons). `POST /timetable-generator/apply` reuses that plan and persists each slot through the existing timetable-assignment service so all FK/guardrail checks remain centralized.
+  - Generator responses include detailed metadata (day, shift, human-readable label) so operators can review or export before applying.
+  - Preview rejects early if staff capacity is insufficient: it sums the weekly demand per grade/subject within the requested division (`sections * weeklyHours`) and compares it against the provided `teacherWeeklyHourCap`. If the current teacher roster can’t cover that load, the API returns `insufficientTeacherCapacity` plus the missing teacher count so the user can seed more staff before scheduling.
 
 - **Students (`/students`)**
   - CRUD with guardian data requirements (`guardianPhone` non-null), soft constraints on uniqueness by `nationalId`.

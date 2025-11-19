@@ -2,11 +2,14 @@ import { DashboardsService } from './dashboards.service';
 import { DataSource } from 'typeorm';
 
 describe('DashboardsService', () => {
-  let dataSource: { query: jest.Mock };
+  let dataSource: jest.Mocked<Pick<DataSource, 'query'>>;
   let service: DashboardsService;
 
   beforeEach(() => {
-    dataSource = { query: jest.fn() } as unknown as DataSource;
+    dataSource = { query: jest.fn() } as jest.Mocked<Pick<
+      DataSource,
+      'query'
+    >>;
     service = new DashboardsService(dataSource as unknown as DataSource);
   });
 

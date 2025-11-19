@@ -149,7 +149,7 @@ describe('CoursesService', () => {
     });
     (coursesRepository.create as jest.Mock).mockReturnValue({});
     (coursesRepository.save as jest.Mock).mockRejectedValue(
-      new QueryFailedError('', [], { code: '23505' }),
+      new QueryFailedError('', [], { code: '23505' } as unknown as Error),
     );
 
     await expect(service.create(createDto)).rejects.toBeInstanceOf(

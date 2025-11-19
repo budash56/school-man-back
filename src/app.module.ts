@@ -74,6 +74,30 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { DashboardsService } from './dashboards/dashboards.service';
 import { DashboardsController } from './dashboards/dashboards.controller';
+import { TimetableGeneratorService } from './timetable_generator/timetable-generator.service';
+import { TimetableGeneratorController } from './timetable_generator/timetable-generator.controller';
+
+export const buildTypeOrmRootOptions = (
+  configService: ConfigService,
+): TypeOrmModuleOptions => {
+  const options = buildDataSourceOptions({
+    databaseUrl: configService.get<string>('database.url') ?? undefined,
+    ssl: configService.get<boolean>('database.ssl') ?? undefined,
+  });
+  const isOpenApiExport =
+    configService.get<boolean>('app.isOpenApiExport') ?? false;
+  return {
+    ...options,
+    autoLoadEntities: true,
+    ...(isOpenApiExport
+      ? {
+          logging: false,
+          retryAttempts: 0,
+          connectTimeoutMS: 1000,
+        }
+      : {}),
+  };
+};
 
 @Module({
   imports: [
@@ -84,25 +108,7 @@ import { DashboardsController } from './dashboards/dashboards.controller';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
-        const options = buildDataSourceOptions({
-          databaseUrl: configService.get<string>('database.url') ?? undefined,
-          ssl: configService.get<boolean>('database.ssl') ?? undefined,
-        });
-        const isOpenApiExport =
-          configService.get<boolean>('app.isOpenApiExport') ?? false;
-        return {
-          ...options,
-          autoLoadEntities: true,
-          ...(isOpenApiExport
-            ? {
-                logging: false,
-                retryAttempts: 0,
-                connectTimeoutMS: 1000,
-              }
-            : {}),
-        };
-      },
+      useFactory: buildTypeOrmRootOptions,
     }),
     TypeOrmModule.forFeature([
       Attendance,
@@ -154,6 +160,7 @@ import { DashboardsController } from './dashboards/dashboards.controller';
     TimetableSlotsController,
     UsersController,
     DashboardsController,
+    TimetableGeneratorController,
   ],
   providers: [
     {
@@ -186,6 +193,7 @@ import { DashboardsController } from './dashboards/dashboards.controller';
     UsersService,
     TimetableSlotsService,
     DashboardsService,
+    TimetableGeneratorService,
   ],
 })
 export class AppModule {}

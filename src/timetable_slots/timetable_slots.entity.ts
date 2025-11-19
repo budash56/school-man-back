@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Unique, Check } from 'typeorm';
+import type { ScheduleDivision } from './timetable-division.type';
 
 @Entity('timetable_slots')
 @Unique('uniq_timetable_slot', ['dayOfWeek', 'startTime', 'endTime'])
@@ -18,6 +19,14 @@ export class TimetableSlot {
 
   @Column({ type: 'integer', name: 'duration_minutes' })
   durationMinutes: number;
+
+  @Column({
+    type: 'character varying',
+    name: 'division',
+    length: 20,
+    default: () => "'elementary'",
+  })
+  division: ScheduleDivision;
 
   timetableAssignments: any;
 }
