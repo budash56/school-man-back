@@ -31,6 +31,7 @@ type SlotWithMeta = TimetableSlot & {
   startSeconds: number;
   endSeconds: number;
   isLastOfDay: boolean;
+  slotIndex: number;
 };
 
 type SessionDemand = {
@@ -40,11 +41,22 @@ type SessionDemand = {
   blockLength: number;
   preferredShift: TimetableShiftPreference;
   label: string;
+  maxSessionsPerDay?: number;
+  minGapSlots?: number;
+  allowDoubleBlock?: boolean;
+  targetDays?: number[];
+  targetDay?: number;
 };
 
 type GradeRange = {
   min: number;
   max: number;
+};
+
+type BlockedSlotRange = {
+  dayOfWeek: number;
+  startSeconds: number;
+  endSeconds: number;
 };
 
 @Injectable()
@@ -283,10 +295,22 @@ export class TimetableGeneratorService {
     const slotLookup = new Map<number, SlotWithMeta>();
     slotMeta.forEach((slot) => slotLookup.set(slot.slotId, slot));
     const slotsByDay = this.groupSlotsByDay(slotMeta);
+    const blockedSlotsByDay = this.buildBlockedSlotMap(criteria.blockedSlots ?? []);
 
     const teacherHours = new Map<string, number>();
     const teacherSlotUsage = new Map<string, Set<number>>();
     const classGroupSlotUsage = new Map<number, Set<number>>();
+    const subjectDayCount = new Map<number, Map<number, number>>();
+    const classGroupDayLoad = new Map<number, Map<number, number>>();
+    const plannedClassGroupDayLoad = new Map<number, Map<number, number>>();
+    const lastSubjectByClassGroupDay = new Map<
+      number,
+      Map<number, Map<number, number>>
+    >();
+    const lastSubjectSlotIndex = new Map<
+      number,
+      Map<number, Map<number, number>>
+    >();
 
     const ensureSet = <T>(
       collection: Map<T, Set<number>>,
@@ -301,11 +325,63 @@ export class TimetableGeneratorService {
       return created;
     };
 
+    const ensureDayMap = <T>(
+      collection: Map<T, Map<number, number>>,
+      key: T,
+    ): Map<number, number> => {
+      const existing = collection.get(key);
+      if (existing) {
+        return existing;
+      }
+      const created = new Map<number, number>();
+      collection.set(key, created);
+      return created;
+    };
+
+    const incrementDayCount = <T>(
+      collection: Map<T, Map<number, number>>,
+      key: T,
+      day: number,
+      delta = 1,
+    ): void => {
+      const map = ensureDayMap(collection, key);
+      map.set(day, (map.get(day) ?? 0) + delta);
+    };
+
+    const ensureSlotMap = (
+      classGroupId: number,
+      day: number,
+    ): Map<number, number> => {
+      const dayMap =
+        lastSubjectByClassGroupDay.get(classGroupId) ?? new Map();
+      lastSubjectByClassGroupDay.set(classGroupId, dayMap);
+      const slotMap = dayMap.get(day) ?? new Map<number, number>();
+      dayMap.set(day, slotMap);
+      return slotMap;
+    };
+
+    const ensureCourseSlotMap = (
+      classGroupId: number,
+      day: number,
+    ): Map<number, number> => {
+      const dayMap = lastSubjectSlotIndex.get(classGroupId) ?? new Map();
+      lastSubjectSlotIndex.set(classGroupId, dayMap);
+      const courseMap = dayMap.get(day) ?? new Map<number, number>();
+      dayMap.set(day, courseMap);
+      return courseMap;
+    };
+
     for (const existing of existingAssignments) {
       if (!existing.slotId) {
         continue;
       }
       const slotId = Number(existing.slotId);
+      const slot = slotLookup.get(slotId);
+      if (!slot) {
+        continue;
+      }
+      const day = slot.dayOfWeek;
+      const slotIndex = slot.slotIndex;
       if (existing.teacherId) {
         ensureSet(teacherSlotUsage, existing.teacherId).add(slotId);
         teacherHours.set(
@@ -316,11 +392,96 @@ export class TimetableGeneratorService {
       if (existing.classGroupId) {
         const cg = Number(existing.classGroupId);
         ensureSet(classGroupSlotUsage, cg).add(slotId);
+        incrementDayCount(classGroupDayLoad, cg, day, 1);
+        incrementDayCount(plannedClassGroupDayLoad, cg, day, 1);
+        const slotMap = ensureSlotMap(cg, day);
+        slotMap.set(slotIndex, Number(existing.courseId));
+        const courseSlotMap = ensureCourseSlotMap(cg, day);
+        courseSlotMap.set(Number(existing.courseId), slotIndex);
+      }
+      if (existing.courseId) {
+        incrementDayCount(subjectDayCount, Number(existing.courseId), day, 1);
       }
     }
 
     const demands: SessionDemand[] = [];
     const unassigned: UnassignedSessionDto[] = [];
+    const availableDays = Array.from(slotsByDay.keys()).sort((a, b) => a - b);
+
+    const assignTargetDays = ({
+      classGroupId,
+      totalBlocks,
+      preferredDays,
+    }: {
+      classGroupId: number;
+      totalBlocks: number;
+      preferredDays?: number[];
+    }): number[] => {
+      const balanceAcrossDays = criteria.balanceAcrossDays === true;
+      const hasPreferredDays = Boolean(preferredDays?.length);
+      if (!balanceAcrossDays && !hasPreferredDays) {
+        return [];
+      }
+
+      const candidateDays = (preferredDays?.length
+        ? preferredDays
+        : availableDays
+      ).filter((day) => availableDays.includes(day));
+
+      if (candidateDays.length === 0 || totalBlocks <= 0) {
+        return [];
+      }
+
+      const plannedDayLoad =
+        plannedClassGroupDayLoad.get(classGroupId) ?? new Map<number, number>();
+      plannedClassGroupDayLoad.set(classGroupId, plannedDayLoad);
+
+      const getLoad = (day: number): number => plannedDayLoad.get(day) ?? 0;
+      const incrementLoad = (day: number): void => {
+        plannedDayLoad.set(day, getLoad(day) + 1);
+      };
+
+      const pickDay = (exclude?: Set<number>): number | undefined => {
+        let bestDay: number | undefined;
+        let bestLoad = Number.POSITIVE_INFINITY;
+        for (const day of candidateDays) {
+          if (exclude?.has(day)) {
+            continue;
+          }
+          const load = getLoad(day);
+          if (load < bestLoad) {
+            bestLoad = load;
+            bestDay = day;
+          }
+        }
+        return bestDay;
+      };
+
+      const targetDays: number[] = [];
+      const distinctCount = Math.min(totalBlocks, candidateDays.length);
+      const used = new Set<number>();
+
+      for (let i = 0; i < distinctCount; i += 1) {
+        const day = pickDay(used);
+        if (day === undefined) {
+          break;
+        }
+        used.add(day);
+        targetDays.push(day);
+        incrementLoad(day);
+      }
+
+      while (targetDays.length < totalBlocks) {
+        const day = pickDay();
+        if (day === undefined) {
+          break;
+        }
+        targetDays.push(day);
+        incrementLoad(day);
+      }
+
+      return targetDays;
+    };
 
     for (const course of courses) {
       const classGroupId = Number(course.classGroupId);
@@ -346,9 +507,21 @@ export class TimetableGeneratorService {
         Math.ceil(weeklyHours / blockLength),
       );
       const preferredShift = pref?.preferredShift ?? 'any';
+      const maxSessionsPerDay = pref?.maxSessionsPerDay;
+      const minGapSlots = pref?.minGapSlots;
+      const allowDoubleBlock = pref?.allowDoubleBlock;
+      const targetDaysOverride = pref?.targetDays?.filter((day) =>
+        availableDays.includes(day),
+      );
       const label = `${course.courseInstance?.courseName ?? 'Course'} - ${
         course.classGroup?.gradeLevel ?? ''
       }${course.classGroup?.section ?? ''}`.trim();
+
+      const targetDaysForSessions = assignTargetDays({
+        classGroupId,
+        totalBlocks,
+        preferredDays: targetDaysOverride,
+      });
 
       for (let i = 0; i < totalBlocks; i += 1) {
         demands.push({
@@ -358,6 +531,11 @@ export class TimetableGeneratorService {
           blockLength,
           preferredShift,
           label,
+          maxSessionsPerDay,
+          minGapSlots,
+          allowDoubleBlock,
+          targetDays: targetDaysOverride,
+          targetDay: targetDaysForSessions[i],
         });
       }
     }
@@ -386,7 +564,11 @@ export class TimetableGeneratorService {
         teacherHours,
         teacherSlotUsage,
         classGroupSlotUsage,
-        slotLookup,
+        subjectDayCount,
+        classGroupDayLoad,
+        lastSubjectByClassGroupDay,
+        lastSubjectSlotIndex,
+        blockedSlotsByDay,
       });
 
       if (!resolution) {
@@ -399,6 +581,8 @@ export class TimetableGeneratorService {
         });
         continue;
       }
+
+      const dayOfWeek = resolution[0]?.dayOfWeek ?? 0;
 
       for (const slot of resolution) {
         proposed.push({
@@ -426,6 +610,26 @@ export class TimetableGeneratorService {
           classGroupSlotUsage.get(demand.classGroupId) ?? new Set();
         classGroupSet.add(slot.slotId);
         classGroupSlotUsage.set(demand.classGroupId, classGroupSet);
+
+        const slotMap = ensureSlotMap(demand.classGroupId, slot.dayOfWeek);
+        slotMap.set(slot.slotIndex, demand.courseId);
+      }
+
+      if (dayOfWeek) {
+        incrementDayCount(subjectDayCount, demand.courseId, dayOfWeek, 1);
+        incrementDayCount(
+          classGroupDayLoad,
+          demand.classGroupId,
+          dayOfWeek,
+          demand.blockLength,
+        );
+        const courseSlotMap = ensureCourseSlotMap(
+          demand.classGroupId,
+          dayOfWeek,
+        );
+        const lastSlotIndex =
+          resolution[resolution.length - 1]?.slotIndex ?? 0;
+        courseSlotMap.set(demand.courseId, lastSlotIndex);
       }
     }
 
@@ -461,6 +665,7 @@ export class TimetableGeneratorService {
         startSeconds,
         endSeconds,
         isLastOfDay: endSeconds === maxEnd,
+        slotIndex: 0,
       };
     });
   }
@@ -485,6 +690,36 @@ export class TimetableGeneratorService {
       list.push(slot);
       map.set(slot.dayOfWeek, list);
     });
+    map.forEach((list) => {
+      list.sort((a, b) => a.startSeconds - b.startSeconds);
+      list.forEach((slot, index) => {
+        slot.slotIndex = index;
+      });
+    });
+    return map;
+  }
+
+  private buildBlockedSlotMap(
+    blockedSlots: Array<{ dayOfWeek: number; startTime: string; endTime: string }>,
+  ): Map<number, BlockedSlotRange[]> {
+    const map = new Map<number, BlockedSlotRange[]>();
+    blockedSlots.forEach((blocked) => {
+      const startSeconds = this.toSeconds(blocked.startTime);
+      const endSeconds = this.toSeconds(blocked.endTime);
+      if (!Number.isFinite(startSeconds) || !Number.isFinite(endSeconds)) {
+        return;
+      }
+      if (endSeconds <= startSeconds) {
+        return;
+      }
+      const list = map.get(blocked.dayOfWeek) ?? [];
+      list.push({
+        dayOfWeek: blocked.dayOfWeek,
+        startSeconds,
+        endSeconds,
+      });
+      map.set(blocked.dayOfWeek, list);
+    });
     map.forEach((list) =>
       list.sort((a, b) => a.startSeconds - b.startSeconds),
     );
@@ -499,7 +734,11 @@ export class TimetableGeneratorService {
     teacherHours,
     teacherSlotUsage,
     classGroupSlotUsage,
-    slotLookup,
+    subjectDayCount,
+    classGroupDayLoad,
+    lastSubjectByClassGroupDay,
+    lastSubjectSlotIndex,
+    blockedSlotsByDay,
   }: {
     demand: SessionDemand;
     criteria: GenerateTimetableDto;
@@ -508,12 +747,16 @@ export class TimetableGeneratorService {
     teacherHours: Map<string, number>;
     teacherSlotUsage: Map<string, Set<number>>;
     classGroupSlotUsage: Map<number, Set<number>>;
-    slotLookup: Map<number, SlotWithMeta>;
+    subjectDayCount: Map<number, Map<number, number>>;
+    classGroupDayLoad: Map<number, Map<number, number>>;
+    lastSubjectByClassGroupDay: Map<number, Map<number, Map<number, number>>>;
+    lastSubjectSlotIndex: Map<number, Map<number, Map<number, number>>>;
+    blockedSlotsByDay: Map<number, BlockedSlotRange[]>;
   }): SlotWithMeta[] | undefined {
     const teacherConstraint = teacherConstraints.get(demand.teacherId);
     const teacherCap = criteria.teacherWeeklyHourCap;
     const usedHours = teacherHours.get(demand.teacherId) ?? 0;
-    if (usedHours + demand.blockLength > teacherCap) {
+    if (teacherCap && usedHours + demand.blockLength > teacherCap) {
       return undefined;
     }
 
@@ -526,10 +769,79 @@ export class TimetableGeneratorService {
     const classGroupSlots =
       classGroupSlotUsage.get(demand.classGroupId) ?? new Set();
 
-    for (const [, daySlots] of slotsByDay) {
-      if (daySlots.length === 0) {
+    const subjectDayMap = subjectDayCount.get(demand.courseId) ?? new Map();
+    const classGroupDayMap =
+      classGroupDayLoad.get(demand.classGroupId) ?? new Map();
+    const classGroupAssignmentsByDay =
+      lastSubjectByClassGroupDay.get(demand.classGroupId);
+    const courseSlotIndexByDay =
+      lastSubjectSlotIndex.get(demand.classGroupId);
+
+    const maxSessionsPerDay =
+      demand.maxSessionsPerDay ?? criteria.maxSessionsPerDayDefault;
+    const minGapSlots = demand.minGapSlots ?? criteria.minGapSlotsDefault;
+    const allowDoubleBlock = demand.allowDoubleBlock === true;
+    const avoidConsecutive =
+      criteria.avoidConsecutiveSameSubject === true && !allowDoubleBlock;
+    const balanceAcrossDays = criteria.balanceAcrossDays === true;
+    const targetDay = demand.targetDay;
+    const allowedTargetDays = demand.targetDays?.length
+      ? new Set(demand.targetDays)
+      : undefined;
+
+    const totalLoad = Array.from(classGroupDayMap.values()).reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+    const dayCount = Math.max(slotsByDay.size, 1);
+    const averageLoad = totalLoad / dayCount;
+
+    const days = Array.from(slotsByDay.keys()).sort((a, b) => a - b);
+
+    let best:
+      | {
+          block: SlotWithMeta[];
+          score: number;
+          day: number;
+          startIndex: number;
+        }
+      | undefined;
+
+    const hasBlockedOverlap = (
+      block: SlotWithMeta[],
+      ranges: BlockedSlotRange[],
+    ): boolean => {
+      if (ranges.length === 0) {
+        return false;
+      }
+      return block.some((slot) =>
+        ranges.some(
+          (range) =>
+            slot.startSeconds < range.endSeconds &&
+            slot.endSeconds > range.startSeconds,
+        ),
+      );
+    };
+
+    for (const day of days) {
+      const daySlots = slotsByDay.get(day);
+      if (!daySlots || daySlots.length === 0) {
         continue;
       }
+
+      if (allowedTargetDays && !allowedTargetDays.has(day)) {
+        continue;
+      }
+
+      if (maxSessionsPerDay && (subjectDayMap.get(day) ?? 0) >= maxSessionsPerDay) {
+        continue;
+      }
+
+      const blockedRanges = blockedSlotsByDay.get(day) ?? [];
+      const dayAssignments = classGroupAssignmentsByDay?.get(day);
+      const lastSlotIndexForCourse = courseSlotIndexByDay
+        ?.get(day)
+        ?.get(demand.courseId);
 
       for (let i = 0; i <= daySlots.length - demand.blockLength; i += 1) {
         const block = daySlots.slice(i, i + demand.blockLength);
@@ -548,6 +860,10 @@ export class TimetableGeneratorService {
           continue;
         }
 
+        if (blockedRanges.length && hasBlockedOverlap(block, blockedRanges)) {
+          continue;
+        }
+
         const overlapsWithTeacher = block.some((slot) =>
           teacherSlots.has(slot.slotId),
         );
@@ -562,11 +878,81 @@ export class TimetableGeneratorService {
           continue;
         }
 
-        return block.map((slot) => slotLookup.get(slot.slotId)!);
+        const startIndex = block[0]?.slotIndex ?? 0;
+        const endIndex = block[block.length - 1]?.slotIndex ?? startIndex;
+
+        let score = 0;
+
+        if (targetDay !== undefined && day !== targetDay) {
+          score += 50;
+        }
+
+        if (balanceAcrossDays) {
+          if ((subjectDayMap.get(day) ?? 0) > 0) {
+            score += 20;
+          }
+          const dayLoad = classGroupDayMap.get(day) ?? 0;
+          const dayLoadAfter = dayLoad + demand.blockLength;
+          const excess = Math.max(0, dayLoadAfter - averageLoad);
+          if (excess > 0) {
+            score += Math.ceil(excess) * 5;
+          }
+        }
+
+        if (!allowDoubleBlock) {
+          if (avoidConsecutive) {
+            const hasAdjacentSameSubject =
+              dayAssignments?.get(startIndex - 1) === demand.courseId ||
+              dayAssignments?.get(endIndex + 1) === demand.courseId;
+            if (hasAdjacentSameSubject) {
+              score += 15;
+            }
+          }
+
+          if (minGapSlots !== undefined && minGapSlots > 0) {
+            let violatesMinGap = false;
+            for (let offset = 1; offset <= minGapSlots; offset += 1) {
+              if (
+                dayAssignments?.get(startIndex - offset) === demand.courseId ||
+                dayAssignments?.get(endIndex + offset) === demand.courseId
+              ) {
+                violatesMinGap = true;
+                break;
+              }
+            }
+
+            if (
+              !violatesMinGap &&
+              lastSlotIndexForCourse !== undefined &&
+              Math.abs(startIndex - lastSlotIndexForCourse) - 1 < minGapSlots
+            ) {
+              violatesMinGap = true;
+            }
+
+            if (violatesMinGap) {
+              score += 10;
+            }
+          }
+        }
+
+        if (
+          !best ||
+          score < best.score ||
+          (score === best.score &&
+            (day < best.day ||
+              (day === best.day && startIndex < best.startIndex)))
+        ) {
+          best = {
+            block,
+            score,
+            day,
+            startIndex,
+          };
+        }
       }
     }
 
-    return undefined;
+    return best?.block;
   }
 
   private toSeconds(value: string): number {

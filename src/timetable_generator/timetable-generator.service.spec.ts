@@ -177,6 +177,142 @@ describe('TimetableGeneratorService', () => {
     });
   });
 
+  it('spreads sessions across days when maxSessionsPerDayDefault is set', async () => {
+    (slotRepository.find as jest.Mock).mockResolvedValue([
+      {
+        slotId: 1,
+        dayOfWeek: 1,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 2,
+        dayOfWeek: 1,
+        startTime: '09:00:00',
+        endTime: '09:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 3,
+        dayOfWeek: 2,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 4,
+        dayOfWeek: 2,
+        startTime: '09:00:00',
+        endTime: '09:45:00',
+        durationMinutes: 45,
+      },
+    ]);
+
+    const preview = await service.preview({
+      ...criteria,
+      balanceAcrossDays: true,
+      maxSessionsPerDayDefault: 1,
+    });
+
+    expect(preview.unassignedSessions).toHaveLength(0);
+    expect(preview.assignments).toHaveLength(2);
+    const dayCounts = preview.assignments.reduce((acc, assignment) => {
+      acc.set(
+        assignment.dayOfWeek,
+        (acc.get(assignment.dayOfWeek) ?? 0) + 1,
+      );
+      return acc;
+    }, new Map<number, number>());
+    expect(dayCounts.get(1)).toBe(1);
+    expect(dayCounts.get(2)).toBe(1);
+  });
+
+  it('avoids consecutive sessions of the same subject when configured', async () => {
+    (slotRepository.find as jest.Mock).mockResolvedValue([
+      {
+        slotId: 1,
+        dayOfWeek: 1,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 2,
+        dayOfWeek: 1,
+        startTime: '08:45:00',
+        endTime: '09:30:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 3,
+        dayOfWeek: 1,
+        startTime: '09:30:00',
+        endTime: '10:15:00',
+        durationMinutes: 45,
+      },
+    ]);
+
+    const preview = await service.preview({
+      ...criteria,
+      avoidConsecutiveSameSubject: true,
+    });
+
+    expect(preview.unassignedSessions).toHaveLength(0);
+    expect(preview.assignments).toHaveLength(2);
+    const slotOrder = new Map<number, number>([
+      [1, 0],
+      [2, 1],
+      [3, 2],
+    ]);
+    const indices = preview.assignments
+      .map((assignment) => slotOrder.get(assignment.slotId) ?? 0)
+      .sort((a, b) => a - b);
+    expect(indices[1] - indices[0]).toBeGreaterThan(1);
+  });
+
+  it('skips blocked slots when blockedSlots are provided', async () => {
+    const oneHourCourse = {
+      ...sampleCourse,
+      courseInstance: {
+        ...sampleCourse.courseInstance,
+        weeklyHours: 1,
+      },
+    };
+    (coursesRepository.find as jest.Mock).mockResolvedValue([oneHourCourse]);
+    (slotRepository.find as jest.Mock).mockResolvedValue([
+      {
+        slotId: 1,
+        dayOfWeek: 1,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 2,
+        dayOfWeek: 1,
+        startTime: '09:00:00',
+        endTime: '09:45:00',
+        durationMinutes: 45,
+      },
+    ]);
+
+    const preview = await service.preview({
+      ...criteria,
+      blockedSlots: [
+        {
+          dayOfWeek: 1,
+          startTime: '08:00',
+          endTime: '08:45',
+        },
+      ],
+    });
+
+    expect(preview.unassignedSessions).toHaveLength(0);
+    expect(preview.assignments).toHaveLength(1);
+    expect(preview.assignments[0].slotId).toBe(2);
+  });
+
   it('balances sessions across Monday/Tuesday with no teacher repeats and correct weekly hours', async () => {
     const courses = ['A', 'B', 'C'].map((section, index) => ({
       courseId: String(index + 1),

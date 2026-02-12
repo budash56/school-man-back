@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
 import type { TimetableShiftPreference } from './teacher-constraint.dto';
 
 export class CoursePreferenceDto {
@@ -40,4 +48,46 @@ export class CoursePreferenceDto {
   @IsInt()
   @Min(1)
   sessionsPerWeek?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Maximum number of sessions per day for this course. Overrides the default.',
+    minimum: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxSessionsPerDay?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Minimum gap (in slots) between sessions of this course on the same day.',
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  minGapSlots?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Allows consecutive sessions of the same subject (double block).',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowDoubleBlock?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Explicit days of week (1=Monday ... 7=Sunday) to target for this course.',
+    isArray: true,
+    type: Number,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(7, { each: true })
+  targetDays?: number[];
 }
