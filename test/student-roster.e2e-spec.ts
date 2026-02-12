@@ -43,7 +43,7 @@ describe('Student deletion and attendance roster (e2e)', () => {
       .post('/students')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        nationalId: 'STU-ATT-001',
+        nationalId: `STU-ATT-${Date.now()}`,
         firstName: 'Roster',
         lastName: 'Target',
         guardianName: 'Guardian',

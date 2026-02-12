@@ -176,4 +176,94 @@ describe('TimetableGeneratorService', () => {
       }),
     });
   });
+
+  it('balances sessions across Monday/Tuesday with no teacher repeats and correct weekly hours', async () => {
+    const courses = ['A', 'B', 'C'].map((section, index) => ({
+      courseId: String(index + 1),
+      classGroupId: String(100 + index),
+      teacherId: `T-${index + 1}`,
+      courseInstance: {
+        courseInstanceId: String(11 + index),
+        weeklyHours: 2,
+        courseName: `Math-${section}`,
+        schoolYearId: '2025',
+      },
+      classGroup: {
+        classGroupId: String(100 + index),
+        gradeLevel: 5,
+        section,
+      },
+    }));
+
+    (coursesRepository.find as jest.Mock).mockResolvedValue(courses);
+    (slotRepository.find as jest.Mock).mockResolvedValue([
+      {
+        slotId: 1,
+        dayOfWeek: 1,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+      {
+        slotId: 2,
+        dayOfWeek: 2,
+        startTime: '08:00:00',
+        endTime: '08:45:00',
+        durationMinutes: 45,
+      },
+    ]);
+    (assignmentsRepository.find as jest.Mock).mockResolvedValue([]);
+
+    // TODO: If you need a real "break at B" slot, the generator needs a
+    //       concept of blocked/break slots. This test models the break by
+    //       only providing one slot per day.
+
+    const preview = await service.preview(criteria);
+
+    expect(preview.unassignedSessions).toHaveLength(0);
+    expect(preview.assignments).toHaveLength(6);
+
+    const byClassGroup = new Map<number, number>();
+    const byCourse = new Map<number, number>();
+    const byDay = new Map<number, number>();
+    const slotTeachers = new Map<number, Set<string>>();
+
+    for (const assignment of preview.assignments) {
+      byClassGroup.set(
+        assignment.classGroupId,
+        (byClassGroup.get(assignment.classGroupId) ?? 0) + 1,
+      );
+      byCourse.set(
+        assignment.courseId,
+        (byCourse.get(assignment.courseId) ?? 0) + 1,
+      );
+      byDay.set(
+        assignment.dayOfWeek,
+        (byDay.get(assignment.dayOfWeek) ?? 0) + 1,
+      );
+
+      const teacherSet = slotTeachers.get(assignment.slotId) ?? new Set();
+      teacherSet.add(assignment.teacherId);
+      slotTeachers.set(assignment.slotId, teacherSet);
+    }
+
+    // Each class group should get exactly 2 sessions (weeklyHours = 2)
+    for (const course of courses) {
+      expect(byClassGroup.get(Number(course.classGroupId))).toBe(2);
+      expect(byCourse.get(Number(course.courseId))).toBe(2);
+    }
+
+    // Same number of classes on Monday and Tuesday (K = 3)
+    expect(byDay.get(1)).toBe(3);
+    expect(byDay.get(2)).toBe(3);
+
+    // No teacher is repeated in the same slot
+    for (const assignment of preview.assignments) {
+      const teachersInSlot = slotTeachers.get(assignment.slotId) ?? new Set();
+      const teachersCount = preview.assignments.filter(
+        (item) => item.slotId === assignment.slotId,
+      ).length;
+      expect(teachersInSlot.size).toBe(teachersCount);
+    }
+  });
 });

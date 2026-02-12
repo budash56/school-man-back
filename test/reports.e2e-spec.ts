@@ -97,10 +97,11 @@ describe('Reports (e2e)', () => {
 
   async function createAndLoginOutsiderTeacher(): Promise<string> {
     const usersRepo = dataSource.getRepository(Users);
+    const uniqueId = String(820000000 + (Date.now() % 100000));
     const outsider = await usersRepo.save(
       usersRepo.create({
-        nationalId: '800999',
-        username: 'teach-999',
+        nationalId: uniqueId,
+        username: `teach-${uniqueId}`,
         passwordHash: await bcrypt.hash('Teach#999', 10),
         role: 'teacher',
         isActive: true,

@@ -23,6 +23,7 @@ describe('ClassGroups (e2e)', () => {
   let registrarToken: string;
   let seedData: SeedResult;
   let schoolYearId: number;
+  let section: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -36,6 +37,8 @@ describe('ClassGroups (e2e)', () => {
 
     seedData = await seedBasicData(dataSource);
     schoolYearId = Number(seedData.schoolYear.schoolYearId);
+    const sectionValue = (Date.now() % 90) + 10;
+    section = String(sectionValue).padStart(2, '0');
 
     coordinatorToken = await login(app, seedData.users.coordinator);
     registrarToken = await login(app, seedData.users.registrar);
@@ -48,7 +51,7 @@ describe('ClassGroups (e2e)', () => {
   it('rejects POST without token', () => {
     return request(app.getHttpServer())
       .post('/class-groups')
-      .send({ schoolYearId, gradeLevel: 9, section: '01' })
+      .send({ schoolYearId, gradeLevel: 9, section })
       .expect(401);
   });
 
@@ -56,7 +59,7 @@ describe('ClassGroups (e2e)', () => {
     return request(app.getHttpServer())
       .post('/class-groups')
       .set('Authorization', `Bearer ${registrarToken}`)
-      .send({ schoolYearId, gradeLevel: 9, section: '01' })
+      .send({ schoolYearId, gradeLevel: 9, section })
       .expect(403);
   });
 
@@ -67,7 +70,7 @@ describe('ClassGroups (e2e)', () => {
       .send({
         schoolYearId,
         gradeLevel: 9,
-        section: '01',
+        section,
       })
       .expect(201);
 
@@ -77,7 +80,7 @@ describe('ClassGroups (e2e)', () => {
       .send({
         schoolYearId,
         gradeLevel: 9,
-        section: '01',
+        section,
       })
       .expect(409);
   });
@@ -95,6 +98,6 @@ describe('ClassGroups (e2e)', () => {
       page: expect.any(Number),
       pageSize: expect.any(Number),
     });
-    expect(body.data[0]).toMatchObject({ gradeLevel: 9, section: '01' });
+    expect(body.data[0]).toMatchObject({ gradeLevel: 9, section });
   });
 });

@@ -4,7 +4,6 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData } from './helpers/seed';
-import { Attendance } from '../src/attendance/attendance.entity';
 import { Students } from '../src/students/students.entity';
 import { Enrollments } from '../src/enrollments/enrollments.entity';
 
@@ -56,14 +55,6 @@ describe('Attendance uniqueness (e2e)', () => {
     slotId = Number(seed.timetableSlot.slotId);
   });
 
-  beforeEach(async () => {
-    await dataSource
-      .getRepository(Attendance)
-      .createQueryBuilder()
-      .delete()
-      .where('1=1')
-      .execute();
-  });
 
   afterAll(async () => {
     await app.close();

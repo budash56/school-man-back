@@ -43,7 +43,7 @@ describe('Students soft delete + restore (e2e)', () => {
 
   it('allows admin to soft delete and restore students', async () => {
     const createPayload = {
-      nationalId: 'SOFT-100',
+      nationalId: `SOFT-${Date.now()}`,
       firstName: 'Soft',
       lastName: 'Delete',
       guardianName: 'Guardian Soft',

@@ -7,7 +7,6 @@ import { seedBasicData, SeedResult } from './helpers/seed';
 import { Students } from '../src/students/students.entity';
 import { Enrollments } from '../src/enrollments/enrollments.entity';
 import { Attendance } from '../src/attendance/attendance.entity';
-import { Notifications } from '../src/notifications/notifications.entity';
 import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
 import { TimetableAssignments } from '../src/timetable_assignments/timetable_assignments.entity';
 
@@ -42,19 +41,6 @@ describe('Attendance absence suggestions (e2e)', () => {
     dataSource = app.get(DataSource);
     seedData = await seedBasicData(dataSource);
 
-    await dataSource
-      .getRepository(Notifications)
-      .createQueryBuilder()
-      .delete()
-      .where('1=1')
-      .execute();
-
-    await dataSource
-      .getRepository(Attendance)
-      .createQueryBuilder()
-      .delete()
-      .where('1=1')
-      .execute();
 
     coordinatorToken = await login(app, seedData.users.coordinator);
     classGroupId = Number(seedData.classGroup.classGroupId);
@@ -65,7 +51,7 @@ describe('Attendance absence suggestions (e2e)', () => {
 
     const student = await studentsRepo.save(
       studentsRepo.create({
-        nationalId: 'ABS-001',
+        nationalId: `ABS-${Date.now()}`,
         firstName: 'Absent',
         lastName: 'Student',
         guardianName: 'Guardian',
@@ -96,25 +82,39 @@ describe('Attendance absence suggestions (e2e)', () => {
     const slotRepo = dataSource.getRepository(TimetableSlot);
     const assignmentsRepo = dataSource.getRepository(TimetableAssignments);
 
-    const slot = await slotRepo.save(
-      slotRepo.create({
-        dayOfWeek: weekday === 0 ? 7 : weekday,
-        startTime: '08:00:00',
-        endTime: '09:00:00',
-        durationMinutes: 60,
-      }),
-    );
+    const dayOfWeek = weekday === 0 ? 7 : weekday;
+    let slot = await slotRepo.findOne({
+      where: { dayOfWeek, startTime: '08:00:00', endTime: '09:00:00' },
+    });
+    if (!slot) {
+      slot = await slotRepo.save(
+        slotRepo.create({
+          dayOfWeek,
+          startTime: '08:00:00',
+          endTime: '09:00:00',
+          durationMinutes: 60,
+        }),
+      );
+    }
 
     // TimetableAssignments fields are still strings in the entity → keep as strings
-    await assignmentsRepo.save(
-      assignmentsRepo.create({
+    const existingAssignment = await assignmentsRepo.findOne({
+      where: {
         courseId: seedData.course.courseId.toString(),
         slotId: slot.slotId.toString(),
-        teacherId: seedData.course.teacherId,
-        classGroupId: seedData.classGroup.classGroupId.toString(),
-        classroomId: seedData.classroom.classroomId.toString(),
-      }),
-    );
+      },
+    });
+    if (!existingAssignment) {
+      await assignmentsRepo.save(
+        assignmentsRepo.create({
+          courseId: seedData.course.courseId.toString(),
+          slotId: slot.slotId.toString(),
+          teacherId: seedData.course.teacherId,
+          classGroupId: seedData.classGroup.classGroupId.toString(),
+          classroomId: seedData.classroom.classroomId.toString(),
+        }),
+      );
+    }
 
     // Attendance entity now uses numeric IDs → pass numbers
     await attendanceRepo().save(
@@ -152,10 +152,9 @@ describe('Attendance absence suggestions (e2e)', () => {
       .set('Authorization', `Bearer ${coordinatorToken}`)
       .expect(200);
 
-    expect(body.data[0]).toMatchObject({
-      category: 'attendance-absence-streak',
-      studentId,
-      isActive: true,
-    });
+    const match = body.data.find((item: { category: string; studentId: number; isActive: boolean }) =>
+      item.category === 'attendance-absence-streak' && item.studentId === studentId && item.isActive === true,
+    );
+    expect(match).toBeTruthy();
   });
 });

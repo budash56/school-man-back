@@ -5,8 +5,6 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData } from './helpers/seed';
 
-const coordinator = { nationalId: 'coord-001', password: 'Coord#123' };
-
 describe('Enrollments uniqueness (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -25,7 +23,7 @@ describe('Enrollments uniqueness (e2e)', () => {
 
     dataSource = app.get(DataSource);
     const seed = await seedBasicData(dataSource);
-    coordinatorToken = await login(coordinator);
+    coordinatorToken = await login(seed.users.coordinator);
     classGroupId = Number(seed.classGroup.classGroupId);
     schoolYearId = Number(seed.schoolYear.schoolYearId);
 
@@ -33,7 +31,7 @@ describe('Enrollments uniqueness (e2e)', () => {
       .post('/students')
       .set('Authorization', `Bearer ${coordinatorToken}`)
       .send({
-        nationalId: 'ENR-UNI-001',
+        nationalId: `ENR-UNI-${Date.now()}`,
         firstName: 'Unique',
         lastName: 'Student',
         guardianName: 'Guardian',

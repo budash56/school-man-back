@@ -4,7 +4,6 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData } from './helpers/seed';
-import { Notifications } from '../src/notifications/notifications.entity';
 
 async function login(
   app: INestApplication,
@@ -37,12 +36,6 @@ describe('Notifications (e2e)', () => {
     coordinatorToken = await login(app, seed.users.coordinator);
     teacherToken = await login(app, seed.users.teacher);
 
-    await dataSource
-      .getRepository(Notifications)
-      .createQueryBuilder()
-      .delete()
-      .where('1=1')
-      .execute();
   });
 
   afterAll(async () => {
@@ -66,11 +59,12 @@ describe('Notifications (e2e)', () => {
   });
 
   it('allows coordinators to create and list notifications', async () => {
+    const uniqueTitle = `Exam reminder ${Date.now()}`;
     await request(app.getHttpServer())
       .post('/notifications')
       .set('Authorization', `Bearer ${coordinatorToken}`)
       .send({
-        title: 'Exam reminder',
+        title: uniqueTitle,
         message: 'Bring calculator',
         isActive: true,
       })
@@ -85,9 +79,6 @@ describe('Notifications (e2e)', () => {
       data: expect.any(Array),
       total: expect.any(Number),
     });
-    expect(body.data[0]).toMatchObject({
-      title: 'Exam reminder',
-      isActive: true,
-    });
+    expect(body.data.some((item: { title: string }) => item.title === uniqueTitle)).toBe(true);
   });
 });

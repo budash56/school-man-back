@@ -1,24 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { seedBasicData } from './helpers/seed';
 import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
+import { TimetableAssignments } from '../src/timetable_assignments/timetable_assignments.entity';
 import { Classrooms } from '../src/classrooms/classrooms.entity';
 
-const coordinator = { nationalId: 'coord-001', password: 'Coord#123' };
-const teacher = { nationalId: '800001', password: 'Teach#123' };
 
 describe('Timetable collisions (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let coordinatorToken: string;
-  let teacherToken: string;
   let slotId: number;
   let courseId: number;
   let classGroupId: number;
   let classroomId: number;
+  let teacherId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -30,15 +29,15 @@ describe('Timetable collisions (e2e)', () => {
 
     dataSource = app.get(DataSource);
     const seed = await seedBasicData(dataSource);
-    coordinatorToken = await login(coordinator);
-    teacherToken = await login(teacher);
+    coordinatorToken = await login(seed.users.coordinator);
+    teacherId = seed.course.teacherId;
     courseId = Number(seed.course.courseId);
     classGroupId = Number(seed.classGroup.classGroupId);
 
     const classroomsRepo = dataSource.getRepository(Classrooms);
     const classroom = await classroomsRepo.save(
       classroomsRepo.create({
-        name: 'Collisions Room',
+        name: `Collisions Room ${Date.now()}`,
         building: 'Main',
         capacity: 30,
       }),
@@ -46,14 +45,8 @@ describe('Timetable collisions (e2e)', () => {
     classroomId = Number(classroom.classroomId);
 
     const slotRepo = dataSource.getRepository(TimetableSlot);
-    const slot = await slotRepo.save(
-      slotRepo.create({
-        dayOfWeek: 1,
-        startTime: '09:00:00',
-        endTime: '10:00:00',
-        durationMinutes: 60,
-      }),
-    );
+    const assignmentsRepo = dataSource.getRepository(TimetableAssignments);
+    const slot = await findAvailableSlot(slotRepo, assignmentsRepo);
     slotId = slot.slotId;
   });
 
@@ -65,7 +58,7 @@ describe('Timetable collisions (e2e)', () => {
     const res = await createAssignment({
       courseId,
       slotId,
-      teacherId: teacher.nationalId,
+      teacherId,
       classGroupId,
       classroomId,
     });
@@ -78,14 +71,14 @@ describe('Timetable collisions (e2e)', () => {
     await createAssignment({
       courseId,
       slotId,
-      teacherId: teacher.nationalId,
+      teacherId,
       classGroupId,
     });
 
     const res = await createAssignment({
       courseId,
       slotId,
-      teacherId: teacher.nationalId,
+      teacherId,
       classGroupId,
     });
 
@@ -96,7 +89,7 @@ describe('Timetable collisions (e2e)', () => {
     const res = await createAssignment({
       courseId,
       slotId,
-      teacherId: teacher.nationalId,
+      teacherId,
     });
     expect(res.status).toBe(409);
   });
@@ -119,6 +112,44 @@ describe('Timetable collisions (e2e)', () => {
     });
     expect(res.status).toBe(409);
   });
+
+
+  async function findAvailableSlot(
+    slotRepo: Repository<TimetableSlot>,
+    assignmentsRepo: Repository<TimetableAssignments>,
+  ): Promise<TimetableSlot> {
+    const dayOfWeek = 1;
+    for (let i = 0; i < 10; i++) {
+      const hour = 8 + ((Date.now() + i) % 8);
+      const startTime = `${String(hour).padStart(2, '0')}:00:00`;
+      const endTime = `${String(hour + 1).padStart(2, '0')}:00:00`;
+      let slot = await slotRepo.findOne({
+        where: { dayOfWeek, startTime, endTime },
+      });
+      if (!slot) {
+        slot = await slotRepo.save(
+          slotRepo.create({
+            dayOfWeek,
+            startTime,
+            endTime,
+            durationMinutes: 60,
+          }),
+        );
+      }
+
+      const conflictCount = await assignmentsRepo.count({
+        where: {
+          slotId: slot.slotId.toString(),
+          classGroupId: classGroupId.toString(),
+        },
+      });
+      if (conflictCount === 0) {
+        return slot;
+      }
+    }
+
+    throw new Error('Unable to find a free slot for collisions test');
+  }
 
   async function login(creds: { nationalId: string; password: string }) {
     const { body } = await request(app.getHttpServer())

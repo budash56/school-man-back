@@ -1,41 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { DataSource, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
+import { seedBasicData, SeedResult } from './helpers/seed';
 import { Users } from '../src/users/users.entity';
-import { SubjectAreas } from '../src/subject_areas/subject_areas.entity';
-import { Subjects } from '../src/subjects/subjects.entity';
-import { SchoolYears } from '../src/school_years/school_years.entity';
 import { ClassGroups } from '../src/class_groups/class_groups.entity';
 import { CourseInstances } from '../src/course_instances/course_instances.entity';
 import { Courses } from '../src/courses/courses.entity';
 import { Students } from '../src/students/students.entity';
-import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
 import { TimetableAssignments } from '../src/timetable_assignments/timetable_assignments.entity';
+import { TimetableSlot } from '../src/timetable_slots/timetable_slots.entity';
 import { Attendance } from '../src/attendance/attendance.entity';
 import { Enrollments } from '../src/enrollments/enrollments.entity';
 import { Terms } from '../src/terms/terms.entity';
 import { Grades } from '../src/grades/grades.entity';
 
+const teacherTwoPassword = 'Teach2#123';
+
 describe('Authorization flows (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
-
-  const adminCredentials = { nationalId: '900001', password: 'Admin#12345' };
-  const coordinatorCredentials = {
-    nationalId: '900002',
-    password: 'Coord#12345',
-  };
-  const teacherOneCredentials = {
-    nationalId: '800001',
-    password: 'Teach1#123',
-  };
-  const teacherTwoCredentials = {
-    nationalId: '800002',
-    password: 'Teach2#123',
-  };
+  let seedData: SeedResult;
 
   let coordinatorToken: string;
   let teacherOneToken: string;
@@ -47,6 +34,7 @@ describe('Authorization flows (e2e)', () => {
   let timetableAssignmentId: string;
   let attendanceRecordId: number;
   let gradeId: number;
+  let termId: number;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -57,25 +45,15 @@ describe('Authorization flows (e2e)', () => {
     await app.init();
 
     dataSource = app.get(DataSource);
+    seedData = await seedBasicData(dataSource);
 
-    await seedDatabase();
+    coordinatorToken = await login(seedData.users.coordinator);
+    teacherOneToken = await login(seedData.users.teacher);
 
-    coordinatorToken = await login(
-      adminCredentials.nationalId,
-      adminCredentials.password,
-    ); // ensure admin exists for future use
-    coordinatorToken = await login(
-      coordinatorCredentials.nationalId,
-      coordinatorCredentials.password,
-    );
-    teacherOneToken = await login(
-      teacherOneCredentials.nationalId,
-      teacherOneCredentials.password,
-    );
-    teacherTwoToken = await login(
-      teacherTwoCredentials.nationalId,
-      teacherTwoCredentials.password,
-    );
+    const teacherTwoCredentials = await ensureTeacherTwo();
+    teacherTwoToken = await login(teacherTwoCredentials);
+
+    await ensureAuthzFixtures(teacherTwoCredentials.nationalId);
   });
 
   afterAll(async () => {
@@ -86,7 +64,7 @@ describe('Authorization flows (e2e)', () => {
     return request(app.getHttpServer())
       .post('/students')
       .send({
-        nationalId: '600010',
+        nationalId: `UNAUTH-${Date.now()}`,
         firstName: 'Unauth',
         lastName: 'User',
         guardianName: 'Guardian',
@@ -101,9 +79,9 @@ describe('Authorization flows (e2e)', () => {
       .post('/grades')
       .set('Authorization', `Bearer ${coordinatorToken}`)
       .send({
-        studentId: 1,
-        courseId: 1,
-        termId: 1,
+        studentId: attendanceStudentId,
+        courseId: otherCourseId,
+        termId,
         mark: 4,
       })
       .expect(403);
@@ -166,224 +144,125 @@ describe('Authorization flows (e2e)', () => {
       .expect(200);
   });
 
-  async function login(nationalId: string, password: string): Promise<string> {
+  async function login(creds: { nationalId: string; password: string }): Promise<string> {
     const { body } = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ nationalId, password })
+      .send(creds)
       .expect(201);
     return body.accessToken;
   }
 
-  async function wipe(repo: Repository<ObjectLiteral>): Promise<void> {
-    await repo.createQueryBuilder().delete().where('1=1').execute();
+  async function ensureTeacherTwo(): Promise<{ nationalId: string; password: string }> {
+    const usersRepo = dataSource.getRepository(Users);
+    const uniqueId = String(810000000 + (Date.now() % 100000));
+    const existing = await usersRepo.findOne({ where: { nationalId: uniqueId } });
+    const passwordHash = await bcrypt.hash(teacherTwoPassword, 10);
+
+    if (!existing) {
+      await usersRepo.save(
+        usersRepo.create({
+          nationalId: uniqueId,
+          username: `teacher-two-${uniqueId}`,
+          passwordHash,
+          role: 'teacher',
+          isActive: true,
+        }),
+      );
+    } else {
+      existing.passwordHash = passwordHash;
+      existing.role = 'teacher';
+      existing.isActive = true;
+      await usersRepo.save(existing);
+    }
+
+    return { nationalId: uniqueId, password: teacherTwoPassword };
   }
 
-  async function seedDatabase(): Promise<void> {
+  async function ensureAuthzFixtures(teacherTwoId: string): Promise<void> {
+    const classGroupsRepo = dataSource.getRepository(ClassGroups);
+    const courseInstancesRepo = dataSource.getRepository(CourseInstances);
+    const coursesRepo = dataSource.getRepository(Courses);
+    const studentsRepo = dataSource.getRepository(Students);
+    const assignmentsRepo = dataSource.getRepository(TimetableAssignments);
+    const slotsRepo = dataSource.getRepository(TimetableSlot);
     const attendanceRepo = dataSource.getRepository(Attendance);
     const enrollmentsRepo = dataSource.getRepository(Enrollments);
-    const coursesRepo = dataSource.getRepository(Courses);
-    const assignmentsRepo = dataSource.getRepository(TimetableAssignments);
-    const courseInstancesRepo = dataSource.getRepository(CourseInstances);
-    const classGroupsRepo = dataSource.getRepository(ClassGroups);
-    const schoolYearsRepo = dataSource.getRepository(SchoolYears);
-    const subjectsRepo = dataSource.getRepository(Subjects);
-    const subjectAreasRepo = dataSource.getRepository(SubjectAreas);
-    const studentsRepo = dataSource.getRepository(Students);
-    const usersRepo = dataSource.getRepository(Users);
-    const slotsRepo = dataSource.getRepository(TimetableSlot);
     const termsRepo = dataSource.getRepository(Terms);
     const gradesRepo = dataSource.getRepository(Grades);
 
-    await wipe(attendanceRepo);
-    await wipe(enrollmentsRepo);
-    await wipe(coursesRepo);
-    await wipe(courseInstancesRepo);
-    await wipe(classGroupsRepo);
-    await wipe(schoolYearsRepo);
-    await wipe(subjectsRepo);
-    await wipe(subjectAreasRepo);
-    await wipe(studentsRepo);
-    await wipe(usersRepo);
-    await wipe(slotsRepo);
+    const sectionValue = (Date.now() % 90) + 10;
+    const section = String(sectionValue).padStart(2, '0');
 
-    const adminPasswordHash = await bcrypt.hash(adminCredentials.password, 10);
-    const coordinatorPasswordHash = await bcrypt.hash(
-      coordinatorCredentials.password,
-      10,
-    );
-    const teacherOnePasswordHash = await bcrypt.hash(
-      teacherOneCredentials.password,
-      10,
-    );
-    const teacherTwoPasswordHash = await bcrypt.hash(
-      teacherTwoCredentials.password,
-      10,
-    );
-
-    await usersRepo.save([
-      usersRepo.create({
-        nationalId: adminCredentials.nationalId,
-        username: 'admin-user',
-        passwordHash: adminPasswordHash,
-        role: 'admin',
-        isActive: true,
-      }),
-      usersRepo.create({
-        nationalId: coordinatorCredentials.nationalId,
-        username: 'coordinator-user',
-        passwordHash: coordinatorPasswordHash,
-        role: 'coordinator',
-        isActive: true,
-      }),
-      usersRepo.create({
-        nationalId: teacherOneCredentials.nationalId,
-        username: 'teacher-one',
-        passwordHash: teacherOnePasswordHash,
-        role: 'teacher',
-        isActive: true,
-      }),
-      usersRepo.create({
-        nationalId: teacherTwoCredentials.nationalId,
-        username: 'teacher-two',
-        passwordHash: teacherTwoPasswordHash,
-        role: 'teacher',
-        isActive: true,
-      }),
-    ]);
-
-    const subjectArea = await subjectAreasRepo.save(
-      subjectAreasRepo.create({
-        name: 'STEM',
-        code: 'STEM',
-      }),
-    );
-
-    const subjectMath = await subjectsRepo.save(
-      subjectsRepo.create({
-        subjectCode: 'MATH-101',
-        name: 'Mathematics 101',
-        description: null,
-        area: subjectArea,
-      }),
-    );
-
-    const subjectScience = await subjectsRepo.save(
-      subjectsRepo.create({
-        subjectCode: 'SCI-201',
-        name: 'Science 201',
-        description: null,
-        area: subjectArea,
-      }),
-    );
-
-    const schoolYearOne = await schoolYearsRepo.save(
-      schoolYearsRepo.create({
-        name: '2024-2025',
-        yearStart: '2024-01-01',
-        yearEnd: '2024-12-31',
-        isActive: true,
-      }),
-    );
-
-    const schoolYearTwo = await schoolYearsRepo.save(
-      schoolYearsRepo.create({
-        name: '2025-2026',
-        yearStart: '2025-01-01',
-        yearEnd: '2025-12-31',
-        isActive: true,
-      }),
-    );
-
-    const classGroupOne = await classGroupsRepo.save(
+    const classGroup = await classGroupsRepo.save(
       classGroupsRepo.create({
-        gradeLevel: 10,
-        section: '01',
-        schoolYearId: schoolYearOne.schoolYearId,
-        schoolYear: schoolYearOne,
-      }),
-    );
-
-    const classGroupTwo = await classGroupsRepo.save(
-      classGroupsRepo.create({
+        schoolYearId: seedData.schoolYear.schoolYearId,
         gradeLevel: 11,
-        section: '02',
-        schoolYearId: schoolYearTwo.schoolYearId,
-        schoolYear: schoolYearTwo,
+        section,
       }),
     );
 
-    const courseInstanceOne = await courseInstancesRepo.save(
+    const baseCourseInstance = await courseInstancesRepo.findOne({
+      where: { courseInstanceId: seedData.course.courseInstanceId },
+    });
+    if (!baseCourseInstance) {
+      throw new Error('Seed course instance missing for authz test');
+    }
+
+    const courseCode = `AUTHZ-${Date.now()}`;
+    const courseInstance = await courseInstancesRepo.save(
       courseInstancesRepo.create({
-        subjectId: subjectMath.subjectId,
-        subject: subjectMath,
-        gradeLevel: 10,
-        schoolYearId: schoolYearOne.schoolYearId,
-        schoolYear: schoolYearOne,
+        subjectId: baseCourseInstance.subjectId,
+        gradeLevel: 11,
+        schoolYearId: seedData.schoolYear.schoolYearId,
         weeklyHours: 5,
-        courseCode: 'ALG-2024',
-        courseName: 'Algebra I',
+        courseCode,
+        courseName: `Authz Course ${Date.now()}`,
         description: null,
         isActive: true,
       }),
     );
 
-    const courseInstanceTwo = await courseInstancesRepo.save(
-      courseInstancesRepo.create({
-        subjectId: subjectScience.subjectId,
-        subject: subjectScience,
-        gradeLevel: 11,
-        schoolYearId: schoolYearTwo.schoolYearId,
-        schoolYear: schoolYearTwo,
-        weeklyHours: 5,
-        courseCode: 'SCI-2025',
-        courseName: 'Science II',
-        description: null,
-        isActive: true,
-      }),
-    );
-
-    await coursesRepo.save(
+    const course = await coursesRepo.save(
       coursesRepo.create({
-        courseInstanceId: courseInstanceOne.courseInstanceId,
-        courseInstance: courseInstanceOne,
-        classGroupId: classGroupOne.classGroupId,
-        classGroup: classGroupOne,
-        teacherId: teacherOneCredentials.nationalId,
+        courseInstanceId: courseInstance.courseInstanceId,
+        classGroupId: classGroup.classGroupId,
+        teacherId: teacherTwoId,
       }),
     );
 
-    const teacherTwoCourse = await coursesRepo.save(
-      coursesRepo.create({
-        courseInstanceId: courseInstanceTwo.courseInstanceId,
-        courseInstance: courseInstanceTwo,
-        classGroupId: classGroupTwo.classGroupId,
-        classGroup: classGroupTwo,
-        teacherId: teacherTwoCredentials.nationalId,
-      }),
-    );
+    otherCourseId = Number(course.courseId);
 
-    const slot = await slotsRepo.save(
-      slotsRepo.create({
-        dayOfWeek: 1,
-        startTime: '08:00:00',
-        endTime: '08:45:00',
-        durationMinutes: 45,
-      }),
-    );
+    const hour = 10 + (Date.now() % 5);
+    const startTime = `${String(hour).padStart(2, '0')}:00:00`;
+    const endTime = `${String(hour).padStart(2, '0')}:45:00`;
+    let slot = await slotsRepo.findOne({
+      where: { dayOfWeek: 1, startTime, endTime },
+    });
+    if (!slot) {
+      slot = await slotsRepo.save(
+        slotsRepo.create({
+          dayOfWeek: 1,
+          startTime,
+          endTime,
+          durationMinutes: 45,
+        }),
+      );
+    }
+    attendanceSlotId = Number(slot.slotId);
 
     const assignment = await assignmentsRepo.save(
       assignmentsRepo.create({
-        courseId: teacherTwoCourse.courseId.toString(),
+        courseId: course.courseId.toString(),
         slotId: slot.slotId.toString(),
-        teacherId: teacherTwoCourse.teacherId,
-        classGroupId: teacherTwoCourse.classGroupId.toString(),
+        teacherId: teacherTwoId,
+        classGroupId: classGroup.classGroupId.toString(),
       }),
     );
     timetableAssignmentId = assignment.assignmentId;
 
     const student = await studentsRepo.save(
       studentsRepo.create({
-        nationalId: '600001',
+        nationalId: `AUTHZ-STU-${Date.now()}`,
         firstName: 'Alice',
         lastName: 'Student',
         dob: '2010-01-01',
@@ -394,50 +273,54 @@ describe('Authorization flows (e2e)', () => {
         isActive: true,
       }),
     );
+    attendanceStudentId = Number(student.studentId);
 
     await enrollmentsRepo.save(
       enrollmentsRepo.create({
         studentId: student.studentId,
-        classGroupId: classGroupTwo.classGroupId,
-        schoolYearId: schoolYearTwo.schoolYearId,
+        classGroupId: classGroup.classGroupId,
+        schoolYearId: seedData.schoolYear.schoolYearId,
         active: true,
       }),
     );
 
     const attendanceRecord = await attendanceRepo.save(
       attendanceRepo.create({
-        studentId: student.studentId,
-        courseId: teacherTwoCourse.courseId,
-        slotId: slot.slotId.toString(),
+        studentId: Number(student.studentId),
+        courseId: Number(course.courseId),
+        slotId: Number(slot.slotId),
         date: '2024-01-15',
         status: 'P',
       }),
     );
     attendanceRecordId = Number(attendanceRecord.attendanceId);
 
-    const term = await termsRepo.save(
-      termsRepo.create({
-        schoolYearId: schoolYearTwo.schoolYearId,
-        name: 'P1',
-        startDate: '2025-01-01',
-        endDate: '2025-02-01',
-        sortOrder: 1,
-        isFinal: false,
-      }),
-    );
+    let term = await termsRepo.findOne({
+      where: { schoolYearId: seedData.schoolYear.schoolYearId, name: 'P1' },
+    });
+    if (!term) {
+      term = await termsRepo.save(
+        termsRepo.create({
+          schoolYearId: seedData.schoolYear.schoolYearId,
+          name: 'P1',
+          startDate: '2025-01-01',
+          endDate: '2025-02-01',
+          sortOrder: 1,
+          isFinal: false,
+        }),
+      );
+    }
+
+    termId = Number(term.termId);
 
     const grade = await gradesRepo.save(
       gradesRepo.create({
         studentId: student.studentId,
-        courseId: teacherTwoCourse.courseId,
+        courseId: course.courseId,
         termId: term.termId,
         mark: 5,
       }),
     );
     gradeId = Number(grade.gradeId);
-
-    otherCourseId = Number(teacherTwoCourse.courseId);
-    attendanceSlotId = slot.slotId;
-    attendanceStudentId = Number(student.studentId);
   }
 });

@@ -50,7 +50,7 @@ describe('Enrollments coordinator override (e2e)', () => {
 
   it('allows coordinator to enroll students in archived school years', async () => {
     const createStudentPayload = {
-      nationalId: 'ARCHIVE-001',
+      nationalId: `ARCHIVE-${Date.now()}`,
       firstName: 'Archive',
       lastName: 'Student',
       guardianName: 'Guardian Archive',
