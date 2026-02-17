@@ -4,6 +4,8 @@ import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { CourseInstancesRepository } from '../course_instances/course_instances.repository';
 import { CoursesRepository } from '../courses/courses.repository';
+import { CurriculaRepository } from '../curricula/curricula.repository';
+import { CurriculumItemsRepository } from '../curriculum_items/curriculum_items.repository';
 import { DisciplinaryRecordsRepository } from '../disciplinary_records/disciplinary_records.repository';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { GradeSchemeValuesRepository } from '../grade_scheme_values/grade_scheme_values.repository';
@@ -26,6 +28,8 @@ export const REPOSITORY_PROVIDERS = [
   ClassroomsRepository,
   CourseInstancesRepository,
   CoursesRepository,
+  CurriculaRepository,
+  CurriculumItemsRepository,
   DisciplinaryRecordsRepository,
   EnrollmentsRepository,
   GradeSchemeValuesRepository,
@@ -49,6 +53,8 @@ export {
   ClassroomsRepository,
   CourseInstancesRepository,
   CoursesRepository,
+  CurriculaRepository,
+  CurriculumItemsRepository,
   DisciplinaryRecordsRepository,
   EnrollmentsRepository,
   GradeSchemeValuesRepository,

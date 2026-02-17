@@ -21,6 +21,9 @@ import { CourseInstances } from './course_instances/course_instances.entity';
 import { CourseInstancesService } from './course_instances/course_instances.service';
 import { Courses } from './courses/courses.entity';
 import { CoursesService } from './courses/courses.service';
+import { Curricula } from './curricula/curricula.entity';
+import { CurriculaService } from './curricula/curricula.service';
+import { CurriculumItems } from './curriculum_items/curriculum_items.entity';
 import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records.entity';
 import { DisciplinaryRecordsService } from './disciplinary_records/disciplinary_records.service';
 import { Enrollments } from './enrollments/enrollments.entity';
@@ -53,6 +56,7 @@ import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
 import { CourseInstancesController } from './course_instances/course_instances.controller';
 import { CoursesController } from './courses/courses.controller';
+import { CurriculaController } from './curricula/curricula.controller';
 import { DisciplinaryRecordsController } from './disciplinary_records/disciplinary_records.controller';
 import { EnrollmentsController } from './enrollments/enrollments.controller';
 import { GradesController } from './grades/grades.controller';
@@ -117,6 +121,8 @@ export const buildTypeOrmRootOptions = (
       Classrooms,
       CourseInstances,
       Courses,
+      Curricula,
+      CurriculumItems,
       DisciplinaryRecords,
       Enrollments,
       Grades,
@@ -145,6 +151,7 @@ export const buildTypeOrmRootOptions = (
     ClassroomsController,
     CourseInstancesController,
     CoursesController,
+    CurriculaController,
     DisciplinaryRecordsController,
     EnrollmentsController,
     GradesController,
@@ -179,6 +186,7 @@ export const buildTypeOrmRootOptions = (
     ClassroomsService,
     CourseInstancesService,
     CoursesService,
+    CurriculaService,
     DisciplinaryRecordsService,
     EnrollmentsService,
     GradesService,

@@ -1,5 +1,12 @@
 // ORM mapping for the curricula table.
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { CurriculumItems } from '../curriculum_items/curriculum_items.entity';
 
 @Index('curricula_pkey', ['curriculumId'], { unique: true })
 @Index('curricula_grade_level_key', ['gradeLevel'], { unique: true })
@@ -23,4 +30,7 @@ export class Curricula {
     default: () => 'now()',
   })
   createdAt: Date | null;
+
+  @OneToMany(() => CurriculumItems, (items) => items.curriculum)
+  items: CurriculumItems[];
 }
