@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SubjectAreas } from './subject_areas.entity';
 import { SubjectAreasRepository } from './subject_areas.repository';
@@ -39,6 +39,21 @@ export class SubjectAreasService {
     qb.take(pageSize);
 
     const [data, total] = await qb.getManyAndCount();
+
+    if (query.includeSubjects && data.length > 0) {
+      const ids = data.map((area) => area.areaId);
+      const withSubjects = await this.repository.find({
+        where: { areaId: In(ids) },
+        relations: { subjects: true },
+        order: { name: 'ASC' },
+      });
+      const mapped = new Map(
+        withSubjects.map((area) => [area.areaId, area]),
+      );
+      const merged = data.map((area) => mapped.get(area.areaId) ?? area);
+      return buildPaginationResult(merged, total, page, pageSize);
+    }
+
     return buildPaginationResult(data, total, page, pageSize);
   }
 

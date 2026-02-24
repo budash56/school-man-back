@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -33,14 +34,19 @@ export class CreateUsersDto {
   @MaxLength(80)
   username: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '$2b$10$FDSf0rjLQ8HsZb0zFvYeOeZKz3R8G5UfH6OteIFqiyIqOQUd0pD3e',
-    description: 'BCrypt password hash',
+    description:
+      'Optional BCrypt password hash. If omitted or empty, a temporary password is generated from 1er apellido + 4 ultimos digitos del ID (ej: Medina9335).',
   })
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim() === '' ? undefined : value,
+  )
+  @IsOptional()
   @IsString()
   @MinLength(20)
   @MaxLength(255)
-  passwordHash: string;
+  passwordHash?: string;
 
   @ApiProperty({
     example: 'teacher',
@@ -59,7 +65,11 @@ export class CreateUsersDto {
   @MaxLength(80)
   firstName?: string;
 
-  @ApiPropertyOptional({ example: 'Doe', description: 'Last name of the user' })
+  @ApiPropertyOptional({
+    example: 'Doe',
+    description:
+      'Last name of the user. Used for temp password generation when passwordHash is omitted.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)

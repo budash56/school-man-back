@@ -17,6 +17,7 @@ export class TeacherConstraintDto {
       'Preferred shift for this teacher. When set to morning/afternoon, only slots within that shift are considered.',
     enum: ['any', 'morning', 'afternoon'],
     default: 'any',
+    example: 'morning',
   })
   @IsOptional()
   @IsEnum(['any', 'morning', 'afternoon'])
@@ -26,6 +27,7 @@ export class TeacherConstraintDto {
     description:
       'Prevents assigning the teacher to the latest slot of the day (useful for teachers who cannot work late).',
     default: false,
+    example: true,
   })
   @IsOptional()
   @IsBoolean()

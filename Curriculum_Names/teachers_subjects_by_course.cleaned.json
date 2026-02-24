@@ -1,0 +1,3726 @@
+{
+  "Aladino / Sergio": {
+    "subjects": {
+      "Ed Física": [
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Ed Física",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      }
+    ]
+  },
+  "Alba Rocío Garzón Garzón": {
+    "subjects": {
+      "Español": [
+        "802",
+        "803",
+        "804",
+        "1002",
+        "1003",
+        "1004"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Español",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Español",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      }
+    ]
+  },
+  "Campo Elías Castillo Gutiérrez": {
+    "subjects": {
+      "Matemáticas": [
+        "702",
+        "703",
+        "704",
+        "705",
+        "706"
+      ],
+      "Paquete Contable": [
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Paquete Contable",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      }
+    ]
+  },
+  "Carlos Andrés Cristancho": {
+    "subjects": {
+      "Tecnología": [
+        "801",
+        "802",
+        "803",
+        "804",
+        "805"
+      ],
+      "Program.": [
+        "1002",
+        "1102"
+      ],
+      "Metodología": [
+        "1002",
+        "1102"
+      ],
+      "Neumática": [
+        "1102"
+      ],
+      "Procesos": [
+        "1002",
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Metodología",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Procesos",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Program.",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Metodología",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Neumática",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Procesos",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Program.",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "Carolina Martínez Parra": {
+    "subjects": {
+      "Inglés": [
+        "901",
+        "902",
+        "903",
+        "904",
+        "1002",
+        "1004",
+        "1102",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Inglés",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Inglés",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Inglés",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Daniel Esteban Acero Díaz": {
+    "subjects": {
+      "Música": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606",
+        "607",
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "803",
+        "804",
+        "805",
+        "901",
+        "902",
+        "903",
+        "904",
+        "1001",
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Música",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Música",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Música",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Música",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Música",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Música",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Música",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Música",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Música",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Música",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Música",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Música",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Música",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Música",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Música",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Música",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Música",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Música",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Música",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Música",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Música",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Música",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Darío Alejandro Moncayo Zarama": {
+    "subjects": {
+      "Lec Comp": [
+        "604",
+        "605"
+      ],
+      "Español": [
+        "801",
+        "805",
+        "902",
+        "903",
+        "904"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Lec Comp",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Lec Comp",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Español",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Español",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Debbie Yenifer Delgado León": {
+    "subjects": {
+      "Lec Comp": [
+        "606",
+        "607"
+      ],
+      "Lec. Crítica": [
+        "901",
+        "902",
+        "903",
+        "904"
+      ],
+      "Filosofía": [
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Filosofía",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Filosofía",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Lec Comp",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Lec Comp",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Lec. Crítica",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Lec. Crítica",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Lec. Crítica",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Lec. Crítica",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Deysi Constanza Peña Murcia": {
+    "subjects": {
+      "Sociales": [
+        "603",
+        "604",
+        "605",
+        "803",
+        "804",
+        "805"
+      ],
+      "Ed Religiosa": [
+        "1101",
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Ed Religiosa",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Sociales",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Sociales",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Sociales",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "Eilen Tatiana Triana Olaya": {
+    "subjects": {
+      "Ed Religiosa": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606"
+      ],
+      "Etica": [
+        "602",
+        "603",
+        "604",
+        "605"
+      ],
+      "Emprend.": [
+        "901",
+        "902"
+      ],
+      "Metodología": [
+        "1004",
+        "1104"
+      ],
+      "Publicidad y": [
+        "1004",
+        "1104"
+      ],
+      "Legislación": [
+        "1004",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Legislación",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Metodología",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Publicidad y",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Legislación",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Metodología",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Publicidad y",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Etica",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Etica",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Emprend.",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Emprend.",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      }
+    ]
+  },
+  "Erick Rodolfo Ortiz Ibáñez": {
+    "subjects": {
+      "Naturales": [
+        "603"
+      ],
+      "Física": [
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ],
+      "Estadística": [
+        "1003"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Física",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Física",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Física",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Física",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Física",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Física",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Física",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Física",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Naturales",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      }
+    ]
+  },
+  "Estiven Andrés Pérez Garzón": {
+    "subjects": {
+      "Sociales": [
+        "704",
+        "705"
+      ],
+      "Ciencias Políticas": [
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ],
+      "Economía": [
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Economía",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Economía",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Economía",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Economía",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Economía",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Ciencias Políticas",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Economía",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      }
+    ]
+  },
+  "Gilma Socorro López López": {
+    "subjects": {
+      "Naturales": [
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "804",
+        "805"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Naturales",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Naturales",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Naturales",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Naturales",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Naturales",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Naturales",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Naturales",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Naturales",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "Guillermo Arturo Amézquita Vargas": {
+    "subjects": {
+      "Artes": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606",
+        "607",
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "801",
+        "802",
+        "1002",
+        "1003",
+        "1004",
+        "1102",
+        "1103",
+        "1104"
+      ],
+      "Etica": [
+        "601"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Artes",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Artes",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Artes",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Artes",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Artes",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Artes",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Artes",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Etica",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Artes",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Artes",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Artes",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Artes",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Artes",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Artes",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Artes",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Artes",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Artes",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Artes",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Artes",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Artes",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Artes",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Artes",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      }
+    ]
+  },
+  "Helman Alirio Cabieles Rojas": {
+    "subjects": {
+      "Lec Comp": [
+        "603"
+      ],
+      "Español": [
+        "606",
+        "607",
+        "704",
+        "705",
+        "706"
+      ],
+      "Etica": [
+        "701"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Lec Comp",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Español",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Etica",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Español",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Español",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      }
+    ]
+  },
+  "Henry Augusto Barragan Guzman": {
+    "subjects": {
+      "Ed Física": [
+        "604",
+        "704",
+        "705",
+        "804",
+        "901",
+        "1003",
+        "1101",
+        "1104"
+      ],
+      "Cul Recreativa Pre": [
+        "1001"
+      ],
+      "Cul. Recreativa": [
+        "1001"
+      ],
+      "SyGestión": [
+        "1001"
+      ],
+      "Dllo Humano": [
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Cul Recreativa Pre",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Cul. Recreativa",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "SyGestión",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Dllo Humano",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      }
+    ]
+  },
+  "Jazmín Hernández Barajas": {
+    "subjects": {
+      "Lec Comp": [
+        "601",
+        "602"
+      ],
+      "Español": [
+        "901",
+        "1001",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Español",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Lec Comp",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Lec Comp",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      }
+    ]
+  },
+  "Jhon Alexander Guarín Avella": {
+    "subjects": {
+      "Matemáticas": [
+        "603",
+        "604",
+        "801",
+        "802"
+      ],
+      "Estadística": [
+        "1001",
+        "1002",
+        "1004",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Estadística",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      }
+    ]
+  },
+  "Jose Aladino Mosquera Alvarez": {
+    "subjects": {
+      "Ed Física": [
+        "601",
+        "605",
+        "702",
+        "706",
+        "803",
+        "904"
+      ],
+      "Prác Deportiva": [
+        "1001",
+        "1101"
+      ],
+      "Cul. Deportiva": [
+        "1001"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Cul. Deportiva",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Prác Deportiva",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Prác Deportiva",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Juan Carlos / Henrry": {
+    "subjects": {
+      "Metodología": [
+        "1101"
+      ],
+      "Fun. Pedagógica": [
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Fun. Pedagógica",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Metodología",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      }
+    ]
+  },
+  "Juan Carlos Bello Gutierrez": {
+    "subjects": {
+      "Ed Física": [
+        "603",
+        "607",
+        "703",
+        "801",
+        "903",
+        "1004",
+        "1103"
+      ],
+      "Fun. Pedagógica": [
+        "1001"
+      ],
+      "Dllo Humano": [
+        "1001"
+      ],
+      "Cul. Recreativa": [
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Dllo Humano",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Fun. Pedagógica",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Cul. Recreativa",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      }
+    ]
+  },
+  "Juan Fernando Hernández": {
+    "subjects": {
+      "Naturales": [
+        "801",
+        "901",
+        "902"
+      ],
+      "Química": [
+        "1003",
+        "1004",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Química",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Química",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Química",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Química",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Naturales",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Naturales",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Naturales",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      }
+    ]
+  },
+  "Julio César Fernández": {
+    "subjects": {
+      "Etica": [
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "801",
+        "802",
+        "803",
+        "804",
+        "805",
+        "901",
+        "902",
+        "903",
+        "904",
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Etica",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Etica",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Etica",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Etica",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Etica",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Etica",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Etica",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Etica",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Etica",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Etica",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Etica",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Etica",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Etica",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Lenin Fabián Quintero Mora": {
+    "subjects": {
+      "Matemáticas": [
+        "606",
+        "607",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ],
+      "Estadística": [
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Matemáticas",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      }
+    ]
+  },
+  "Leonardo Gutiérrez Correa": {
+    "subjects": {
+      "Inglés": [
+        "803",
+        "804",
+        "805",
+        "1001",
+        "1003",
+        "1101",
+        "1103"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Inglés",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Inglés",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "Lidia Becerra Alvarado": {
+    "subjects": {
+      "Tecnología": [
+        "603",
+        "604",
+        "605",
+        "606",
+        "607",
+        "703",
+        "704",
+        "705",
+        "706"
+      ],
+      "Diseño Industrial": [
+        "1002",
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Diseño Industrial",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Diseño Industrial",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      }
+    ]
+  },
+  "Ligia Patricia Arévalo González": {
+    "subjects": {
+      "Naturales": [
+        "601",
+        "602",
+        "604",
+        "605",
+        "606",
+        "607",
+        "803"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Naturales",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Naturales",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Naturales",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Naturales",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Naturales",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Naturales",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Naturales",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      }
+    ]
+  },
+  "Luz Aleida Gómez Cuesta": {
+    "subjects": {
+      "Inglés": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606",
+        "607",
+        "704"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Inglés",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Inglés",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Inglés",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Inglés",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Inglés",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Inglés",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      }
+    ]
+  },
+  "Luz Marina Larrota Chinchilla": {
+    "subjects": {
+      "Informática": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606",
+        "607"
+      ],
+      "Tecnología": [
+        "601",
+        "602"
+      ],
+      "Español": [
+        "604"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Informática",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Informática",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Informática",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      }
+    ]
+  },
+  "Martha Ibeth Carrillo Súa": {
+    "subjects": {
+      "Informática": [
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "801",
+        "802",
+        "803",
+        "804",
+        "805"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Informática",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Informática",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Informática",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Informática",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Informática",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "María Lucía Rojas Muñoz": {
+    "subjects": {
+      "Sociales": [
+        "601",
+        "602",
+        "701",
+        "702",
+        "703"
+      ],
+      "Etica": [
+        "606",
+        "607"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Sociales",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Etica",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Sociales",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      }
+    ]
+  },
+  "Mauricio Medina Gutiérrez": {
+    "subjects": {
+      "Matemáticas": [
+        "803",
+        "804",
+        "805"
+      ],
+      "Emprend.": [
+        "903",
+        "904"
+      ],
+      "Contabilidad": [
+        "1004",
+        "1104"
+      ],
+      "MaT. Financiera": [
+        "1004",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Contabilidad",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "MaT. Financiera",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Contabilidad",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "MaT. Financiera",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Emprend.",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Emprend.",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Mery Marlén Vargas Mesa": {
+    "subjects": {
+      "Español": [
+        "601",
+        "602",
+        "603",
+        "701",
+        "702",
+        "703"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Español",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Español",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Español",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Español",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      }
+    ]
+  },
+  "Nancy Ochoa Sanabria": {
+    "subjects": {
+      "Sociales": [
+        "901",
+        "902",
+        "903",
+        "904",
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ],
+      "Economía": [
+        "1001",
+        "1002"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Economía",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Economía",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Sociales",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Sociales",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Sociales",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Sociales",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Nelcy Janeth Hernández": {
+    "subjects": {
+      "Naturales": [
+        "802",
+        "903",
+        "904"
+      ],
+      "Química": [
+        "1001",
+        "1002",
+        "1101",
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Química",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Química",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Química",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Química",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Naturales",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Naturales",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Naturales",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Nubia Isabel Otálora Vásquez": {
+    "subjects": {
+      "Ed Religiosa": [
+        "607",
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "801",
+        "802",
+        "803",
+        "804",
+        "805",
+        "901",
+        "902",
+        "903",
+        "904",
+        "1001",
+        "1002",
+        "1004",
+        "1103",
+        "1104"
+      ],
+      "Etica": [
+        "1003"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Ed Religiosa",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Etica",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Ed Religiosa",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Pablo José Juez Raba": {
+    "subjects": {
+      "Geometría": [
+        "601",
+        "602",
+        "603",
+        "604",
+        "605",
+        "606",
+        "607",
+        "701",
+        "702",
+        "703",
+        "704",
+        "705",
+        "706",
+        "801",
+        "802",
+        "803",
+        "804",
+        "805"
+      ],
+      "Matemáticas": [
+        "605"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Geometría",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Geometría",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Geometría",
+        "course": "603",
+        "grade": 6,
+        "group": "03"
+      },
+      {
+        "subject": "Geometría",
+        "course": "604",
+        "grade": 6,
+        "group": "04"
+      },
+      {
+        "subject": "Geometría",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Geometría",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Geometría",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Geometría",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Geometría",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Geometría",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Geometría",
+        "course": "704",
+        "grade": 7,
+        "group": "04"
+      },
+      {
+        "subject": "Geometría",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Geometría",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Geometría",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Geometría",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Geometría",
+        "course": "803",
+        "grade": 8,
+        "group": "03"
+      },
+      {
+        "subject": "Geometría",
+        "course": "804",
+        "grade": 8,
+        "group": "04"
+      },
+      {
+        "subject": "Geometría",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      }
+    ]
+  },
+  "Patricia Torres Rodríguez": {
+    "subjects": {
+      "Matemáticas": [
+        "601",
+        "602",
+        "901",
+        "902",
+        "903"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Matemáticas",
+        "course": "601",
+        "grade": 6,
+        "group": "01"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      }
+    ]
+  },
+  "Robinson Fabián Reyes Montañez": {
+    "subjects": {
+      "Español": [
+        "605"
+      ],
+      "Sociales": [
+        "606",
+        "607",
+        "706",
+        "801",
+        "802"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Español",
+        "course": "605",
+        "grade": 6,
+        "group": "05"
+      },
+      {
+        "subject": "Sociales",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Sociales",
+        "course": "607",
+        "grade": 6,
+        "group": "07"
+      },
+      {
+        "subject": "Sociales",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Sociales",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Sociales",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      }
+    ]
+  },
+  "SENA Camilo Montealegre": {
+    "subjects": {
+      "SENA": [
+        "1102",
+        "1103"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "SENA",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "SENA",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      }
+    ]
+  },
+  "Sandra Milena Lizarazo Rojas": {
+    "subjects": {
+      "Program.": [
+        "901",
+        "902",
+        "903",
+        "904"
+      ],
+      "Informática": [
+        "901",
+        "902",
+        "903",
+        "904",
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "1101",
+        "1102",
+        "1103",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Informática",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Informática",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Informática",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      },
+      {
+        "subject": "Informática",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Program.",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Informática",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Program.",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Informática",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Program.",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Informática",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      },
+      {
+        "subject": "Program.",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Sena Carlos Arturo": {
+    "subjects": {
+      "SENA": [
+        "1002",
+        "1003"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "SENA",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "SENA",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      }
+    ]
+  },
+  "Sena Deportivo": {
+    "subjects": {
+      "SENA": [
+        "1001",
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "SENA",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "SENA",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      }
+    ]
+  },
+  "Sena Gestión": {
+    "subjects": {
+      "SENA": [
+        "1004",
+        "1104"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "SENA",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "SENA",
+        "course": "1104",
+        "grade": 11,
+        "group": "04"
+      }
+    ]
+  },
+  "Sergio / Aladino": {
+    "subjects": {
+      "Metodología": [
+        "1001"
+      ],
+      "Ed Física": [
+        "1002"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Metodología",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      }
+    ]
+  },
+  "Sergio David Lozano Lopez": {
+    "subjects": {
+      "Ed Física": [
+        "602",
+        "606",
+        "701",
+        "802",
+        "805",
+        "902",
+        "1001"
+      ],
+      "SyGestión": [
+        "1101"
+      ],
+      "Cul. Deportiva": [
+        "1101"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Ed Física",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Cul. Deportiva",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "SyGestión",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "602",
+        "grade": 6,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "606",
+        "grade": 6,
+        "group": "06"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "805",
+        "grade": 8,
+        "group": "05"
+      },
+      {
+        "subject": "Ed Física",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      }
+    ]
+  },
+  "Sonia Carmenza Martínez Rojas": {
+    "subjects": {
+      "Inglés": [
+        "701",
+        "702",
+        "703",
+        "705",
+        "706",
+        "801",
+        "802"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Inglés",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Inglés",
+        "course": "703",
+        "grade": 7,
+        "group": "03"
+      },
+      {
+        "subject": "Inglés",
+        "course": "705",
+        "grade": 7,
+        "group": "05"
+      },
+      {
+        "subject": "Inglés",
+        "course": "706",
+        "grade": 7,
+        "group": "06"
+      },
+      {
+        "subject": "Inglés",
+        "course": "801",
+        "grade": 8,
+        "group": "01"
+      },
+      {
+        "subject": "Inglés",
+        "course": "802",
+        "grade": 8,
+        "group": "02"
+      }
+    ]
+  },
+  "Víctor Fabio Camargo Pérez": {
+    "subjects": {
+      "Tecnología": [
+        "701",
+        "702",
+        "901",
+        "902",
+        "903",
+        "904"
+      ],
+      "Electrónica": [
+        "1002"
+      ],
+      "PLC": [
+        "1002"
+      ],
+      "Microcontroladores": [
+        "1002",
+        "1102"
+      ],
+      "Control Analógico": [
+        "1102"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Electrónica",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Microcontroladores",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "PLC",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Control Analógico",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Microcontroladores",
+        "course": "1102",
+        "grade": 11,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "702",
+        "grade": 7,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "901",
+        "grade": 9,
+        "group": "01"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "902",
+        "grade": 9,
+        "group": "02"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "903",
+        "grade": 9,
+        "group": "03"
+      },
+      {
+        "subject": "Tecnología",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  },
+  "Yolima Coy Pulido": {
+    "subjects": {
+      "Matemáticas": [
+        "701",
+        "904",
+        "1001",
+        "1002",
+        "1003",
+        "1004"
+      ],
+      "Estadística": [
+        "1101",
+        "1103"
+      ]
+    },
+    "assignments": [
+      {
+        "subject": "Matemáticas",
+        "course": "1001",
+        "grade": 10,
+        "group": "01"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1002",
+        "grade": 10,
+        "group": "02"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1003",
+        "grade": 10,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "1004",
+        "grade": 10,
+        "group": "04"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1101",
+        "grade": 11,
+        "group": "01"
+      },
+      {
+        "subject": "Estadística",
+        "course": "1103",
+        "grade": 11,
+        "group": "03"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "701",
+        "grade": 7,
+        "group": "01"
+      },
+      {
+        "subject": "Matemáticas",
+        "course": "904",
+        "grade": 9,
+        "group": "04"
+      }
+    ]
+  }
+}

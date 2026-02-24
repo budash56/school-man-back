@@ -182,6 +182,46 @@
         ]
       }
     },
+    "/attendance/sheet": {
+      "get": {
+        "operationId": "AttendanceController_buildRoster",
+        "parameters": [
+          {
+            "name": "classGroupId",
+            "required": true,
+            "in": "query",
+            "description": "Class group identifier",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "description": "Date for which the roster is generated (YYYY-MM-DD)",
+            "schema": {
+              "example": "2025-02-15",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Attendance"
+        ]
+      }
+    },
     "/attendance/{id}": {
       "get": {
         "operationId": "AttendanceController_findOne",
@@ -938,209 +978,6 @@
         ]
       }
     },
-    "/course-instances": {
-      "get": {
-        "operationId": "CourseInstancesController_findAll",
-        "parameters": [
-          {
-            "name": "schoolYearId",
-            "required": false,
-            "in": "query",
-            "description": "Filters course instances by school year identifier",
-            "schema": {
-              "example": 3,
-              "type": "number"
-            }
-          },
-          {
-            "name": "gradeLevel",
-            "required": false,
-            "in": "query",
-            "description": "Filters course instances by grade level",
-            "schema": {
-              "minimum": 1,
-              "maximum": 11,
-              "example": 10,
-              "type": "number"
-            }
-          },
-          {
-            "name": "subjectId",
-            "required": false,
-            "in": "query",
-            "description": "Filters course instances by subject identifier",
-            "schema": {
-              "example": 12,
-              "type": "number"
-            }
-          },
-          {
-            "name": "q",
-            "required": false,
-            "in": "query",
-            "description": "Keyword applied to course code and name",
-            "schema": {
-              "example": "MATH",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "course-instances"
-        ]
-      },
-      "post": {
-        "operationId": "CourseInstancesController_create",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCourseInstanceDto"
-              },
-              "examples": {
-                "default": {
-                  "summary": "Create course instance for school year",
-                  "value": {
-                    "subjectId": 5,
-                    "gradeLevel": 9,
-                    "schoolYearId": 2,
-                    "weeklyHours": 5,
-                    "courseCode": "SCI-2025",
-                    "courseName": "Science Fundamentals",
-                    "description": "Core science curriculum",
-                    "isActive": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "403": {
-            "description": "Forbidden: requires role admin, coordinator"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "course-instances"
-        ]
-      }
-    },
-    "/course-instances/{id}": {
-      "get": {
-        "operationId": "CourseInstancesController_findOne",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "course-instances"
-        ]
-      },
-      "patch": {
-        "operationId": "CourseInstancesController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCourseInstanceDto"
-              },
-              "examples": {
-                "default": {
-                  "summary": "Update course name",
-                  "value": {
-                    "courseName": "Advanced Science Fundamentals",
-                    "weeklyHours": 6
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "403": {
-            "description": "Forbidden: requires role admin, coordinator"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "course-instances"
-        ]
-      },
-      "delete": {
-        "operationId": "CourseInstancesController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "403": {
-            "description": "Forbidden: requires role admin, coordinator"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "course-instances"
-        ]
-      }
-    },
     "/courses": {
       "get": {
         "operationId": "CoursesController_findAll",
@@ -1292,6 +1129,260 @@
         ],
         "tags": [
           "Courses"
+        ]
+      }
+    },
+    "/class-group-curriculum-overrides": {
+      "get": {
+        "operationId": "ClassGroupCurriculumOverridesController_findAll",
+        "parameters": [
+          {
+            "name": "classGroupId",
+            "required": false,
+            "in": "query",
+            "description": "Filter overrides by class group identifier",
+            "schema": {
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "curriculumItemId",
+            "required": false,
+            "in": "query",
+            "description": "Filter overrides by curriculum item identifier",
+            "schema": {
+              "example": 55,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-group-curriculum-overrides"
+        ]
+      },
+      "post": {
+        "operationId": "ClassGroupCurriculumOverridesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassGroupCurriculumOverrideDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-group-curriculum-overrides"
+        ]
+      }
+    },
+    "/class-group-curriculum-overrides/{id}": {
+      "get": {
+        "operationId": "ClassGroupCurriculumOverridesController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-group-curriculum-overrides"
+        ]
+      },
+      "patch": {
+        "operationId": "ClassGroupCurriculumOverridesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClassGroupCurriculumOverrideDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-group-curriculum-overrides"
+        ]
+      },
+      "delete": {
+        "operationId": "ClassGroupCurriculumOverridesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "class-group-curriculum-overrides"
+        ]
+      }
+    },
+    "/curricula": {
+      "get": {
+        "operationId": "CurriculaController_findAll",
+        "parameters": [
+          {
+            "name": "gradeLevel",
+            "required": false,
+            "in": "query",
+            "description": "Filters curricula by grade level (1-11)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 11,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "description": "Filters by active curricula when provided",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "curricula"
+        ]
+      },
+      "post": {
+        "operationId": "CurriculaController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCurriculumDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "curricula"
+        ]
+      }
+    },
+    "/curricula/{id}": {
+      "get": {
+        "operationId": "CurriculaController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "curricula"
         ]
       }
     },
@@ -1825,7 +1916,7 @@
                     "studentId": 2201,
                     "courseId": 15,
                     "termId": 3,
-                    "mark": "A",
+                    "mark": 4,
                     "comment": "Excellent performance"
                   }
                 }
@@ -2375,6 +2466,62 @@
         ]
       }
     },
+    "/notifications/{id}/resolve": {
+      "patch": {
+        "operationId": "NotificationsController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/suggestions/absence/run": {
+      "post": {
+        "operationId": "NotificationsController_runAbsence",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
     "/school-years": {
       "get": {
         "operationId": "SchoolYearsController_findAll",
@@ -2759,7 +2906,7 @@
       }
     },
     "/students/{id}/restore": {
-      "patch": {
+      "post": {
         "operationId": "StudentsController_restore",
         "parameters": [
           {
@@ -2767,6 +2914,16 @@
             "required": true,
             "in": "path",
             "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": true,
+            "in": "query",
+            "description": "School year identifier to restore the student enrollment into",
+            "schema": {
+              "example": 3,
               "type": "number"
             }
           }
@@ -2819,6 +2976,16 @@
             "schema": {
               "example": "math",
               "type": "string"
+            }
+          },
+          {
+            "name": "includeSubjects",
+            "required": false,
+            "in": "query",
+            "description": "Include nested subjects for each area",
+            "schema": {
+              "example": true,
+              "type": "boolean"
             }
           }
         ],
@@ -3513,7 +3680,8 @@
                   "value": {
                     "dayOfWeek": 1,
                     "startTime": "08:00",
-                    "endTime": "09:00"
+                    "endTime": "09:00",
+                    "durationMinutes": 60
                   }
                 }
               }
@@ -3631,6 +3799,127 @@
         ],
         "tags": [
           "timetable-slots"
+        ]
+      }
+    },
+    "/teacher-subjects": {
+      "get": {
+        "operationId": "TeacherSubjectsController_findAll",
+        "parameters": [
+          {
+            "name": "teacherId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by teacher national ID",
+            "schema": {
+              "example": "199001011234",
+              "type": "string"
+            }
+          },
+          {
+            "name": "subjectId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by subject identifier",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "teacher-subjects"
+        ]
+      },
+      "post": {
+        "operationId": "TeacherSubjectsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTeacherSubjectDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "teacher-subjects"
+        ]
+      }
+    },
+    "/teacher-subjects/{id}": {
+      "get": {
+        "operationId": "TeacherSubjectsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "teacher-subjects"
+        ]
+      },
+      "delete": {
+        "operationId": "TeacherSubjectsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden: requires role admin, coordinator"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "teacher-subjects"
         ]
       }
     },
@@ -3855,6 +4144,321 @@
         ]
       }
     },
+    "/dashboards/attendance/weekly": {
+      "get": {
+        "operationId": "DashboardsController_getWeeklyAttendance",
+        "parameters": [
+          {
+            "name": "grade",
+            "required": false,
+            "in": "query",
+            "description": "Grade level filter",
+            "schema": {
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "weeks",
+            "required": false,
+            "in": "query",
+            "description": "Number of weeks to include (default 8)",
+            "schema": {
+              "example": 8,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/failing-rate": {
+      "get": {
+        "operationId": "DashboardsController_getFailingRate",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "required": false,
+            "in": "query",
+            "description": "Subject identifier",
+            "schema": {
+              "example": 5,
+              "type": "number"
+            }
+          },
+          {
+            "name": "termId",
+            "required": false,
+            "in": "query",
+            "description": "Term identifier",
+            "schema": {
+              "example": 12,
+              "type": "number"
+            }
+          },
+          {
+            "name": "schoolYearId",
+            "required": false,
+            "in": "query",
+            "description": "School year identifier",
+            "schema": {
+              "example": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/discipline/heatmap": {
+      "get": {
+        "operationId": "DashboardsController_getDisciplineHeatmap",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Number of days to include (default 30)",
+            "schema": {
+              "example": 30,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/dashboards/teacher-workload": {
+      "get": {
+        "operationId": "DashboardsController_getTeacherWorkload",
+        "parameters": [
+          {
+            "name": "teacherId",
+            "required": true,
+            "in": "query",
+            "description": "Teacher national ID",
+            "schema": {
+              "example": "800001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "weekOffset",
+            "required": false,
+            "in": "query",
+            "description": "Optional week offset (0=current week, -1=previous)",
+            "schema": {
+              "$ref": "#/components/schemas/Object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "dashboards"
+        ]
+      }
+    },
+    "/timetable-generator/preview": {
+      "post": {
+        "operationId": "TimetableGeneratorController_preview",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTimetableDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Balanced preview request",
+                  "value": {
+                    "schoolYearId": 2026,
+                    "division": "secondary",
+                    "teacherWeeklyHourCap": 18,
+                    "balanceAcrossDays": true,
+                    "avoidConsecutiveSameSubject": true,
+                    "maxSessionsPerDayDefault": 1,
+                    "minGapSlotsDefault": 1,
+                    "teacherConstraints": [
+                      {
+                        "teacherId": "900100",
+                        "preferredShift": "morning",
+                        "avoidLastSlot": true
+                      }
+                    ],
+                    "coursePreferences": [
+                      {
+                        "courseId": 1201,
+                        "sessionsPerWeek": 4,
+                        "blockLength": 1,
+                        "maxSessionsPerDay": 1,
+                        "minGapSlots": 1
+                      },
+                      {
+                        "courseId": 1202,
+                        "sessionsPerWeek": 2,
+                        "blockLength": 2,
+                        "allowDoubleBlock": true,
+                        "targetDays": [
+                          1,
+                          3,
+                          5
+                        ]
+                      }
+                    ],
+                    "blockedSlots": [
+                      {
+                        "dayOfWeek": 1,
+                        "startTime": "10:50:00",
+                        "endTime": "11:20:00"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Preview generated timetable assignments without persisting them",
+        "tags": [
+          "timetable-generator"
+        ]
+      }
+    },
+    "/timetable-generator/apply": {
+      "post": {
+        "operationId": "TimetableGeneratorController_apply",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTimetableDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Balanced apply request",
+                  "value": {
+                    "schoolYearId": 2026,
+                    "division": "secondary",
+                    "teacherWeeklyHourCap": 18,
+                    "balanceAcrossDays": true,
+                    "avoidConsecutiveSameSubject": true,
+                    "maxSessionsPerDayDefault": 1,
+                    "minGapSlotsDefault": 1,
+                    "teacherConstraints": [
+                      {
+                        "teacherId": "900100",
+                        "preferredShift": "morning",
+                        "avoidLastSlot": true
+                      }
+                    ],
+                    "coursePreferences": [
+                      {
+                        "courseId": 1201,
+                        "sessionsPerWeek": 4,
+                        "blockLength": 1,
+                        "maxSessionsPerDay": 1,
+                        "minGapSlots": 1
+                      },
+                      {
+                        "courseId": 1202,
+                        "sessionsPerWeek": 2,
+                        "blockLength": 2,
+                        "allowDoubleBlock": true,
+                        "targetDays": [
+                          1,
+                          3,
+                          5
+                        ]
+                      }
+                    ],
+                    "blockedSlots": [
+                      {
+                        "dayOfWeek": 1,
+                        "startTime": "10:50:00",
+                        "endTime": "11:20:00"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Generate assignments and persist them via the timetable assignments service",
+        "tags": [
+          "timetable-generator"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -3901,6 +4505,21 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SignupDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Create a new user",
+                  "value": {
+                    "nationalId": "900100",
+                    "password": "Admin#123",
+                    "username": "admin.user",
+                    "role": "admin",
+                    "firstName": "Maria",
+                    "lastName": "Lopez",
+                    "email": "maria.lopez@example.edu",
+                    "phone": "+57 3001234567"
+                  }
+                }
               }
             }
           }
@@ -3952,6 +4571,148 @@
           "auth"
         ]
       }
+    },
+    "/reports/certificates/active-student": {
+      "post": {
+        "operationId": "CertificatesController_generateActiveStudentCertificate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActiveStudentCertificateDto"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Generate active student certificate",
+                  "value": {
+                    "studentId": 101,
+                    "schoolYearId": 3
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/grades/term": {
+      "get": {
+        "operationId": "GradesReportsController_getTermReport",
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": true,
+            "in": "query",
+            "description": "Student identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 101,
+              "type": "number"
+            }
+          },
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "query",
+            "description": "Course identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "termId",
+            "required": true,
+            "in": "query",
+            "description": "Term identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 4,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/grades/final": {
+      "get": {
+        "operationId": "GradesReportsController_getFinalReport",
+        "parameters": [
+          {
+            "name": "studentId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 101,
+              "type": "number"
+            }
+          },
+          {
+            "name": "courseId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "example": 15,
+              "type": "number"
+            }
+          },
+          {
+            "name": "schoolYearId",
+            "required": true,
+            "in": "query",
+            "description": "School year identifier",
+            "schema": {
+              "minimum": 1,
+              "example": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "reports"
+        ]
+      }
     }
   },
   "info": {
@@ -3987,10 +4748,11 @@
             "minimum": 1
           },
           "slotId": {
-            "type": "number",
-            "description": "Identifier of the timetable slot when the lesson occurred",
+            "type": "object",
+            "description": "Identifier of the timetable slot when the lesson occurred. Optional for legacy daily entries.",
             "example": 12,
-            "minimum": 1
+            "minimum": 1,
+            "nullable": true
           },
           "date": {
             "type": "string",
@@ -4012,7 +4774,6 @@
         "required": [
           "studentId",
           "courseId",
-          "slotId",
           "date",
           "status"
         ]
@@ -4157,62 +4918,6 @@
         "type": "object",
         "properties": {}
       },
-      "CreateCourseInstanceDto": {
-        "type": "object",
-        "properties": {
-          "subjectId": {
-            "type": "number",
-            "example": 12,
-            "description": "Identifier of the related subject"
-          },
-          "gradeLevel": {
-            "type": "number",
-            "example": 10,
-            "description": "Grade level served by this course instance (1-11)",
-            "minimum": 1,
-            "maximum": 11
-          },
-          "schoolYearId": {
-            "type": "number",
-            "example": 3,
-            "description": "School year identifier"
-          },
-          "courseCode": {
-            "type": "string",
-            "example": "MATH-10-Y2025",
-            "description": "Custom course code. When omitted, it is generated automatically",
-            "maxLength": 50
-          },
-          "courseName": {
-            "type": "string",
-            "example": "Mathematics Grade 10",
-            "maxLength": 120,
-            "description": "Human readable course instance name"
-          },
-          "weeklyHours": {
-            "type": "number",
-            "example": 4,
-            "default": 0,
-            "description": "Weekly teaching hours for this course instance",
-            "minimum": 0
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true,
-            "description": "Flag to enable or disable the course instance without deleting it"
-          }
-        },
-        "required": [
-          "subjectId",
-          "gradeLevel",
-          "schoolYearId",
-          "courseName"
-        ]
-      },
-      "UpdateCourseInstanceDto": {
-        "type": "object",
-        "properties": {}
-      },
       "CreateCourseDto": {
         "type": "object",
         "properties": {}
@@ -4220,6 +4925,112 @@
       "UpdateCourseDto": {
         "type": "object",
         "properties": {}
+      },
+      "CreateClassGroupCurriculumOverrideDto": {
+        "type": "object",
+        "properties": {
+          "classGroupId": {
+            "type": "number",
+            "example": 20,
+            "description": "Identifier of the class group to override"
+          },
+          "curriculumItemId": {
+            "type": "number",
+            "example": 55,
+            "description": "Identifier of the curriculum item being overridden"
+          },
+          "weeklyHoursOverride": {
+            "type": "number",
+            "example": 5,
+            "description": "Override weekly hours for the class group",
+            "minimum": 0
+          },
+          "doubleSessionOverride": {
+            "type": "boolean",
+            "example": true,
+            "description": "Override double session requirement"
+          },
+          "isDisabled": {
+            "type": "boolean",
+            "example": false,
+            "description": "Disable this subject for the class group"
+          }
+        },
+        "required": [
+          "classGroupId",
+          "curriculumItemId"
+        ]
+      },
+      "UpdateClassGroupCurriculumOverrideDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCurriculumItemDto": {
+        "type": "object",
+        "properties": {
+          "subjectId": {
+            "type": "number",
+            "example": 12,
+            "description": "Identifier of the subject assigned to this curriculum item"
+          },
+          "weeklyHours": {
+            "type": "number",
+            "example": 4,
+            "default": 0,
+            "description": "Weekly teaching hours for this subject",
+            "minimum": 0
+          },
+          "doubleSessionRequired": {
+            "type": "boolean",
+            "example": true,
+            "default": false,
+            "description": "Whether this subject must be scheduled in a double session"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Lab requires a double block on Thursdays",
+            "description": "Optional notes for scheduling or curriculum review"
+          }
+        },
+        "required": [
+          "subjectId"
+        ]
+      },
+      "CreateCurriculumDto": {
+        "type": "object",
+        "properties": {
+          "gradeLevel": {
+            "type": "number",
+            "example": 10,
+            "description": "Grade level for this curriculum (1-11)",
+            "minimum": 1,
+            "maximum": 11
+          },
+          "name": {
+            "type": "string",
+            "example": "Grade 10 Curriculum",
+            "maxLength": 120,
+            "description": "Human readable curriculum name"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true,
+            "default": true,
+            "description": "Whether this curriculum is active for planning"
+          },
+          "items": {
+            "description": "Curriculum items for the grade level",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateCurriculumItemDto"
+            }
+          }
+        },
+        "required": [
+          "gradeLevel",
+          "name",
+          "items"
+        ]
       },
       "CreateDisciplinaryRecordDto": {
         "type": "object",
@@ -4321,14 +5132,14 @@
             "minimum": 1
           },
           "mark": {
-            "type": "string",
-            "description": "Letter mark assigned to the student",
-            "example": "A",
+            "type": "number",
+            "description": "Numeric mark assigned to the student (5=S, 4=A, 3=B, 1=J)",
+            "example": 4,
             "enum": [
-              "S",
-              "A",
-              "B",
-              "J"
+              5,
+              4,
+              3,
+              1
             ]
           },
           "comment": {
@@ -4349,14 +5160,14 @@
         "type": "object",
         "properties": {
           "mark": {
-            "type": "string",
-            "description": "Updated letter mark for the student",
-            "example": "B",
+            "type": "number",
+            "description": "Updated numeric mark for the student (5=S, 4=A, 3=B, 1=J)",
+            "example": 3,
             "enum": [
-              "S",
-              "A",
-              "B",
-              "J"
+              5,
+              4,
+              3,
+              1
             ]
           },
           "comment": {
@@ -4615,7 +5426,8 @@
           }
         },
         "required": [
-          "courseId"
+          "courseId",
+          "slotId"
         ]
       },
       "UpdateTimetableAssignmentDto": {
@@ -4667,12 +5479,27 @@
             "type": "string",
             "example": "09:00",
             "description": "End time in HH:MM (24h)"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "example": 60,
+            "description": "Optional duration override; defaults to the difference between endTime and startTime"
+          },
+          "division": {
+            "type": "string",
+            "description": "Division this slot belongs to",
+            "enum": [
+              "elementary",
+              "secondary",
+              "senior"
+            ]
           }
         },
         "required": [
           "dayOfWeek",
           "startTime",
-          "endTime"
+          "endTime",
+          "division"
         ]
       },
       "UpdateTimetableSlotDto": {
@@ -4694,8 +5521,41 @@
             "type": "string",
             "example": "09:00",
             "description": "End time in HH:MM (24h)"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "example": 60,
+            "description": "Optional duration override; defaults to the difference between endTime and startTime"
+          },
+          "division": {
+            "type": "string",
+            "description": "Division this slot belongs to",
+            "enum": [
+              "elementary",
+              "secondary",
+              "senior"
+            ]
           }
         }
+      },
+      "CreateTeacherSubjectDto": {
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "example": "199001011234",
+            "description": "Teacher national ID"
+          },
+          "subjectId": {
+            "type": "number",
+            "example": 12,
+            "description": "Subject identifier assigned to the teacher"
+          }
+        },
+        "required": [
+          "teacherId",
+          "subjectId"
+        ]
       },
       "CreateUsersDto": {
         "type": "object",
@@ -4762,6 +5622,231 @@
       "UpdateUsersDto": {
         "type": "object",
         "properties": {}
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "TeacherConstraintDto": {
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "description": "Teacher identifier (national ID) whose availability constraints should be considered",
+            "example": "900100"
+          },
+          "preferredShift": {
+            "type": "string",
+            "description": "Preferred shift for this teacher. When set to morning/afternoon, only slots within that shift are considered.",
+            "enum": [
+              "any",
+              "morning",
+              "afternoon"
+            ],
+            "default": "any",
+            "example": "morning"
+          },
+          "avoidLastSlot": {
+            "type": "boolean",
+            "description": "Prevents assigning the teacher to the latest slot of the day (useful for teachers who cannot work late).",
+            "default": false,
+            "example": true
+          }
+        }
+      },
+      "CoursePreferenceDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "number",
+            "description": "Course identifier that should override the default behaviour",
+            "example": 1201
+          },
+          "preferredShift": {
+            "type": "string",
+            "description": "Preferred shift for this course. Acts as a hard constraint, so only slots in this shift will be considered.",
+            "enum": [
+              "any",
+              "morning",
+              "afternoon"
+            ],
+            "example": "morning"
+          },
+          "blockLength": {
+            "type": "number",
+            "description": "Number of consecutive slots required for each session of this course (e.g. 2 for double block). Defaults to 1.",
+            "minimum": 1,
+            "default": 1,
+            "example": 1
+          },
+          "sessionsPerWeek": {
+            "type": "number",
+            "description": "Total sessions per week override. When omitted, the generator falls back to `courseInstance.weeklyHours`.",
+            "minimum": 1,
+            "example": 4
+          },
+          "maxSessionsPerDay": {
+            "type": "number",
+            "description": "Maximum number of sessions per day for this course. Overrides the default.",
+            "minimum": 1,
+            "example": 1
+          },
+          "minGapSlots": {
+            "type": "number",
+            "description": "Minimum gap (in slots) between sessions of this course on the same day.",
+            "minimum": 0,
+            "example": 1
+          },
+          "allowDoubleBlock": {
+            "type": "boolean",
+            "description": "Allows consecutive sessions of the same subject (double block).",
+            "default": false,
+            "example": false
+          },
+          "targetDays": {
+            "description": "Explicit days of week (1=Monday ... 7=Sunday) to target for this course.",
+            "example": [
+              1,
+              3,
+              5
+            ],
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "BlockedSlotDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "description": "Day of week (1=Monday ... 7=Sunday).",
+            "minimum": 1,
+            "maximum": 7,
+            "example": 1
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Blocked start time (HH:mm or HH:mm:ss).",
+            "example": "10:50:00"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Blocked end time (HH:mm or HH:mm:ss).",
+            "example": "11:20:00"
+          }
+        }
+      },
+      "GenerateTimetableDto": {
+        "type": "object",
+        "properties": {
+          "schoolYearId": {
+            "type": "number",
+            "description": "Target school year identifier",
+            "example": 2026
+          },
+          "division": {
+            "type": "string",
+            "description": "Division to generate (elementary, secondary, or senior)",
+            "enum": [
+              "elementary",
+              "secondary",
+              "senior"
+            ],
+            "example": "secondary"
+          },
+          "teacherWeeklyHourCap": {
+            "type": "number",
+            "description": "Maximum number of slots a teacher can cover during the week (applies to every teacher unless a constraint is provided externally).",
+            "example": 18
+          },
+          "teacherConstraints": {
+            "description": "Optional list of teacher constraints (e.g. availability per shift, avoid last slot).",
+            "example": [
+              {
+                "teacherId": "900100",
+                "preferredShift": "morning",
+                "avoidLastSlot": true
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherConstraintDto"
+            }
+          },
+          "balanceAcrossDays": {
+            "type": "boolean",
+            "description": "Try to balance sessions across available days for each class group when possible.",
+            "default": false,
+            "example": true
+          },
+          "avoidConsecutiveSameSubject": {
+            "type": "boolean",
+            "description": "Avoid placing the same subject in consecutive slots for a class group.",
+            "default": false,
+            "example": true
+          },
+          "maxSessionsPerDayDefault": {
+            "type": "number",
+            "description": "Default maximum number of sessions per day for a course when no per-course override is provided.",
+            "minimum": 1,
+            "example": 1
+          },
+          "minGapSlotsDefault": {
+            "type": "number",
+            "description": "Default minimum gap (in slots) between sessions of the same course on the same day.",
+            "minimum": 0,
+            "example": 1
+          },
+          "coursePreferences": {
+            "description": "Optional per-course overrides such as double blocks or session counts.",
+            "example": [
+              {
+                "courseId": 1201,
+                "sessionsPerWeek": 4,
+                "blockLength": 1,
+                "maxSessionsPerDay": 1,
+                "minGapSlots": 1
+              },
+              {
+                "courseId": 1202,
+                "sessionsPerWeek": 2,
+                "blockLength": 2,
+                "allowDoubleBlock": true,
+                "targetDays": [
+                  1,
+                  3,
+                  5
+                ]
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoursePreferenceDto"
+            }
+          },
+          "blockedSlots": {
+            "description": "Explicit blocked/break slots to avoid (e.g. lunch break). Times should match slot times.",
+            "example": [
+              {
+                "dayOfWeek": 1,
+                "startTime": "10:50:00",
+                "endTime": "11:20:00"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockedSlotDto"
+            }
+          }
+        },
+        "required": [
+          "schoolYearId",
+          "division",
+          "teacherWeeklyHourCap"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -4836,7 +5921,69 @@
       },
       "SignupDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "nationalId": {
+            "type": "string",
+            "example": "900100",
+            "description": "Unique national ID for the user"
+          },
+          "password": {
+            "type": "string",
+            "example": "Admin#123",
+            "description": "Plain text password (min 8 characters)"
+          },
+          "username": {
+            "type": "string",
+            "example": "admin.user",
+            "description": "Optional username; defaults to nationalId when omitted"
+          },
+          "role": {
+            "type": "string",
+            "example": "admin",
+            "description": "Only admins can create other admins"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Maria"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Lopez"
+          },
+          "email": {
+            "type": "string",
+            "example": "maria.lopez@example.edu"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+57 3001234567"
+          }
+        },
+        "required": [
+          "nationalId",
+          "password"
+        ]
+      },
+      "ActiveStudentCertificateDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "number",
+            "example": 101,
+            "description": "Student identifier",
+            "minimum": 1
+          },
+          "schoolYearId": {
+            "type": "number",
+            "example": 3,
+            "description": "School year identifier for the certificate",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "studentId",
+          "schoolYearId"
+        ]
       }
     }
   }

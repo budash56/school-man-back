@@ -47,7 +47,20 @@ export class UsersController {
     type: CreateUsersDto,
     examples: {
       default: {
-        summary: 'Create user',
+        summary: 'Create user (auto temp password)',
+        value: {
+          nationalId: '199001011234',
+          username: 'jdoe',
+          role: 'teacher',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.edu',
+          phone: '+1-202-555-0199',
+          isActive: true,
+        },
+      },
+      explicitHash: {
+        summary: 'Create user (explicit password hash)',
         value: {
           nationalId: '199001011234',
           username: 'jdoe',

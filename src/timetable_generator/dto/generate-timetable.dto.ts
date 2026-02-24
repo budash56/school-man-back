@@ -14,11 +14,37 @@ import {
 import { CoursePreferenceDto } from './course-preference.dto';
 import { TeacherConstraintDto } from './teacher-constraint.dto';
 import { SCHEDULE_DIVISIONS } from '../../timetable_slots/timetable-division.type';
+export class BlockedSlotDto {
+  @ApiPropertyOptional({
+    description: 'Day of week (1=Monday ... 7=Sunday).',
+    minimum: 1,
+    maximum: 7,
+    example: 1,
+  })
+  @IsInt()
+  @Min(1)
+  @Max(7)
+  dayOfWeek: number;
+
+  @ApiPropertyOptional({
+    description: 'Blocked start time (HH:mm or HH:mm:ss).',
+    example: '10:50:00',
+  })
+  @IsString()
+  startTime: string;
+
+  @ApiPropertyOptional({
+    description: 'Blocked end time (HH:mm or HH:mm:ss).',
+    example: '11:20:00',
+  })
+  @IsString()
+  endTime: string;
+}
 
 export class GenerateTimetableDto {
   @ApiProperty({
     description: 'Target school year identifier',
-    example: 2025,
+    example: 2026,
   })
   @IsInt()
   @Min(1)
@@ -27,6 +53,7 @@ export class GenerateTimetableDto {
   @ApiProperty({
     description: 'Division to generate (elementary, secondary, or senior)',
     enum: SCHEDULE_DIVISIONS,
+    example: 'secondary',
   })
   @IsIn(SCHEDULE_DIVISIONS)
   division: string;
@@ -45,6 +72,13 @@ export class GenerateTimetableDto {
       'Optional list of teacher constraints (e.g. availability per shift, avoid last slot).',
     type: TeacherConstraintDto,
     isArray: true,
+    example: [
+      {
+        teacherId: '900100',
+        preferredShift: 'morning',
+        avoidLastSlot: true,
+      },
+    ],
   })
   @IsOptional()
   @IsArray()
@@ -56,6 +90,7 @@ export class GenerateTimetableDto {
     description:
       'Try to balance sessions across available days for each class group when possible.',
     default: false,
+    example: true,
   })
   @IsOptional()
   @IsBoolean()
@@ -65,6 +100,7 @@ export class GenerateTimetableDto {
     description:
       'Avoid placing the same subject in consecutive slots for a class group.',
     default: false,
+    example: true,
   })
   @IsOptional()
   @IsBoolean()
@@ -74,6 +110,7 @@ export class GenerateTimetableDto {
     description:
       'Default maximum number of sessions per day for a course when no per-course override is provided.',
     minimum: 1,
+    example: 1,
   })
   @IsOptional()
   @IsInt()
@@ -84,6 +121,7 @@ export class GenerateTimetableDto {
     description:
       'Default minimum gap (in slots) between sessions of the same course on the same day.',
     minimum: 0,
+    example: 1,
   })
   @IsOptional()
   @IsInt()
@@ -95,6 +133,22 @@ export class GenerateTimetableDto {
       'Optional per-course overrides such as double blocks or session counts.',
     type: CoursePreferenceDto,
     isArray: true,
+    example: [
+      {
+        courseId: 1201,
+        sessionsPerWeek: 4,
+        blockLength: 1,
+        maxSessionsPerDay: 1,
+        minGapSlots: 1,
+      },
+      {
+        courseId: 1202,
+        sessionsPerWeek: 2,
+        blockLength: 2,
+        allowDoubleBlock: true,
+        targetDays: [1, 3, 5],
+      },
+    ],
   })
   @IsOptional()
   @IsArray()
@@ -107,36 +161,17 @@ export class GenerateTimetableDto {
       'Explicit blocked/break slots to avoid (e.g. lunch break). Times should match slot times.',
     type: BlockedSlotDto,
     isArray: true,
+    example: [
+      {
+        dayOfWeek: 1,
+        startTime: '10:50:00',
+        endTime: '11:20:00',
+      },
+    ],
   })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BlockedSlotDto)
   blockedSlots?: BlockedSlotDto[];
-}
-
-export class BlockedSlotDto {
-  @ApiPropertyOptional({
-    description: 'Day of week (1=Monday ... 7=Sunday).',
-    minimum: 1,
-    maximum: 7,
-  })
-  @IsInt()
-  @Min(1)
-  @Max(7)
-  dayOfWeek: number;
-
-  @ApiPropertyOptional({
-    description: 'Blocked start time (HH:mm or HH:mm:ss).',
-    example: '10:50',
-  })
-  @IsString()
-  startTime: string;
-
-  @ApiPropertyOptional({
-    description: 'Blocked end time (HH:mm or HH:mm:ss).',
-    example: '11:20',
-  })
-  @IsString()
-  endTime: string;
 }

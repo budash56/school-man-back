@@ -23,7 +23,8 @@
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "typeorm-ts-node-commonjs migration:run --dataSource src/data-source.ts",
     "migration:revert": "ypeorm-ts-node-commonjs migration:revert --dataSource src/data-source.ts",
-    "openapi:export": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/export-openapi.ts"
+    "openapi:export": "node -r ts-node/register/transpile-only -r tsconfig-paths/register scripts/export-openapi.ts",
+    "test:db": "dotenv -e .env.test -- jest"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

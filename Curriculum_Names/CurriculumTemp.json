@@ -1,0 +1,197 @@
+{
+  "curriculum": {
+    "grades_6_to_9": {
+      "6": {
+        "subjects": {
+          "Artes": { "lessons_per_week": 2.0 },
+          "Ed Física": { "lessons_per_week": 2.0 },
+          "Ed Religiosa": { "lessons_per_week": 2.0 },
+          "Español": { "lessons_per_week": 5.0 },
+          "Etica": { "lessons_per_week": 2.0 },
+          "Geometría": { "lessons_per_week": 2.0 },
+          "Informática": { "lessons_per_week": 2.0 },
+          "Inglés": { "lessons_per_week": 3.0 },
+          "Lec Comp": { "lessons_per_week": 2.0 },
+          "Matemáticas": { "lessons_per_week": 3.0 },
+          "Música": { "lessons_per_week": 2.0 },
+          "Naturales": { "lessons_per_week": 3.0 },
+          "Sociales": { "lessons_per_week": 3.0 },
+          "Tecnología": { "lessons_per_week": 2.0 }
+        }
+      },
+      "7": {
+        "subjects": {
+          "Artes": { "lessons_per_week": 2.0 },
+          "Ed Física": { "lessons_per_week": 2.0 },
+          "Ed Religiosa": { "lessons_per_week": 1.0 },
+          "Español": { "lessons_per_week": 3.0 },
+          "Etica": { "lessons_per_week": 2.0 },
+          "Geometría": { "lessons_per_week": 2.0 },
+          "Inglés": { "lessons_per_week": 3.0 },
+          "Matemáticas": { "lessons_per_week": 4.0 },
+          "Música": { "lessons_per_week": 2.0 },
+          "Naturales": { "lessons_per_week": 3.0 },
+          "Sociales": { "lessons_per_week": 3.0 },
+          "Tecnología": { "lessons_per_week": 2.0 }
+        }
+      },
+      "8": {
+        "subjects": {
+          "Artes": { "lessons_per_week": 3.0 },
+          "Ed Física": { "lessons_per_week": 2.0 },
+          "Ed Religiosa": { "lessons_per_week": 1.0 },
+          "Español": { "lessons_per_week": 3.0 },
+          "Etica": { "lessons_per_week": 2.0 },
+          "Geometría": { "lessons_per_week": 1.0 },
+          "Informática": { "lessons_per_week": 2.0 },
+          "Inglés": { "lessons_per_week": 4.0 },
+          "Matemáticas": { "lessons_per_week": 2.0 },
+          "Música": { "lessons_per_week": 1.0 },
+          "Naturales": { "lessons_per_week": 3.0 },
+          "Sociales": { "lessons_per_week": 3.0 },
+          "Tecnología": { "lessons_per_week": 3.0 }
+        }
+      },
+      "9": {
+        "subjects": {
+          "Ed Física": { "lessons_per_week": 1.5 },
+          "Ed Religiosa": { "lessons_per_week": 1.0 },
+          "Emprend.": { "lessons_per_week": 0.5 },
+          "Español": { "lessons_per_week": 3.0 },
+          "Etica": { "lessons_per_week": 1.0 },
+          "Informática": { "lessons_per_week": 2.0 },
+          "Inglés": { "lessons_per_week": 2.5 },
+          "Lec. Crítica": { "lessons_per_week": 2.0 },
+          "Matemáticas": { "lessons_per_week": 2.0 },
+          "Música": { "lessons_per_week": 1.0 },
+          "Naturales": { "lessons_per_week": 3.0 },
+          "Sociales": { "lessons_per_week": 4.0 },
+          "Tecnología": { "lessons_per_week": 2.0 }
+        }
+      }
+    },
+    "grades_10_11_shared_by_pair": {
+      "1001-1101": {
+        "pair": "1001-1101",
+        "shared": {
+          "Cul. Deportiva": { "10": 2.0, "11": 2.0 },
+          "Cul. Recreativa": { "10": 2.0, "11": 2.0 },
+          "Dllo Humano": { "10": 2.0, "11": 2.0 },
+          "Economía": { "10": 1.5, "11": 1.5 },
+          "Ed Religiosa": { "10": 1.5, "11": 1.5 },
+          "Español": { "10": 4.0, "11": 4.0 },
+          "Estadística": { "10": 1.5, "11": 1.5 },
+          "Etica": { "10": 2.0, "11": 2.0 },
+          "Filosofía": { "10": 2.0, "11": 2.0 },
+          "Fun. Pedagógica": { "10": 2.0, "11": 2.0 },
+          "Física": { "10": 2.0, "11": 2.0 },
+          "Informática": { "10": 2.0, "11": 2.0 },
+          "Inglés": { "10": 2.0, "11": 2.0 },
+          "Matemáticas": { "10": 4.0, "11": 4.0 },
+          "Prác Deportiva": { "10": 2.0, "11": 2.0 },
+          "SENA": { "10": 1.5, "11": 1.5 },
+          "SyGestión": { "10": 2.0, "11": 2.0 }
+        },
+        "exclusive_10": {
+          "Artes": { "10": 3.0 },
+          "Ciencias Políticas": { "10": 2.0 },
+          "Cul Recreativa Pre": { "10": 2.0 },
+          "Metodología": { "10": 1.0 },
+          "Tecnología": { "10": 3.0 }
+        },
+        "exclusive_11": {}
+      },
+      "1002-1102": {
+        "pair": "1002-1102",
+        "shared": {
+          "Ciencias Políticas": { "10": 2.0, "11": 2.0 },
+          "Diseño Industrial": { "10": 2.0, "11": 2.0 },
+          "Economía": { "10": 1.5, "11": 1.5 },
+          "Ed Religiosa": { "10": 1.5, "11": 1.5 },
+          "Español": { "10": 4.0, "11": 4.0 },
+          "Estadística": { "10": 1.5, "11": 1.5 },
+          "Etica": { "10": 2.0, "11": 2.0 },
+          "Filosofía": { "10": 2.0, "11": 2.0 },
+          "Física": { "10": 2.0, "11": 2.0 },
+          "Informática": { "10": 2.0, "11": 2.0 },
+          "Inglés": { "10": 2.0, "11": 2.0 },
+          "Matemáticas": { "10": 4.0, "11": 4.0 },
+          "Metodología": { "10": 1.0, "11": 1.0 },
+          "Microcontroladores": { "10": 2.0, "11": 2.0 },
+          "Procesos": { "10": 2.0, "11": 2.0 },
+          "Program.": { "10": 2.0, "11": 2.0 },
+          "Química": { "10": 1.0, "11": 1.0 },
+          "SENA": { "10": 1.5, "11": 1.5 }
+        },
+        "exclusive_10": {
+          "Artes": { "10": 3.0 },
+          "Electrónica": { "10": 2.0 },
+          "PLC": { "10": 2.0 },
+          "Tecnología": { "10": 3.0 }
+        },
+        "exclusive_11": {
+          "Control Analógico": { "11": 2.0 },
+          "Neumática": { "11": 2.0 }
+        }
+      },
+      "1003-1103": {
+        "pair": "1003-1103",
+        "shared": {
+          "Artes": { "10": 3.0, "11": 3.0 },
+          "Ciencias Políticas": { "10": 2.0, "11": 2.0 },
+          "Economía": { "10": 1.5, "11": 1.5 },
+          "Ed Religiosa": { "10": 1.5, "11": 1.5 },
+          "Español": { "10": 4.0, "11": 4.0 },
+          "Estadística": { "10": 1.5, "11": 2.0 },
+          "Etica": { "10": 2.0, "11": 2.0 },
+          "Filosofía": { "10": 2.0, "11": 2.0 },
+          "Física": { "10": 2.0, "11": 2.0 },
+          "Informática": { "10": 2.0, "11": 2.0 },
+          "Inglés": { "10": 2.0, "11": 2.0 },
+          "Matemáticas": { "10": 4.0, "11": 4.0 },
+          "Química": { "10": 1.0, "11": 1.0 }
+        },
+        "exclusive_10": {
+          "Sociales": { "10": 2.0 }
+        },
+        "exclusive_11": {
+          "SENA": { "11": 1.5 }
+        }
+      },
+      "1004-1104": {
+        "pair": "1004-1104",
+        "shared": {
+          "Artes": { "10": 3.0, "11": 3.0 },
+          "Ciencias Políticas": { "10": 2.0, "11": 2.0 },
+          "Contabilidad": { "10": 2.0, "11": 2.0 },
+          "Economía": { "10": 1.5, "11": 1.5 },
+          "Ed Religiosa": { "10": 1.5, "11": 1.5 },
+          "Español": { "10": 4.0, "11": 4.0 },
+          "Etica": { "10": 2.0, "11": 2.0 },
+          "Filosofía": { "10": 2.0, "11": 2.0 },
+          "Física": { "10": 2.0, "11": 2.0 },
+          "Informática": { "10": 2.0, "11": 2.0 },
+          "Inglés": { "10": 2.0, "11": 2.0 },
+          "Legislación": { "10": 2.0, "11": 2.0 },
+          "MaT. Financiera": { "10": 2.0, "11": 2.0 },
+          "Matemáticas": { "10": 4.0, "11": 4.0 },
+          "Metodología": { "10": 1.0, "11": 1.0 },
+          "Publicidad y": { "10": 2.0, "11": 2.0 },
+          "Química": { "10": 1.0, "11": 1.0 },
+          "SENA": { "10": 1.5, "11": 1.5 }
+        },
+        "exclusive_10": {
+          "Sociales": { "10": 2.0 }
+        },
+        "exclusive_11": {
+          "Paquete Contable": { "11": 2.0 }
+        }
+      }
+    }
+  },
+  "notes": {
+    "lesson_unit": "Numbers represent weekly lessons (1 lesson = one weekly period).",
+    "grades_6_to_9": "Same curriculum applies to all class groups within each grade.",
+    "pairing_rule": "Each 10th course '10xx' is paired with 11th course '11xx' (e.g., 1001→1101). Shared subjects listed with both grade values; exclusives listed under the grade where they exist."
+  }
+}

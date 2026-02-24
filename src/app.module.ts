@@ -21,9 +21,12 @@ import { CourseInstances } from './course_instances/course_instances.entity';
 import { CourseInstancesService } from './course_instances/course_instances.service';
 import { Courses } from './courses/courses.entity';
 import { CoursesService } from './courses/courses.service';
+import { ClassGroupCurriculumOverrides } from './class_group_curriculum_overrides/class_group_curriculum_overrides.entity';
+import { ClassGroupCurriculumOverridesService } from './class_group_curriculum_overrides/class_group_curriculum_overrides.service';
 import { Curricula } from './curricula/curricula.entity';
 import { CurriculaService } from './curricula/curricula.service';
 import { CurriculumItems } from './curriculum_items/curriculum_items.entity';
+import { CurriculumItemsService } from './curriculum_items/curriculum_items.service';
 import { DisciplinaryRecords } from './disciplinary_records/disciplinary_records.entity';
 import { DisciplinaryRecordsService } from './disciplinary_records/disciplinary_records.service';
 import { Enrollments } from './enrollments/enrollments.entity';
@@ -54,9 +57,10 @@ import { AuditLogsController } from './audit_logs/audit_logs.controller';
 import { AuditLogsService } from './audit_logs/audit_logs.service';
 import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
-import { CourseInstancesController } from './course_instances/course_instances.controller';
 import { CoursesController } from './courses/courses.controller';
+import { ClassGroupCurriculumOverridesController } from './class_group_curriculum_overrides/class_group_curriculum_overrides.controller';
 import { CurriculaController } from './curricula/curricula.controller';
+import { CurriculumItemsController } from './curriculum_items/curriculum_items.controller';
 import { DisciplinaryRecordsController } from './disciplinary_records/disciplinary_records.controller';
 import { EnrollmentsController } from './enrollments/enrollments.controller';
 import { GradesController } from './grades/grades.controller';
@@ -72,6 +76,9 @@ import { TimetableAssignmentsController } from './timetable_assignments/timetabl
 import { TimetableAssignmentsService } from './timetable_assignments/timetable_assignments.service';
 import { TimetableSlotsController } from './timetable_slots/timetable_slots.controller';
 import { TimetableSlotsService } from './timetable_slots/timetable_slots.service';
+import { TeacherSubjects } from './teacher_subjects/teacher_subjects.entity';
+import { TeacherSubjectsService } from './teacher_subjects/teacher_subjects.service';
+import { TeacherSubjectsController } from './teacher_subjects/teacher_subjects.controller';
 import { ReportsModule } from './reports/reports.module';
 import { UsersController } from './users/users.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -121,6 +128,7 @@ export const buildTypeOrmRootOptions = (
       Classrooms,
       CourseInstances,
       Courses,
+      ClassGroupCurriculumOverrides,
       Curricula,
       CurriculumItems,
       DisciplinaryRecords,
@@ -136,6 +144,7 @@ export const buildTypeOrmRootOptions = (
       Terms,
       TimetableAssignments,
       TimetableSlot,
+      TeacherSubjects,
       Users,
     ]),
     AuthModule,
@@ -149,9 +158,10 @@ export const buildTypeOrmRootOptions = (
     AuditLogsController,
     ClassGroupsController,
     ClassroomsController,
-    CourseInstancesController,
     CoursesController,
+    ClassGroupCurriculumOverridesController,
     CurriculaController,
+    CurriculumItemsController,
     DisciplinaryRecordsController,
     EnrollmentsController,
     GradesController,
@@ -165,6 +175,7 @@ export const buildTypeOrmRootOptions = (
     TermsController,
     TimetableAssignmentsController,
     TimetableSlotsController,
+    TeacherSubjectsController,
     UsersController,
     DashboardsController,
     TimetableGeneratorController,
@@ -186,7 +197,9 @@ export const buildTypeOrmRootOptions = (
     ClassroomsService,
     CourseInstancesService,
     CoursesService,
+    ClassGroupCurriculumOverridesService,
     CurriculaService,
+    CurriculumItemsService,
     DisciplinaryRecordsService,
     EnrollmentsService,
     GradesService,
@@ -200,6 +213,7 @@ export const buildTypeOrmRootOptions = (
     TermsService,
     UsersService,
     TimetableSlotsService,
+    TeacherSubjectsService,
     DashboardsService,
     TimetableGeneratorService,
   ],

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsPositive,
@@ -44,4 +45,17 @@ export class SubjectAreasQueryDto {
   @IsOptional()
   @IsString()
   q?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Include subjects nested under each area',
+  })
+  @Transform(({ value }) =>
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
+  )
+  @IsOptional()
+  @IsBoolean()
+  includeSubjects?: boolean;
 }

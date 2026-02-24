@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { Brackets } from 'typeorm';
 import { UsersRepository } from './users.repository';
 import { Users } from './users.entity';
@@ -62,10 +63,14 @@ export class UsersService {
   }
 
   async create(dto: CreateUsersDto): Promise<Users> {
+    const providedPasswordHash = dto.passwordHash?.trim();
+    const passwordHash = providedPasswordHash
+      ? providedPasswordHash
+      : await this.buildTempPasswordHash(dto);
     const entity = this.repository.create({
       nationalId: dto.nationalId,
       username: dto.username,
-      passwordHash: dto.passwordHash,
+      passwordHash,
       role: dto.role,
       firstName: dto.firstName ?? null,
       lastName: dto.lastName ?? null,
@@ -160,5 +165,25 @@ export class UsersService {
 
     const escaped = trimmed.replace(/[%_]/g, (match) => `\\${match}`);
     return `%${escaped}%`;
+  }
+
+  private async buildTempPasswordHash(dto: CreateUsersDto): Promise<string> {
+    const lastNameRaw = dto.lastName?.trim();
+    if (!lastNameRaw) {
+      throw new BadRequestException(
+        'Last name is required to generate a temporary password.',
+      );
+    }
+    const firstLastName = lastNameRaw.split(/\s+/)[0];
+
+    const digits = dto.nationalId.replace(/\D/g, '');
+    if (digits.length < 4) {
+      throw new BadRequestException(
+        'National ID must contain at least 4 digits to generate a temporary password.',
+      );
+    }
+
+    const tempPassword = `${firstLastName}${digits.slice(-4)}`;
+    return bcrypt.hash(tempPassword, 10);
   }
 }

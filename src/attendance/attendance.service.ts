@@ -184,14 +184,16 @@ export class AttendanceService {
       Number(dto.courseId),
     );
 
-    const slot = await this.timetableSlotRepository.findOne({
-      where: { slotId: dto.slotId },
-    });
-    if (!slot) {
-      throw new NotFoundException('Timetable slot not found');
-    }
+    if (dto.slotId !== undefined && dto.slotId !== null) {
+      const slot = await this.timetableSlotRepository.findOne({
+        where: { slotId: dto.slotId },
+      });
+      if (!slot) {
+        throw new NotFoundException('Timetable slot not found');
+      }
 
-    this.assertSlotMatchesDate(slot.dayOfWeek, dto.date);
+      this.assertSlotMatchesDate(slot.dayOfWeek, dto.date);
+    }
 
     const requiredClassGroupId = course.classGroup?.classGroupId;
     const requiredSchoolYearId = course.courseInstance?.schoolYearId;
@@ -228,7 +230,10 @@ export class AttendanceService {
       courseId: Number(dto.courseId), // number
       date: dto.date, // 'YYYY-MM-DD'
       status: dto.status, // 'P' | 'A' | 'AE'
-      slotId: dto.slotId ?? null, // number | null
+      slotId:
+        dto.slotId !== undefined && dto.slotId !== null
+          ? Number(dto.slotId)
+          : null, // number | null
       // reasonNote: dto.reasonNote ?? null,
       // relation (Users). If no course.teacher, fallback to currentUser if present.
       recordedBy:

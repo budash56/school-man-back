@@ -6,6 +6,7 @@ import { CourseInstancesRepository } from '../course_instances/course_instances.
 import { CoursesRepository } from '../courses/courses.repository';
 import { CurriculaRepository } from '../curricula/curricula.repository';
 import { CurriculumItemsRepository } from '../curriculum_items/curriculum_items.repository';
+import { ClassGroupCurriculumOverridesRepository } from '../class_group_curriculum_overrides/class_group_curriculum_overrides.repository';
 import { DisciplinaryRecordsRepository } from '../disciplinary_records/disciplinary_records.repository';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { GradeSchemeValuesRepository } from '../grade_scheme_values/grade_scheme_values.repository';
@@ -19,6 +20,7 @@ import { SubjectsRepository } from '../subjects/subjects.repository';
 import { TermsRepository } from '../terms/terms.repository';
 import { TimetableAssignmentsRepository } from '../timetable_assignments/timetable_assignments.repository';
 import { TimetableSlotRepository } from '../timetable_slots/timetable_slots.repository';
+import { TeacherSubjectsRepository } from '../teacher_subjects/teacher_subjects.repository';
 import { UsersRepository } from '../users/users.repository';
 
 export const REPOSITORY_PROVIDERS = [
@@ -30,6 +32,7 @@ export const REPOSITORY_PROVIDERS = [
   CoursesRepository,
   CurriculaRepository,
   CurriculumItemsRepository,
+  ClassGroupCurriculumOverridesRepository,
   DisciplinaryRecordsRepository,
   EnrollmentsRepository,
   GradeSchemeValuesRepository,
@@ -43,6 +46,7 @@ export const REPOSITORY_PROVIDERS = [
   TermsRepository,
   TimetableAssignmentsRepository,
   TimetableSlotRepository,
+  TeacherSubjectsRepository,
   UsersRepository,
 ] as const;
 
@@ -55,6 +59,7 @@ export {
   CoursesRepository,
   CurriculaRepository,
   CurriculumItemsRepository,
+  ClassGroupCurriculumOverridesRepository,
   DisciplinaryRecordsRepository,
   EnrollmentsRepository,
   GradeSchemeValuesRepository,
@@ -68,5 +73,6 @@ export {
   TermsRepository,
   TimetableAssignmentsRepository,
   TimetableSlotRepository,
+  TeacherSubjectsRepository,
   UsersRepository,
 };

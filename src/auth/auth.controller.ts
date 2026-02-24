@@ -34,7 +34,24 @@ export class AuthController {
 
   @Public()
   @Post('signup')
-  @ApiBody({ type: SignupDto })
+  @ApiBody({
+    type: SignupDto,
+    examples: {
+      default: {
+        summary: 'Create a new user',
+        value: {
+          nationalId: '900100',
+          password: 'Admin#123',
+          username: 'admin.user',
+          role: 'admin',
+          firstName: 'Maria',
+          lastName: 'Lopez',
+          email: 'maria.lopez@example.edu',
+          phone: '+57 3001234567',
+        },
+      },
+    },
+  })
   @ApiCreatedResponse({
     description: 'Creates a new user and returns access token + profile',
     type: AuthResponseDto,

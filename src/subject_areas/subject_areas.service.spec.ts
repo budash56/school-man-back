@@ -26,6 +26,7 @@ describe('SubjectAreasService', () => {
       create: jest.fn(),
       save: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
       remove: jest.fn(),
       merge: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -57,5 +58,29 @@ describe('SubjectAreasService', () => {
       name: createDto.name,
     });
     expect(result).toEqual(entity);
+  });
+
+  it('includes subjects when includeSubjects is true', async () => {
+    const qb = {
+      orderBy: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      setParameter: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest
+        .fn()
+        .mockResolvedValue([[{ areaId: '1', name: 'Math' }], 1]),
+    };
+
+    (repository.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+    (repository.find as jest.Mock).mockResolvedValue([
+      { areaId: '1', name: 'Math', subjects: [] },
+    ]);
+
+    const result = await service.findAll({ includeSubjects: true });
+
+    expect(repository.find as jest.Mock).toHaveBeenCalled();
+    expect(result.data[0]).toHaveProperty('subjects');
   });
 });

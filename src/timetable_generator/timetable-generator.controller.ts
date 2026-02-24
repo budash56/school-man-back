@@ -18,6 +18,46 @@ import {
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { SanitizedUser } from '../auth/auth.types';
 
+const exampleGeneratePayload: GenerateTimetableDto = {
+  schoolYearId: 2026,
+  division: 'secondary',
+  teacherWeeklyHourCap: 18,
+  balanceAcrossDays: true,
+  avoidConsecutiveSameSubject: true,
+  maxSessionsPerDayDefault: 1,
+  minGapSlotsDefault: 1,
+  teacherConstraints: [
+    {
+      teacherId: '900100',
+      preferredShift: 'morning',
+      avoidLastSlot: true,
+    },
+  ],
+  coursePreferences: [
+    {
+      courseId: 1201,
+      sessionsPerWeek: 4,
+      blockLength: 1,
+      maxSessionsPerDay: 1,
+      minGapSlots: 1,
+    },
+    {
+      courseId: 1202,
+      sessionsPerWeek: 2,
+      blockLength: 2,
+      allowDoubleBlock: true,
+      targetDays: [1, 3, 5],
+    },
+  ],
+  blockedSlots: [
+    {
+      dayOfWeek: 1,
+      startTime: '10:50:00',
+      endTime: '11:20:00',
+    },
+  ],
+};
+
 @ApiTags('timetable-generator')
 @ApiBearerAuth('bearer')
 @Roles('admin', 'coordinator')
@@ -30,7 +70,15 @@ export class TimetableGeneratorController {
   @ApiOperation({
     summary: 'Preview generated timetable assignments without persisting them',
   })
-  @ApiBody({ type: GenerateTimetableDto })
+  @ApiBody({
+    type: GenerateTimetableDto,
+    examples: {
+      default: {
+        summary: 'Balanced preview request',
+        value: exampleGeneratePayload,
+      },
+    },
+  })
   preview(@Body() dto: GenerateTimetableDto): Promise<GenerationPreviewDto> {
     return this.service.preview(dto);
   }
@@ -40,7 +88,15 @@ export class TimetableGeneratorController {
     summary:
       'Generate assignments and persist them via the timetable assignments service',
   })
-  @ApiBody({ type: GenerateTimetableDto })
+  @ApiBody({
+    type: GenerateTimetableDto,
+    examples: {
+      default: {
+        summary: 'Balanced apply request',
+        value: exampleGeneratePayload,
+      },
+    },
+  })
   apply(
     @Body() dto: GenerateTimetableDto,
     @CurrentUser() user?: SanitizedUser,

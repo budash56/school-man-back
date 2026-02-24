@@ -41,6 +41,11 @@ export class SubjectAreasController {
     required: false,
     description: 'Search keyword applied to area code and name',
   })
+  @ApiQuery({
+    name: 'includeSubjects',
+    required: false,
+    description: 'Include nested subjects for each area',
+  })
   findAll(@Query() query: SubjectAreasQueryDto) {
     return this.subjectAreasService.findAll(query);
   }

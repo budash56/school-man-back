@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsIn, IsInt, Min } from 'class-validator';
+import { IsDateString, IsIn, IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreateAttendanceDto {
   @ApiProperty({
@@ -21,13 +21,17 @@ export class CreateAttendanceDto {
   courseId: number;
 
   @ApiProperty({
-    description: 'Identifier of the timetable slot when the lesson occurred',
+    description:
+      'Identifier of the timetable slot when the lesson occurred. Optional for legacy daily entries.',
     example: 12,
     minimum: 1,
+    required: false,
+    nullable: true,
   })
+  @IsOptional()
   @IsInt()
   @Min(1)
-  slotId: number;
+  slotId?: number | null;
 
   @ApiProperty({
     description: 'Date of the attendance entry in ISO 8601 format',
