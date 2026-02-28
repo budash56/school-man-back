@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -17,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateCurriculumDto } from './dto/create-curriculum.dto';
 import { CurriculaQueryDto } from './dto/curricula-query.dto';
+import { UpdateCurriculumAreaDto } from './dto/update-curriculum-area.dto';
 import { CurriculaService } from './curricula.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -42,10 +44,24 @@ export class CurriculaController {
     return this.service.findOne(id);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'coordinator')
   @Post()
-  @ApiForbiddenResponse({ description: 'Forbidden: requires role admin' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
   create(@Body() dto: CreateCurriculumDto) {
     return this.service.create(dto);
+  }
+
+  @Roles('admin', 'coordinator')
+  @Patch(':id/specialization-area')
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
+  linkSpecializationArea(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateCurriculumAreaDto,
+  ) {
+    return this.service.linkSpecializationArea(id, dto.specializationAreaId);
   }
 }

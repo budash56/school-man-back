@@ -8,6 +8,9 @@
 - Based on curriculum, fix weekly hours for grades 1-5 and 6-9. Grades 10-11 remain specialization-specific.
 - Implement curriculum import pipeline supporting CSV, TXT, Excel (XLSX), PDF (text-based), and OCR for scanned PDFs/images. Include preview + validation step before persistence.
 - Curriculum: separate per grade and expose curriculum details; include creation flow that links professors (teachers) to course instances.
+- Add linkage between subject areas (professors/subjects) and specialization curricula.
+  - Prevent errors when adding asignaturas: hide specialization-only subjects unless a specialization curriculum is selected.
+  - Add a boolean specialization-area flag on areas (e.g., `is_specialization`).
 - Define teacher area qualifications with a primary area and secondary areas (e.g., `teacher_areas` with `is_primary`).
   - Allow teachers to belong to multiple areas; only one marked primary.
   - Use these qualifications for filtering/assignment decisions (not necessarily hard enforcement).

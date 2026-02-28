@@ -48,7 +48,7 @@ export class CurriculumItems {
   @JoinColumn([{ name: 'curriculum_id', referencedColumnName: 'curriculumId' }])
   curriculum: Curricula;
 
-  @ManyToOne(() => Subjects, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Subjects, { onDelete: 'CASCADE' })
   @JoinColumn([{ name: 'subject_id', referencedColumnName: 'subjectId' }])
   subject: Subjects;
 }

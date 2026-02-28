@@ -15,7 +15,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class CreateCurriculumItemDto {
+export class CreateCurriculumItemInputDto {
   @ApiProperty({
     example: 12,
     description: 'Identifier of the subject assigned to this curriculum item',
@@ -79,6 +79,28 @@ export class CreateCurriculumDto {
   name: string;
 
   @ApiPropertyOptional({
+    example: 'Industrial',
+    maxLength: 120,
+    description:
+      'Optional specialization track name for grade 10 curricula (grade 11 is created automatically)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  trackName?: string;
+
+  @ApiPropertyOptional({
+    example: 12,
+    description:
+      'Subject area linked to this specialization (required when trackName is provided)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  specializationAreaId?: number;
+
+  @ApiPropertyOptional({
     example: true,
     default: true,
     description: 'Whether this curriculum is active for planning',
@@ -89,12 +111,12 @@ export class CreateCurriculumDto {
 
   @ApiProperty({
     description: 'Curriculum items for the grade level',
-    type: CreateCurriculumItemDto,
+    type: CreateCurriculumItemInputDto,
     isArray: true,
   })
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => CreateCurriculumItemDto)
-  items: CreateCurriculumItemDto[];
+  @Type(() => CreateCurriculumItemInputDto)
+  items: CreateCurriculumItemInputDto[];
 }

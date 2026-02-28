@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export const SUBJECT_CODE_REGEX = /^[A-Z0-9_]{2,16}$/;
 
@@ -21,4 +28,13 @@ export class CreateSubjectAreaDto {
   @IsNotEmpty()
   @MaxLength(120)
   name: string;
+
+  @ApiPropertyOptional({
+    example: false,
+    default: false,
+    description: 'Marks the area as a specialization-only area',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isSpecialization?: boolean;
 }

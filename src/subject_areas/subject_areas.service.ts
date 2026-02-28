@@ -73,6 +73,7 @@ export class SubjectAreasService {
     const entity = this.repository.create({
       code: dto.code,
       name: dto.name,
+      isSpecialization: dto.isSpecialization ?? false,
     });
 
     try {

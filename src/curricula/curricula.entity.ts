@@ -3,13 +3,15 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CurriculumItems } from '../curriculum_items/curriculum_items.entity';
+import { SubjectAreas } from '../subject_areas/subject_areas.entity';
 
 @Index('curricula_pkey', ['curriculumId'], { unique: true })
-@Index('curricula_grade_level_key', ['gradeLevel'], { unique: true })
 @Entity('curricula', { schema: 'public' })
 export class Curricula {
   @PrimaryGeneratedColumn({ type: 'bigint', name: 'curriculum_id' })
@@ -20,6 +22,16 @@ export class Curricula {
 
   @Column('character varying', { name: 'name', length: 120 })
   name: string;
+
+  @Column('character varying', {
+    name: 'track_name',
+    length: 120,
+    nullable: true,
+  })
+  trackName: string | null;
+
+  @Column('bigint', { name: 'specialization_area_id', nullable: true })
+  specializationAreaId: string | null;
 
   @Column('boolean', { name: 'is_active', default: () => 'true' })
   isActive: boolean;
@@ -33,4 +45,10 @@ export class Curricula {
 
   @OneToMany(() => CurriculumItems, (items) => items.curriculum)
   items: CurriculumItems[];
+
+  @ManyToOne(() => SubjectAreas, { onDelete: 'RESTRICT' })
+  @JoinColumn([
+    { name: 'specialization_area_id', referencedColumnName: 'areaId' },
+  ])
+  specializationArea: SubjectAreas | null;
 }

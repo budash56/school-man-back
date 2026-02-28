@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { CurriculaRepository } from '../curricula/curricula.repository';
 import { SubjectsRepository } from '../subjects/subjects.repository';
@@ -25,10 +25,32 @@ export class CurriculumItemsService {
 
     const subject = await this.subjectsRepository.findOne({
       where: { subjectId: dto.subjectId.toString() },
+      relations: { area: true },
     });
 
     if (!subject) {
       throw new NotFoundException('Subject not found');
+    }
+
+    const isSpecializationSubject = Boolean(subject.area?.isSpecialization);
+    if (curriculum.trackName) {
+      if (!curriculum.specializationAreaId) {
+        throw new BadRequestException(
+          'Specialization curricula must be linked to a specialization area',
+        );
+      }
+      if (
+        isSpecializationSubject &&
+        subject.area?.areaId !== curriculum.specializationAreaId
+      ) {
+        throw new BadRequestException(
+          'Subjects from other specialization areas are not allowed',
+        );
+      }
+    } else if (isSpecializationSubject) {
+      throw new BadRequestException(
+        'Specialization subjects are not allowed in base curricula',
+      );
     }
 
     const notes = dto.notes?.trim();

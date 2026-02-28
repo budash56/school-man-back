@@ -27,6 +27,12 @@ export class SubjectAreas {
   })
   code: string | null;
 
+  @Column('boolean', {
+    name: 'is_specialization',
+    default: () => 'false',
+  })
+  isSpecialization: boolean;
+
   @OneToMany(() => Subjects, (subjects) => subjects.area)
   subjects: Subjects[];
 }
