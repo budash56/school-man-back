@@ -19,6 +19,7 @@ import {
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
+import { AutoAssignClassGroupsDto } from './dto/auto-assign-class-groups.dto';
 import { ClassGroupsService } from './class_groups.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -62,6 +63,27 @@ export class ClassGroupsController {
   })
   async create(@Body() dto: CreateClassGroupDto) {
     return this.service.create(dto);
+  }
+
+  @Roles('admin', 'coordinator')
+  @Post('auto-assign')
+  @ApiBody({
+    type: AutoAssignClassGroupsDto,
+    examples: {
+      default: {
+        summary: 'Create sections and assign enrollments',
+        value: {
+          schoolYearId: 2,
+          gradeLevel: 7,
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
+  async autoAssign(@Body() dto: AutoAssignClassGroupsDto) {
+    return this.service.autoAssignSections(dto);
   }
 
   @Roles('admin', 'coordinator')

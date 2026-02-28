@@ -54,6 +54,14 @@ export class EnrollmentsController {
           schoolYearId: 2,
         },
       },
+      withoutSection: {
+        summary: 'Enroll student into a grade without section assignment',
+        value: {
+          studentId: 501,
+          gradeLevel: 7,
+          schoolYearId: 2,
+        },
+      },
     },
   })
   @ApiForbiddenResponse({

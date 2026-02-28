@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets } from 'typeorm';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Brackets, In } from 'typeorm';
 import { Classrooms } from '../classrooms/classrooms.entity';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
@@ -10,6 +10,9 @@ import { ClassGroupsRepository } from './class_groups.repository';
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
+import { AutoAssignClassGroupsDto } from './dto/auto-assign-class-groups.dto';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { Enrollments } from '../enrollments/enrollments.entity';
 import {
   buildPaginationResult,
   PaginatedResult,
@@ -26,12 +29,24 @@ export type ClassGroupResponse = {
   createdAt?: Date | null;
 };
 
+export type AutoAssignSectionsResponse = {
+  gradeLevel: number;
+  schoolYearId: number;
+  sectionsCreated: number;
+  studentsAssigned: number;
+  sectionSizes: number[];
+  groups: ClassGroupResponse[];
+};
+
+const DEFAULT_SECTION_CAPACITY = 20;
+
 @Injectable()
 export class ClassGroupsService {
   constructor(
     private readonly classGroupsRepository: ClassGroupsRepository,
     private readonly schoolYearsRepository: SchoolYearsRepository,
     private readonly classroomsRepository: ClassroomsRepository,
+    private readonly enrollmentsRepository: EnrollmentsRepository,
   ) {}
 
   async findAll(
@@ -168,6 +183,129 @@ export class ClassGroupsService {
     return { deleted: true };
   }
 
+  async autoAssignSections(
+    dto: AutoAssignClassGroupsDto,
+  ): Promise<AutoAssignSectionsResponse> {
+    await this.resolveSchoolYear(dto.schoolYearId);
+
+    const existingGroups = await this.classGroupsRepository.find({
+      where: {
+        schoolYearId: dto.schoolYearId.toString(),
+        gradeLevel: dto.gradeLevel,
+      },
+    });
+
+    if (existingGroups.length > 0) {
+      throw new ConflictException(
+        'Class groups already exist for this grade and school year',
+      );
+    }
+
+    const enrollments = await this.enrollmentsRepository.find({
+      where: {
+        schoolYearId: dto.schoolYearId.toString(),
+        gradeLevel: dto.gradeLevel,
+        classGroupId: null,
+        active: true,
+      },
+      relations: { student: true },
+    });
+
+    if (enrollments.length === 0) {
+      throw new NotFoundException(
+        'No pending enrollments found for this grade',
+      );
+    }
+
+    const usedClassrooms = await this.classGroupsRepository.find({
+      where: { schoolYearId: dto.schoolYearId.toString() },
+      relations: { classroom: true },
+    });
+
+    const usedClassroomIds = new Set(
+      usedClassrooms
+        .map((group) => group.classroom?.classroomId)
+        .filter((id): id is string => Boolean(id)),
+    );
+
+    const classrooms = await this.classroomsRepository.find({
+      order: { capacity: 'DESC', name: 'ASC' },
+    });
+
+    const availableClassrooms = classrooms.filter(
+      (classroom) => !usedClassroomIds.has(classroom.classroomId),
+    );
+
+    if (availableClassrooms.length === 0) {
+      throw new ConflictException(
+        'No available classrooms to create sections',
+      );
+    }
+
+    const desiredSections = Math.ceil(
+      enrollments.length / DEFAULT_SECTION_CAPACITY,
+    );
+    const sectionsCount = Math.min(
+      desiredSections,
+      availableClassrooms.length,
+    );
+
+    const selectedClassrooms = availableClassrooms.slice(0, sectionsCount);
+    const sectionCodes = this.buildSectionCodes(
+      new Set(),
+      sectionsCount,
+    );
+
+    // TODO: balance sections by gender once student gender is available.
+    const shuffledEnrollments = this.shuffleEnrollments(enrollments);
+    const buckets = Array.from({ length: sectionsCount }, () => [] as Enrollments[]);
+
+    shuffledEnrollments.forEach((enrollment, index) => {
+      buckets[index % sectionsCount].push(enrollment);
+    });
+
+    const response = await this.enrollmentsRepository.manager.transaction(
+      async (manager) => {
+        const classGroupRepo = manager.getRepository(ClassGroups);
+        const enrollmentRepo = manager.getRepository(Enrollments);
+        const createdGroups: ClassGroups[] = [];
+
+        for (let index = 0; index < sectionsCount; index += 1) {
+          const section = sectionCodes[index];
+          const classroom = selectedClassrooms[index];
+          const group = classGroupRepo.create({
+            schoolYearId: dto.schoolYearId.toString(),
+            gradeLevel: dto.gradeLevel,
+            section,
+            classroom,
+          });
+          const savedGroup = await classGroupRepo.save(group);
+          createdGroups.push(savedGroup);
+
+          const bucket = buckets[index];
+          if (bucket.length > 0) {
+            const enrollmentIds = bucket.map((item) => item.enrollmentId);
+            await enrollmentRepo.update(
+              { enrollmentId: In(enrollmentIds) },
+              { classGroupId: savedGroup.classGroupId },
+            );
+          }
+        }
+
+        return createdGroups;
+      },
+    );
+
+    return {
+      gradeLevel: dto.gradeLevel,
+      schoolYearId: dto.schoolYearId,
+      sectionsCreated: sectionsCount,
+      studentsAssigned: enrollments.length,
+      sectionSizes: buckets.map((bucket) => bucket.length),
+      groups: response.map((group) => this.toResponse(group)),
+    };
+  }
+
   private async getClassGroupEntity(id: number): Promise<ClassGroups> {
     const entity = await this.classGroupsRepository.findOne({
       where: { classGroupId: id.toString() },
@@ -217,5 +355,27 @@ export class ClassGroupsService {
         : undefined,
       createdAt: entity.createdAt,
     };
+  }
+
+  private buildSectionCodes(existing: Set<string>, count: number): string[] {
+    const sections: string[] = [];
+    let index = 1;
+    while (sections.length < count) {
+      const code = String(index).padStart(2, '0');
+      if (!existing.has(code)) {
+        sections.push(code);
+      }
+      index += 1;
+    }
+    return sections;
+  }
+
+  private shuffleEnrollments(enrollments: Enrollments[]): Enrollments[] {
+    const result = [...enrollments];
+    for (let i = result.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
   }
 }

@@ -28,7 +28,8 @@ type ActingUser = {
 export type EnrollmentResponse = {
   enrollmentId: number;
   studentId: number;
-  classGroupId: number;
+  classGroupId: number | null;
+  gradeLevel: number;
   schoolYearId: number;
   active: boolean;
   enrolledAt: Date | null;
@@ -67,6 +68,12 @@ export class EnrollmentsService {
     if (query.classGroupId !== undefined) {
       qb.andWhere('enrollment.classGroupId = :classGroupId', {
         classGroupId: query.classGroupId.toString(),
+      });
+    }
+
+    if (query.gradeLevel !== undefined) {
+      qb.andWhere('enrollment.gradeLevel = :gradeLevel', {
+        gradeLevel: query.gradeLevel,
       });
     }
 
@@ -125,26 +132,41 @@ export class EnrollmentsService {
     currentUser?: ActingUser,
   ): Promise<EnrollmentResponse> {
     const student = await this.resolveStudent(dto.studentId);
-    const classGroup = await this.resolveClassGroup(dto.classGroupId);
     const schoolYear = await this.resolveSchoolYear(dto.schoolYearId);
 
-    this.assertClassGroupMatchesSchoolYear(
-      classGroup.schoolYearId,
-      schoolYear.schoolYearId,
-    );
+    let classGroupId: string | null = null;
+    let gradeLevel = dto.gradeLevel;
 
-    const classGroupYearId = Number(classGroup.schoolYearId);
-    if (!Number.isFinite(classGroupYearId)) {
-      throw new ConflictException(
-        'Class group has invalid school year reference',
+    if (dto.classGroupId !== undefined) {
+      const classGroup = await this.resolveClassGroup(dto.classGroupId);
+      this.assertClassGroupMatchesSchoolYear(
+        classGroup.schoolYearId,
+        schoolYear.schoolYearId,
       );
-    }
 
-    await this.assertYearWritable(classGroupYearId, currentUser);
+      const classGroupYearId = Number(classGroup.schoolYearId);
+      if (!Number.isFinite(classGroupYearId)) {
+        throw new ConflictException(
+          'Class group has invalid school year reference',
+        );
+      }
+
+      await this.assertYearWritable(classGroupYearId, currentUser);
+      classGroupId = classGroup.classGroupId;
+      gradeLevel = classGroup.gradeLevel;
+    } else {
+      if (gradeLevel === undefined) {
+        throw new ConflictException(
+          'Grade level is required when class group is not provided',
+        );
+      }
+      await this.assertYearWritable(Number(schoolYear.schoolYearId), currentUser);
+    }
 
     const entity = this.enrollmentsRepository.create({
       studentId: student.studentId,
-      classGroupId: classGroup.classGroupId,
+      classGroupId,
+      gradeLevel,
       schoolYearId: schoolYear.schoolYearId,
       active: true,
     });
@@ -302,7 +324,10 @@ export class EnrollmentsService {
     return {
       enrollmentId: Number(enrollment.enrollmentId),
       studentId: Number(enrollment.studentId),
-      classGroupId: Number(enrollment.classGroupId),
+      classGroupId: enrollment.classGroupId
+        ? Number(enrollment.classGroupId)
+        : null,
+      gradeLevel: enrollment.gradeLevel,
       schoolYearId: Number(enrollment.schoolYearId),
       active: enrollment.active ?? false,
       enrolledAt: enrollment.enrolledAt ?? null,

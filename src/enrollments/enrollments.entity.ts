@@ -31,8 +31,11 @@ export class Enrollments {
   @Column('bigint', { name: 'student_id' })
   studentId: string;
 
-  @Column('bigint', { name: 'class_group_id' })
-  classGroupId: string;
+  @Column('bigint', { name: 'class_group_id', nullable: true })
+  classGroupId: string | null;
+
+  @Column('smallint', { name: 'grade_level' })
+  gradeLevel: number;
 
   @Column('bigint', { name: 'school_year_id' })
   schoolYearId: string;
@@ -49,11 +52,12 @@ export class Enrollments {
 
   @ManyToOne(() => ClassGroups, (classGroups) => classGroups.enrollments, {
     onDelete: 'CASCADE',
+    nullable: true,
   })
   @JoinColumn([
     { name: 'class_group_id', referencedColumnName: 'classGroupId' },
   ])
-  classGroup: ClassGroups;
+  classGroup: ClassGroups | null;
 
   @ManyToOne(() => SchoolYears, (schoolYears) => schoolYears.enrollments, {
     onDelete: 'CASCADE',

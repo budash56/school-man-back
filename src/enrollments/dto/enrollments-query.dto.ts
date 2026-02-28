@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class EnrollmentsQueryDto {
   @ApiPropertyOptional({
@@ -21,6 +21,18 @@ export class EnrollmentsQueryDto {
   @IsInt()
   @Min(1)
   classGroupId?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter results by grade level',
+    example: 10,
+    minimum: 1,
+    maximum: 11,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(11)
+  gradeLevel?: number;
 
   @ApiPropertyOptional({
     description: 'Filter results by school year identifier',
