@@ -3,11 +3,14 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ClassGroups } from '../class_groups/class_groups.entity';
 import { TimetableAssignments } from '../timetable_assignments/timetable_assignments.entity';
+import { Buildings } from '../buildings/buildings.entity';
 
 @Index('classrooms_pkey', ['classroomId'], { unique: true })
 @Index('classrooms_name_key', ['name'], { unique: true })
@@ -19,8 +22,8 @@ export class Classrooms {
   @Column('character varying', { name: 'name', unique: true, length: 80 })
   name: string;
 
-  @Column('character varying', { name: 'building', nullable: true, length: 80 })
-  building: string | null;
+  @Column('bigint', { name: 'building_id', nullable: true })
+  buildingId: string | null;
 
   @Column('integer', { name: 'capacity', default: () => '0' })
   capacity: number;
@@ -34,6 +37,12 @@ export class Classrooms {
 
   @OneToMany(() => ClassGroups, (classGroups) => classGroups.classroom)
   classGroups: ClassGroups[];
+
+  @ManyToOne(() => Buildings, (buildings) => buildings.classrooms, {
+    onDelete: 'RESTRICT',
+  })
+  @JoinColumn([{ name: 'building_id', referencedColumnName: 'buildingId' }])
+  building: Buildings | null;
 
   @OneToMany(
     () => TimetableAssignments,

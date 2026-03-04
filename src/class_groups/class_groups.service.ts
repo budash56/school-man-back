@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Brackets, In } from 'typeorm';
+import { Brackets, In, IsNull } from 'typeorm';
 import { Classrooms } from '../classrooms/classrooms.entity';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { DbErrorMapper } from '../shared/db-error.mapper';
@@ -205,7 +205,7 @@ export class ClassGroupsService {
       where: {
         schoolYearId: dto.schoolYearId.toString(),
         gradeLevel: dto.gradeLevel,
-        classGroupId: null,
+        classGroupId: IsNull(),
         active: true,
       },
       relations: { student: true },

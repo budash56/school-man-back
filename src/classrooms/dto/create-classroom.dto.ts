@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsInt,
   IsOptional,
+  IsPositive,
   IsString,
   MaxLength,
   Min,
@@ -9,20 +10,23 @@ import {
 } from 'class-validator';
 
 export class CreateClassroomDto {
-  @ApiProperty({ example: 'Room 101', description: 'Unique classroom name' })
-  @IsString()
-  @MinLength(1)
-  @MaxLength(80)
-  name: string;
-
   @ApiPropertyOptional({
-    example: 'Main Building',
-    description: 'Building where the classroom is located',
+    example: 'BuildingA_Aula01',
+    description: 'Classroom name (auto-generated if omitted)',
   })
   @IsOptional()
   @IsString()
+  @MinLength(1)
   @MaxLength(80)
-  building?: string;
+  name?: string;
+
+  @ApiProperty({
+    example: 1,
+    description: 'Building id where the classroom is located',
+  })
+  @IsInt()
+  @IsPositive()
+  buildingId: number;
 
   @ApiProperty({
     example: 30,

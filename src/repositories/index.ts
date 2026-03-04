@@ -1,5 +1,6 @@
 import { AttendanceRepository } from '../attendance/attendance.repository';
 import { AuditLogsRepository } from '../audit_logs/audit_logs.repository';
+import { BuildingsRepository } from '../buildings/buildings.repository';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { CourseInstancesRepository } from '../course_instances/course_instances.repository';
@@ -26,6 +27,7 @@ import { UsersRepository } from '../users/users.repository';
 export const REPOSITORY_PROVIDERS = [
   AttendanceRepository,
   AuditLogsRepository,
+  BuildingsRepository,
   ClassGroupsRepository,
   ClassroomsRepository,
   CourseInstancesRepository,
@@ -53,6 +55,7 @@ export const REPOSITORY_PROVIDERS = [
 export {
   AttendanceRepository,
   AuditLogsRepository,
+  BuildingsRepository,
   ClassGroupsRepository,
   ClassroomsRepository,
   CourseInstancesRepository,

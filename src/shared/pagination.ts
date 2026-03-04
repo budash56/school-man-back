@@ -26,7 +26,6 @@ export const PAGINATION_METADATA = {
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 25;
-const MAX_PAGE_SIZE = 100;
 
 export function resolvePagination(
   rawPage?: number,
@@ -39,10 +38,6 @@ export function resolvePagination(
     !rawPageSize || rawPageSize < 1
       ? DEFAULT_PAGE_SIZE
       : Math.floor(rawPageSize);
-
-  if (pageSize > MAX_PAGE_SIZE) {
-    pageSize = MAX_PAGE_SIZE;
-  }
 
   return { page, pageSize };
 }

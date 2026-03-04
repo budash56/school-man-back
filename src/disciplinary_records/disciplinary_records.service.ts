@@ -48,13 +48,13 @@ export class DisciplinaryRecordsService {
       .addOrderBy('records.disciplinaryId', 'DESC');
 
     if (query.studentId !== undefined) {
-      qb.andWhere('records.studentId = :studentId', {
+      qb.andWhere('student.studentId = :studentId', {
         studentId: query.studentId.toString(),
       });
     }
 
     if (query.recordedBy?.trim()) {
-      qb.andWhere('records.recordedBy = :recordedBy', {
+      qb.andWhere('user.nationalId = :recordedBy', {
         recordedBy: query.recordedBy.trim(),
       });
     }

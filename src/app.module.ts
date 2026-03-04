@@ -13,6 +13,7 @@ import { Attendance } from './attendance/attendance.entity';
 import { AttendanceService } from './attendance/attendance.service';
 import { AttendanceRosterService } from './attendance/attendance-roster.service';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
+import { Buildings } from './buildings/buildings.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { ClassGroupsService } from './class_groups/class_groups.service';
 import { Classrooms } from './classrooms/classrooms.entity';
@@ -55,6 +56,8 @@ import { UsersService } from './users/users.service';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AuditLogsController } from './audit_logs/audit_logs.controller';
 import { AuditLogsService } from './audit_logs/audit_logs.service';
+import { BuildingsController } from './buildings/buildings.controller';
+import { BuildingsService } from './buildings/buildings.service';
 import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
 import { CoursesController } from './courses/courses.controller';
@@ -124,6 +127,7 @@ export const buildTypeOrmRootOptions = (
     TypeOrmModule.forFeature([
       Attendance,
       AuditLogs,
+      Buildings,
       ClassGroups,
       Classrooms,
       CourseInstances,
@@ -156,6 +160,7 @@ export const buildTypeOrmRootOptions = (
     AppController,
     AttendanceController,
     AuditLogsController,
+    BuildingsController,
     ClassGroupsController,
     ClassroomsController,
     CoursesController,
@@ -193,6 +198,7 @@ export const buildTypeOrmRootOptions = (
     AttendanceService,
     AttendanceRosterService,
     AuditLogsService,
+    BuildingsService,
     ClassGroupsService,
     ClassroomsService,
     CourseInstancesService,

@@ -7,6 +7,7 @@
 - Matrículas: permitir registrar por grado sin sección y asignar secciones al cerrar matrículas.
   - Auto-crear secciones según capacidad y aulas disponibles.
   - TODO transición/graduación: considerar criterios académicos al agrupar estudiantes al pasar de grado.
+- Add method to distribute/assign students to sections based on criteria (e.g., capacity, gender balance, performance, special needs).
 - Based on curriculum, fix weekly hours for grades 1-5 and 6-9. Grades 10-11 remain specialization-specific.
 - Implement curriculum import pipeline supporting CSV, TXT, Excel (XLSX), PDF (text-based), and OCR for scanned PDFs/images. Include preview + validation step before persistence.
 - Curriculum: separate per grade and expose curriculum details; include creation flow that links professors (teachers) to course instances.
@@ -23,3 +24,6 @@
   - Pre-register national IDs in the system (minimal user record).
   - On first login, if profile fields are missing, prompt a completion form (name, contact, areas/skills, primary area).
   - Admin can later review/approve and update qualifications.
+- Classrooms blueprint: add buildings and their classroom templates (name + capacity) to seed/validate classrooms.
+  - Provide building dropdowns in classroom creation/filtering and keep capacity defaults per building when applicable.
+  - Support future class-group assignment to buildings without enforcing it yet.

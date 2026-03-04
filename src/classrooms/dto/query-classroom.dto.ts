@@ -1,11 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsInt,
   IsOptional,
   IsString,
-  Max,
   Min,
   MinLength,
+  IsPositive,
 } from 'class-validator';
 
 export class QueryClassroomDto {
@@ -17,6 +18,18 @@ export class QueryClassroomDto {
   @IsString()
   @MinLength(1)
   building?: string;
+
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Filter by building id',
+  })
+  @Transform(({ value }) =>
+    value !== undefined ? parseInt(value, 10) : undefined,
+  )
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  buildingId?: number;
 
   @ApiPropertyOptional({
     example: 'Room',
@@ -39,11 +52,10 @@ export class QueryClassroomDto {
   @ApiPropertyOptional({
     example: 20,
     default: 20,
-    description: 'Page size (1-100)',
+    description: 'Page size (1+)',
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
   pageSize?: number = 20;
 }

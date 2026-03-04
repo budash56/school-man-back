@@ -6,7 +6,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Max,
   Min,
 } from 'class-validator';
 import { USER_ROLES } from './create-users.dto';
@@ -69,12 +68,11 @@ export class QueryUsersDto {
   @ApiPropertyOptional({
     example: 25,
     default: 25,
-    description: 'Page size (1-100)',
+    description: 'Page size (1+)',
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
   pageSize?: number = 25;
 }

@@ -1,16 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsInt,
-  IsOptional,
-  IsPositive,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsInt, IsOptional, IsPositive, IsString, Min } from 'class-validator';
 
 const DEFAULT_PAGE_SIZE = 25;
 
-export class SubjectsQueryDto {
+export class QueryBuildingDto {
   @ApiPropertyOptional({ example: 1, minimum: 1 })
   @Transform(({ value }) =>
     value !== undefined ? parseInt(value, 10) : undefined,
@@ -33,22 +27,10 @@ export class SubjectsQueryDto {
   pageSize?: number;
 
   @ApiPropertyOptional({
-    example: 'algebra',
-    description: 'Filter by partial match in subject code or name',
+    example: 'bloque',
+    description: 'Filter by building name',
   })
   @IsOptional()
   @IsString()
   q?: string;
-
-  @ApiPropertyOptional({
-    example: 1,
-    description: 'Filter by subject area ID',
-  })
-  @Transform(({ value }) =>
-    value !== undefined ? parseInt(value, 10) : undefined,
-  )
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  areaId?: number;
 }

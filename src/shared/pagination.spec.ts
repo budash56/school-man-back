@@ -1,10 +1,10 @@
 import { buildPaginationResult, resolvePagination } from './pagination';
 
 describe('pagination helpers', () => {
-  it('clamps invalid inputs to safe defaults', () => {
+  it('uses defaults for invalid page values', () => {
     const { page, pageSize } = resolvePagination(0, 1000);
     expect(page).toBe(1);
-    expect(pageSize).toBe(100);
+    expect(pageSize).toBe(1000);
   });
 
   it('returns paginated result wrapper', () => {

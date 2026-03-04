@@ -1,4 +1,4 @@
-// Provides CRUD endpoints for classrooms using the generated Classrooms entity.
+// Provides CRUD endpoints for buildings.
 import {
   Body,
   Controller,
@@ -20,21 +20,21 @@ import {
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { ClassroomsService } from './classrooms.service';
-import { QueryClassroomDto } from './dto/query-classroom.dto';
-import { CreateClassroomDto } from './dto/create-classroom.dto';
-import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { BuildingsService } from './buildings.service';
+import { CreateBuildingDto } from './dto/create-building.dto';
+import { QueryBuildingDto } from './dto/query-building.dto';
+import { UpdateBuildingDto } from './dto/update-building.dto';
 
-@ApiTags('classrooms')
+@ApiTags('buildings')
 @Roles(...READ_ROLES)
 @ApiBearerAuth('bearer')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('classrooms')
-export class ClassroomsController {
-  constructor(private readonly service: ClassroomsService) {}
+@Controller('buildings')
+export class BuildingsController {
+  constructor(private readonly service: BuildingsService) {}
 
   @Get()
-  findAll(@Query() query: QueryClassroomDto) {
+  findAll(@Query() query: QueryBuildingDto) {
     return this.service.findAll(query);
   }
 
@@ -46,14 +46,15 @@ export class ClassroomsController {
   @Roles('admin', 'coordinator')
   @Post()
   @ApiBody({
-    type: CreateClassroomDto,
+    type: CreateBuildingDto,
     examples: {
       default: {
-        summary: 'Create classroom',
+        summary: 'Create building',
         value: {
-          name: 'Room 101',
-          buildingId: 1,
-          capacity: 30,
+          name: 'Bloque A',
+          isLab: false,
+          isAuditorium: false,
+          isComputerRoom: false,
         },
       },
     },
@@ -61,20 +62,18 @@ export class ClassroomsController {
   @ApiForbiddenResponse({
     description: 'Forbidden: requires role admin, coordinator',
   })
-  create(@Body() dto: CreateClassroomDto) {
+  create(@Body() dto: CreateBuildingDto) {
     return this.service.create(dto);
   }
 
   @Roles('admin', 'coordinator')
   @Patch(':id')
   @ApiBody({
-    type: UpdateClassroomDto,
+    type: UpdateBuildingDto,
     examples: {
       default: {
-        summary: 'Update classroom capacity',
-        value: {
-          capacity: 28,
-        },
+        summary: 'Update building',
+        value: { name: 'Bloque B' },
       },
     },
   })
@@ -83,7 +82,7 @@ export class ClassroomsController {
   })
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateClassroomDto,
+    @Body() dto: UpdateBuildingDto,
   ) {
     return this.service.update(id, dto);
   }

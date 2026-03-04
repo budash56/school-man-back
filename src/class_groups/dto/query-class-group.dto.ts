@@ -46,11 +46,10 @@ export class QueryClassGroupDto {
   @ApiPropertyOptional({
     example: 20,
     default: 20,
-    description: 'Page size (1-100)',
+    description: 'Page size (1+)',
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
   pageSize?: number = 20;
 }

@@ -5,7 +5,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Max,
   Min,
 } from 'class-validator';
 
@@ -60,6 +59,5 @@ export class QueryDisciplinaryRecordDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
   pageSize?: number = 20;
 }
