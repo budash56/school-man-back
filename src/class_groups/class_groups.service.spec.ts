@@ -4,8 +4,13 @@ import { ClassGroupsService } from './class_groups.service';
 import { ClassGroupsRepository } from './class_groups.repository';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { ClassGroupFixedLocationsRepository } from '../class_group_fixed_locations/class_group_fixed_locations.repository';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { QueryClassGroupDto } from './dto/query-class-group.dto';
+import { ClassGroups } from './class_groups.entity';
+import { Enrollments } from '../enrollments/enrollments.entity';
+import { ClassGroupFixedLocations } from '../class_group_fixed_locations/class_group_fixed_locations.entity';
 
 const createDto: CreateClassGroupDto = {
   schoolYearId: 1,
@@ -32,6 +37,8 @@ describe('ClassGroupsService', () => {
   let classGroupsRepository: jest.Mocked<ClassGroupsRepository>;
   let schoolYearsRepository: jest.Mocked<SchoolYearsRepository>;
   let classroomsRepository: jest.Mocked<ClassroomsRepository>;
+  let enrollmentsRepository: jest.Mocked<EnrollmentsRepository>;
+  let fixedLocationsRepository: jest.Mocked<ClassGroupFixedLocationsRepository>;
 
   beforeEach(() => {
     classGroupsRepository = {
@@ -51,10 +58,35 @@ describe('ClassGroupsService', () => {
       findOne: jest.fn(),
     } as unknown as jest.Mocked<ClassroomsRepository>;
 
+    enrollmentsRepository = {
+      find: jest.fn(),
+      count: jest.fn(),
+      manager: { transaction: jest.fn() },
+    } as unknown as jest.Mocked<EnrollmentsRepository>;
+
+    fixedLocationsRepository = {
+      findOne: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+    } as unknown as jest.Mocked<ClassGroupFixedLocationsRepository>;
+
+    const availabilityQueryBuilder = {
+      leftJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    };
+
+    (classGroupsRepository.createQueryBuilder as jest.Mock).mockReturnValue(
+      availabilityQueryBuilder,
+    );
+
     service = new ClassGroupsService(
       classGroupsRepository,
       schoolYearsRepository,
       classroomsRepository,
+      enrollmentsRepository,
+      fixedLocationsRepository,
     );
   });
 
@@ -145,5 +177,128 @@ describe('ClassGroupsService', () => {
     expect(result.data).toHaveLength(1);
     expect(result.total).toBe(1);
   });
-  
+
+  it('manually assigns a section and returns capacity warning', async () => {
+    (schoolYearsRepository.findOne as jest.Mock).mockResolvedValue({
+      schoolYearId: '1',
+    });
+    (classroomsRepository.findOne as jest.Mock).mockResolvedValue({
+      classroomId: '2',
+      name: 'Room 2',
+      capacity: 1,
+    });
+    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue(null);
+
+    const enrollmentRecords = [
+      {
+        enrollmentId: '10',
+        schoolYearId: '1',
+        gradeLevel: 5,
+        classGroupId: null,
+        active: true,
+      },
+      {
+        enrollmentId: '11',
+        schoolYearId: '1',
+        gradeLevel: 5,
+        classGroupId: null,
+        active: true,
+      },
+    ];
+
+    (enrollmentsRepository.find as jest.Mock).mockResolvedValue(enrollmentRecords);
+
+    const classGroupRepo = {
+      create: jest.fn().mockReturnValue({}),
+      save: jest.fn().mockResolvedValue({
+        classGroupId: '7',
+        schoolYearId: '1',
+        gradeLevel: 5,
+        section: '01',
+        classroom: { classroomId: '2' },
+      }),
+    };
+    const enrollmentRepo = { update: jest.fn() };
+    const fixedRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockReturnValue({}),
+      save: jest.fn().mockResolvedValue({}),
+    };
+
+    (enrollmentsRepository.manager.transaction as jest.Mock).mockImplementation(
+      async (callback: (manager: unknown) => unknown) =>
+        callback({
+          getRepository: (entity: unknown) => {
+            if (entity === ClassGroups) return classGroupRepo;
+            if (entity === Enrollments) return enrollmentRepo;
+            if (entity === ClassGroupFixedLocations) return fixedRepo;
+            return null;
+          },
+        }),
+    );
+
+    const result = await service.manualAssignSection({
+      schoolYearId: 1,
+      gradeLevel: 5,
+      section: '01',
+      classroomId: 2,
+      enrollmentIds: [10, 11],
+      fixedLocation: true,
+    });
+
+    expect(enrollmentRepo.update).toHaveBeenCalled();
+    expect(result.capacityWarning).toBe(true);
+    expect(result.fixedLocationApplied).toBe(true);
+    expect(result.classGroup.defaultClassroomId).toBe(2);
+  });
+
+  it('updates classroom assignment and applies fixed location', async () => {
+    (classGroupsRepository.findOne as jest.Mock).mockResolvedValue({
+      classGroupId: '7',
+      schoolYearId: '1',
+      gradeLevel: 5,
+      section: '01',
+      classroom: { classroomId: '1' },
+      createdAt: new Date(),
+    });
+    (classroomsRepository.findOne as jest.Mock).mockResolvedValue({
+      classroomId: '3',
+      name: 'Room 3',
+      capacity: 20,
+    });
+    (enrollmentsRepository.count as jest.Mock).mockResolvedValue(25);
+
+    const classGroupRepo = {
+      save: jest.fn().mockResolvedValue({
+        classGroupId: '7',
+        schoolYearId: '1',
+        gradeLevel: 5,
+        section: '01',
+        classroom: { classroomId: '3' },
+        createdAt: new Date(),
+      }),
+    };
+    const fixedRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockReturnValue({}),
+      save: jest.fn().mockResolvedValue({}),
+    };
+
+    (enrollmentsRepository.manager.transaction as jest.Mock).mockImplementation(
+      async (callback: (manager: unknown) => unknown) =>
+        callback({
+          getRepository: (entity: unknown) => {
+            if (entity === ClassGroups) return classGroupRepo;
+            if (entity === ClassGroupFixedLocations) return fixedRepo;
+            return null;
+          },
+        }),
+    );
+
+    const result = await service.updateClassroomAssignment(7, 3, true);
+
+    expect(result.capacityWarning).toBe(true);
+    expect(result.fixedLocationApplied).toBe(true);
+    expect(result.classGroup.defaultClassroomId).toBe(3);
+  });
 });

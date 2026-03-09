@@ -1,12 +1,15 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { QueryFailedError } from 'typeorm';
 import { SchoolYearsService } from './school_years.service';
 import { SchoolYearsRepository } from './school_years.repository';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { StudentsRepository } from '../students/students.repository';
 
 type MockedRepository = Partial<
   Record<keyof SchoolYearsRepository, jest.Mock>
@@ -17,6 +20,8 @@ type MockedRepository = Partial<
 describe('SchoolYearsService', () => {
   let service: SchoolYearsService;
   let repository: SchoolYearsRepository & MockedRepository;
+  let enrollmentsRepository: jest.Mocked<EnrollmentsRepository>;
+  let studentsRepository: jest.Mocked<StudentsRepository>;
 
   const createDto: CreateSchoolYearDto = {
     name: '2025-2026',
@@ -38,7 +43,19 @@ describe('SchoolYearsService', () => {
       },
     } as unknown as SchoolYearsRepository & MockedRepository;
 
-    service = new SchoolYearsService(repository);
+    enrollmentsRepository = {
+      find: jest.fn(),
+    } as unknown as jest.Mocked<EnrollmentsRepository>;
+
+    studentsRepository = {
+      update: jest.fn(),
+    } as unknown as jest.Mocked<StudentsRepository>;
+
+    service = new SchoolYearsService(
+      repository,
+      enrollmentsRepository,
+      studentsRepository,
+    );
   });
 
   const uniqueViolation = () =>
@@ -188,5 +205,138 @@ describe('SchoolYearsService', () => {
       isActive: true,
     });
     expect(transactionRepository.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws ForbiddenException when completing year without admin role', async () => {
+    await expect(
+      service.completeYear(1, { force: true }, { role: 'coordinator' }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('throws ConflictException when completing before calendar close without force', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-04T00:00:00Z'));
+
+    (repository.findOne as jest.Mock).mockResolvedValue({
+      schoolYearId: '1',
+      name: '2026',
+      yearStart: '2026-01-01',
+      yearEnd: '2026-12-31',
+      isActive: true,
+    });
+
+    await expect(
+      service.completeYear(1, { force: false }, { role: 'admin' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    jest.useRealTimers();
+  });
+
+  it('completes year, promotes and graduates students when forced', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-04T00:00:00Z'));
+
+    const currentYear = {
+      schoolYearId: '1',
+      name: '2026',
+      yearStart: '2026-01-01',
+      yearEnd: '2026-12-31',
+      isActive: true,
+    };
+    const nextYear = {
+      schoolYearId: '2',
+      name: '2027',
+      yearStart: '2027-01-01',
+      yearEnd: '2027-12-31',
+      isActive: false,
+    };
+
+    (repository.findOne as jest.Mock)
+      .mockResolvedValueOnce(currentYear)
+      .mockResolvedValueOnce(nextYear);
+
+    (enrollmentsRepository.find as jest.Mock).mockResolvedValue([
+      {
+        enrollmentId: '1',
+        studentId: '100',
+        gradeLevel: 10,
+        schoolYearId: '1',
+        active: true,
+      },
+      {
+        enrollmentId: '2',
+        studentId: '200',
+        gradeLevel: 11,
+        schoolYearId: '1',
+        active: true,
+      },
+      {
+        enrollmentId: '3',
+        studentId: '300',
+        gradeLevel: 10,
+        schoolYearId: '1',
+        active: true,
+      },
+    ]);
+
+    const enrollmentRepo = {
+      update: jest.fn(),
+      find: jest.fn().mockResolvedValue([
+        {
+          enrollmentId: '9',
+          studentId: '300',
+          schoolYearId: '2',
+          active: true,
+        },
+      ]),
+      create: jest.fn().mockImplementation((payload) => payload),
+      save: jest.fn(),
+    };
+    const studentRepo = {
+      update: jest.fn(),
+    };
+    const schoolYearRepo = {
+      update: jest.fn(),
+    };
+
+    const manager = {
+      getRepository: jest
+        .fn()
+        .mockImplementation((entity) => {
+          if (entity.name === 'Enrollments') {
+            return enrollmentRepo;
+          }
+          if (entity.name === 'Students') {
+            return studentRepo;
+          }
+          return schoolYearRepo;
+        }),
+    };
+
+    (repository.manager.transaction as jest.Mock).mockImplementation(
+      async (callback) => callback(manager as never),
+    );
+
+    const result = await service.completeYear(
+      1,
+      { force: true },
+      { role: 'admin' },
+    );
+
+    expect(enrollmentRepo.update).toHaveBeenCalledTimes(1);
+    expect(enrollmentRepo.save).toHaveBeenCalledTimes(1);
+    expect(studentRepo.update).toHaveBeenCalledTimes(1);
+    expect(schoolYearRepo.update).toHaveBeenCalledTimes(2);
+    expect(result).toEqual(
+      expect.objectContaining({
+        schoolYearId: 1,
+        nextSchoolYearId: 2,
+        force: true,
+        enrollmentsClosed: 3,
+        studentsPromoted: 1,
+        studentsGraduated: 1,
+        studentsAlreadyEnrolled: 1,
+      }),
+    );
+
+    jest.useRealTimers();
   });
 });

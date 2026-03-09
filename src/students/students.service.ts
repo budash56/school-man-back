@@ -76,6 +76,11 @@ export class StudentsService {
   async create(dto: CreateStudentDto): Promise<Students> {
     await this.assertNationalIdAvailable(dto.nationalId);
 
+    const guardianRelationship = this.resolveGuardianRelationship(
+      dto.guardianRelationship,
+      dto.guardianRelationshipOther,
+    );
+
     const entity = this.repository.create({
       nationalId: dto.nationalId,
       firstName: dto.firstName,
@@ -83,7 +88,7 @@ export class StudentsService {
       dob: dto.dob ?? null,
       address: dto.address ?? null,
       guardianName: dto.guardianName,
-      guardianRelationship: dto.guardianRelationship,
+      guardianRelationship,
       guardianPhone: dto.guardianPhone,
       isActive: true,
     });
@@ -98,10 +103,29 @@ export class StudentsService {
       await this.assertNationalIdAvailable(dto.nationalId, student.studentId);
     }
 
+    const {
+      guardianRelationship,
+      guardianRelationshipOther,
+      guardianName,
+      guardianPhone,
+      dob,
+      address,
+      ...rest
+    } = dto;
+
+    const resolvedRelationship = this.resolveGuardianRelationship(
+      guardianRelationship,
+      guardianRelationshipOther,
+      student.guardianRelationship,
+    );
+
     this.repository.merge(student, {
-      ...dto,
-      dob: dto.dob ?? student.dob,
-      address: dto.address ?? student.address,
+      ...rest,
+      guardianName: guardianName ?? student.guardianName,
+      guardianPhone: guardianPhone ?? student.guardianPhone,
+      guardianRelationship: resolvedRelationship,
+      dob: dob ?? student.dob,
+      address: address ?? student.address,
     });
 
     return this.repository.save(student);
@@ -187,6 +211,28 @@ export class StudentsService {
 
     const escaped = trimmed.replace(/[%_]/g, (match) => `\\${match}`);
     return `%${escaped}%`;
+  }
+
+  private resolveGuardianRelationship(
+    relationship?: string,
+    relationshipOther?: string,
+    fallback?: string | null,
+  ): string | null {
+    if (!relationship) {
+      return fallback ?? null;
+    }
+
+    if (relationship === 'Otro') {
+      const other = relationshipOther?.trim();
+      if (!other) {
+        throw new ConflictException(
+          'Parentesco requerido cuando se selecciona "Otro".',
+        );
+      }
+      return other;
+    }
+
+    return relationship;
   }
 
   private async assertNationalIdAvailable(

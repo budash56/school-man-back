@@ -14,11 +14,13 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiForbiddenResponse,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
+import { CompleteSchoolYearDto } from './dto/complete-school-year.dto';
 import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYearsService } from './school_years.service';
@@ -98,5 +100,31 @@ export class SchoolYearsController {
     @Req() req: { user: { role: string } },
   ) {
     return this.service.lock(id, req.user);
+  }
+
+  @Post(':id/complete')
+  @Roles('admin')
+  @ApiBody({
+    type: CompleteSchoolYearDto,
+    examples: {
+      default: {
+        summary: 'Complete school year',
+        value: { force: false },
+      },
+      testing: {
+        summary: 'Force completion (testing)',
+        value: { force: true },
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin',
+  })
+  complete(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CompleteSchoolYearDto,
+    @Req() req: { user: { role: string } },
+  ) {
+    return this.service.completeYear(id, dto, req.user);
   }
 }

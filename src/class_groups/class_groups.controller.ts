@@ -20,6 +20,8 @@ import { QueryClassGroupDto } from './dto/query-class-group.dto';
 import { CreateClassGroupDto } from './dto/create-class-group.dto';
 import { UpdateClassGroupDto } from './dto/update-class-group.dto';
 import { AutoAssignClassGroupsDto } from './dto/auto-assign-class-groups.dto';
+import { ManualAssignClassGroupDto } from './dto/manual-assign-class-group.dto';
+import { UpdateClassGroupClassroomDto } from './dto/update-class-group-classroom.dto';
 import { ClassGroupsService } from './class_groups.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -63,6 +65,59 @@ export class ClassGroupsController {
   })
   async create(@Body() dto: CreateClassGroupDto) {
     return this.service.create(dto);
+  }
+
+  @Roles('admin', 'coordinator')
+  @Post('manual-assign')
+  @ApiBody({
+    type: ManualAssignClassGroupDto,
+    examples: {
+      default: {
+        summary: 'Create a class group and assign students manually',
+        value: {
+          schoolYearId: 2,
+          gradeLevel: 4,
+          section: '01',
+          classroomId: 12,
+          enrollmentIds: [101, 102, 103],
+          fixedLocation: true,
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
+  async manualAssign(@Body() dto: ManualAssignClassGroupDto) {
+    return this.service.manualAssignSection(dto);
+  }
+
+  @Roles('admin', 'coordinator')
+  @Patch(':id/classroom')
+  @ApiBody({
+    type: UpdateClassGroupClassroomDto,
+    examples: {
+      default: {
+        summary: 'Update the classroom for an existing class group',
+        value: {
+          classroomId: 12,
+          fixedLocation: true,
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden: requires role admin, coordinator',
+  })
+  async updateClassroom(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateClassGroupClassroomDto,
+  ) {
+    return this.service.updateClassroomAssignment(
+      id,
+      dto.classroomId,
+      dto.fixedLocation,
+    );
   }
 
   @Roles('admin', 'coordinator')

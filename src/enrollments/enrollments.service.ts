@@ -33,6 +33,12 @@ export type EnrollmentResponse = {
   schoolYearId: number;
   active: boolean;
   enrolledAt: Date | null;
+  student?: {
+    studentId: number;
+    firstName: string;
+    lastName: string;
+    nationalId: string;
+  } | null;
 };
 
 @Injectable()
@@ -81,6 +87,18 @@ export class EnrollmentsService {
       qb.andWhere('enrollment.schoolYearId = :schoolYearId', {
         schoolYearId: query.schoolYearId.toString(),
       });
+    }
+
+    if (query.active !== undefined) {
+      qb.andWhere('enrollment.active = :active', { active: query.active });
+    }
+
+    if (query.unassigned !== undefined) {
+      qb.andWhere(
+        query.unassigned
+          ? 'enrollment.classGroupId IS NULL'
+          : 'enrollment.classGroupId IS NOT NULL',
+      );
     }
 
     if (currentUser?.role === 'teacher') {
@@ -331,6 +349,14 @@ export class EnrollmentsService {
       schoolYearId: Number(enrollment.schoolYearId),
       active: enrollment.active ?? false,
       enrolledAt: enrollment.enrolledAt ?? null,
+      student: enrollment.student
+        ? {
+            studentId: Number(enrollment.student.studentId),
+            firstName: enrollment.student.firstName,
+            lastName: enrollment.student.lastName,
+            nationalId: enrollment.student.nationalId,
+          }
+        : null,
     };
   }
 }

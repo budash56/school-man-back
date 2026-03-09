@@ -2,6 +2,7 @@ import { AttendanceRepository } from '../attendance/attendance.repository';
 import { AuditLogsRepository } from '../audit_logs/audit_logs.repository';
 import { BuildingsRepository } from '../buildings/buildings.repository';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
+import { ClassGroupFixedLocationsRepository } from '../class_group_fixed_locations/class_group_fixed_locations.repository';
 import { ClassroomsRepository } from '../classrooms/classrooms.repository';
 import { CourseInstancesRepository } from '../course_instances/course_instances.repository';
 import { CoursesRepository } from '../courses/courses.repository';
@@ -29,6 +30,7 @@ export const REPOSITORY_PROVIDERS = [
   AuditLogsRepository,
   BuildingsRepository,
   ClassGroupsRepository,
+  ClassGroupFixedLocationsRepository,
   ClassroomsRepository,
   CourseInstancesRepository,
   CoursesRepository,
@@ -57,6 +59,7 @@ export {
   AuditLogsRepository,
   BuildingsRepository,
   ClassGroupsRepository,
+  ClassGroupFixedLocationsRepository,
   ClassroomsRepository,
   CourseInstancesRepository,
   CoursesRepository,

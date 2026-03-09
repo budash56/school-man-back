@@ -56,6 +56,7 @@ describe('SubjectAreasService', () => {
     expect(repository.create as jest.Mock).toHaveBeenCalledWith({
       code: createDto.code,
       name: createDto.name,
+      isSpecialization: false,
     });
     expect(result).toEqual(entity);
   });

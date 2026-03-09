@@ -14,6 +14,7 @@ import { AttendanceService } from './attendance/attendance.service';
 import { AttendanceRosterService } from './attendance/attendance-roster.service';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { Buildings } from './buildings/buildings.entity';
+import { ClassGroupFixedLocations } from './class_group_fixed_locations/class_group_fixed_locations.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { ClassGroupsService } from './class_groups/class_groups.service';
 import { Classrooms } from './classrooms/classrooms.entity';
@@ -128,6 +129,7 @@ export const buildTypeOrmRootOptions = (
       Attendance,
       AuditLogs,
       Buildings,
+      ClassGroupFixedLocations,
       ClassGroups,
       Classrooms,
       CourseInstances,

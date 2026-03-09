@@ -8,6 +8,7 @@ describe('CreateTimetableSlotDto', () => {
       dayOfWeek: 2,
       startTime: '08:00',
       endTime: '09:00',
+      division: 'elementary',
     });
 
     await expect(validate(dto)).resolves.toHaveLength(0);

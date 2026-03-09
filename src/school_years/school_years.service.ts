@@ -5,16 +5,26 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { In, MoreThan } from 'typeorm';
 import { DbErrorMapper } from '../shared/db-error.mapper';
 import { SchoolYears } from './school_years.entity';
 import { SchoolYearsRepository } from './school_years.repository';
 import { CreateSchoolYearDto } from './dto/create-school-year.dto';
 import { UpdateSchoolYearDto } from './dto/update-school-year.dto';
 import { SchoolYearsQueryDto } from './dto/school-years-query.dto';
+import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
+import { StudentsRepository } from '../students/students.repository';
+import { CompleteSchoolYearDto } from './dto/complete-school-year.dto';
+import { Enrollments } from '../enrollments/enrollments.entity';
+import { Students } from '../students/students.entity';
 
 @Injectable()
 export class SchoolYearsService {
-  constructor(private readonly repository: SchoolYearsRepository) {}
+  constructor(
+    private readonly repository: SchoolYearsRepository,
+    private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly studentsRepository: StudentsRepository,
+  ) {}
 
   async findAll(query: SchoolYearsQueryDto): Promise<SchoolYears[]> {
     const qb = this.repository.createQueryBuilder('schoolYears');
@@ -189,6 +199,147 @@ export class SchoolYearsService {
     return this.repository.save(schoolYear);
   }
 
+  async completeYear(
+    id: number,
+    dto: CompleteSchoolYearDto,
+    user: { role: string },
+  ): Promise<{
+    schoolYearId: number;
+    nextSchoolYearId: number | null;
+    closedAt: string;
+    force: boolean;
+    enrollmentsClosed: number;
+    studentsPromoted: number;
+    studentsGraduated: number;
+    studentsAlreadyEnrolled: number;
+  }> {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException(
+        'Only administrators can complete school years',
+      );
+    }
+
+    const schoolYear = await this.findOne(id);
+    const closingDate = this.resolveCalendarYearEnd(schoolYear.yearEnd);
+    const now = new Date();
+    const force = dto.force ?? false;
+
+    if (!force && now < closingDate) {
+      throw new ConflictException(
+        'School year can only be completed after the last day of the calendar year',
+      );
+    }
+
+    const enrollments = await this.enrollmentsRepository.find({
+      where: { schoolYearId: schoolYear.schoolYearId, active: true },
+    });
+
+    // TODO: apply academic criteria for promotion once available.
+    const toPromote = enrollments.filter((enrollment) => enrollment.gradeLevel < 11);
+    const toGraduate = enrollments.filter((enrollment) => enrollment.gradeLevel >= 11);
+
+    let nextSchoolYear: SchoolYears | null = null;
+    if (toPromote.length > 0) {
+      nextSchoolYear = await this.repository.findOne({
+        where: { yearStart: MoreThan(schoolYear.yearEnd) },
+        order: { yearStart: 'ASC' },
+      });
+
+      if (!nextSchoolYear) {
+        throw new ConflictException(
+          'Next school year not found. Create it before promoting students.',
+        );
+      }
+    }
+
+    return this.repository.manager.transaction(async (manager) => {
+      const enrollmentRepo = manager.getRepository(Enrollments);
+      const studentRepo = manager.getRepository(Students);
+      const schoolYearRepo = manager.getRepository(SchoolYears);
+
+      const enrollmentIds = enrollments.map((enrollment) => enrollment.enrollmentId);
+      if (enrollmentIds.length > 0) {
+        await enrollmentRepo.update(
+          { enrollmentId: In(enrollmentIds) },
+          { active: false },
+        );
+      }
+
+      let studentsPromoted = 0;
+      let studentsAlreadyEnrolled = 0;
+
+      if (nextSchoolYear && toPromote.length > 0) {
+        const promoteStudentIds = toPromote.map((enrollment) => enrollment.studentId);
+        const existingNext = await enrollmentRepo.find({
+          where: {
+            schoolYearId: nextSchoolYear.schoolYearId,
+            studentId: In(promoteStudentIds),
+            active: true,
+          },
+        });
+        const existingSet = new Set(
+          existingNext.map((enrollment) => enrollment.studentId),
+        );
+
+        const newEnrollments = toPromote
+          .filter((enrollment) => !existingSet.has(enrollment.studentId))
+          .map((enrollment) =>
+            enrollmentRepo.create({
+              studentId: enrollment.studentId,
+              classGroupId: null,
+              gradeLevel: enrollment.gradeLevel + 1,
+              schoolYearId: nextSchoolYear!.schoolYearId,
+              active: true,
+            }),
+          );
+
+        if (newEnrollments.length > 0) {
+          await enrollmentRepo.save(newEnrollments);
+        }
+
+        studentsPromoted = newEnrollments.length;
+        studentsAlreadyEnrolled = toPromote.length - newEnrollments.length;
+      }
+
+      if (toGraduate.length > 0) {
+        const graduateIds = Array.from(
+          new Set(toGraduate.map((enrollment) => enrollment.studentId)),
+        );
+        await studentRepo.update(
+          { studentId: In(graduateIds) },
+          { isActive: false },
+        );
+      }
+
+      if (schoolYear.isActive) {
+        await schoolYearRepo.update(
+          { schoolYearId: schoolYear.schoolYearId },
+          { isActive: false },
+        );
+      }
+
+      if (nextSchoolYear && !nextSchoolYear.isActive) {
+        await schoolYearRepo.update(
+          { schoolYearId: nextSchoolYear.schoolYearId },
+          { isActive: true },
+        );
+      }
+
+      return {
+        schoolYearId: Number(schoolYear.schoolYearId),
+        nextSchoolYearId: nextSchoolYear
+          ? Number(nextSchoolYear.schoolYearId)
+          : null,
+        closedAt: now.toISOString(),
+        force,
+        enrollmentsClosed: enrollments.length,
+        studentsPromoted,
+        studentsGraduated: toGraduate.length,
+        studentsAlreadyEnrolled,
+      };
+    });
+  }
+
   private assertChronologicalOrder(
     startDate: string,
     endDate: string,
@@ -209,6 +360,14 @@ export class SchoolYearsService {
         'School year startDate must be before endDate',
       );
     }
+  }
+
+  private resolveCalendarYearEnd(yearEnd: string): Date {
+    const end = new Date(yearEnd);
+    if (Number.isNaN(end.getTime())) {
+      throw new BadRequestException('School year end date is invalid');
+    }
+    return new Date(Date.UTC(end.getUTCFullYear(), 11, 31, 23, 59, 59, 999));
   }
 
   private buildNameSearch(raw: string): string {

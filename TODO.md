@@ -1,29 +1,45 @@
 # TODO
 
-- Add optional teacher skill constraints (teacher → allowed subjects). Enforce only when a teacher has declared skills; otherwise keep current open assignment behavior.
-  - Proposed: new table `teacher_subjects` (teacher_id, subject_id), update course assignment validation to respect it.
-  - Add admin endpoints to manage teacher skills.
-  - Update timetable generator to prefer/require teachers whose skills match subject.
-- Matrículas: permitir registrar por grado sin sección y asignar secciones al cerrar matrículas.
-  - Auto-crear secciones según capacidad y aulas disponibles.
-  - TODO transición/graduación: considerar criterios académicos al agrupar estudiantes al pasar de grado.
-- Add method to distribute/assign students to sections based on criteria (e.g., capacity, gender balance, performance, special needs).
-- Based on curriculum, fix weekly hours for grades 1-5 and 6-9. Grades 10-11 remain specialization-specific.
-- Implement curriculum import pipeline supporting CSV, TXT, Excel (XLSX), PDF (text-based), and OCR for scanned PDFs/images. Include preview + validation step before persistence.
-- Curriculum: separate per grade and expose curriculum details; include creation flow that links professors (teachers) to course instances.
-- Add linkage between subject areas (professors/subjects) and specialization curricula.
-  - Prevent errors when adding asignaturas: hide specialization-only subjects unless a specialization curriculum is selected.
-  - Add a boolean specialization-area flag on areas (e.g., `is_specialization`).
-- Define teacher area qualifications with a primary area and secondary areas (e.g., `teacher_areas` with `is_primary`).
-  - Allow teachers to belong to multiple areas; only one marked primary.
-  - Use these qualifications for filtering/assignment decisions (not necessarily hard enforcement).
-- Capture teacher grade-band preferences (e.g., lower, middle, upper) to guide scheduling and assignments.
-  - Store as optional preferences and use for suggestions rather than strict rules.
-- Add optional student gender field to support balanced section distribution during auto-assignment.
-- Add a self-service professor registration flow:
-  - Pre-register national IDs in the system (minimal user record).
-  - On first login, if profile fields are missing, prompt a completion form (name, contact, areas/skills, primary area).
-  - Admin can later review/approve and update qualifications.
-- Classrooms blueprint: add buildings and their classroom templates (name + capacity) to seed/validate classrooms.
-  - Provide building dropdowns in classroom creation/filtering and keep capacity defaults per building when applicable.
-  - Support future class-group assignment to buildings without enforcing it yet.
+**Docentes**
+- Add optional teacher skill constraints (teacher → allowed subjects) and enforce only when skills exist.
+- Add admin endpoints to manage teacher skills.
+- Update timetable generator to prefer/require teachers whose skills match subject.
+- Define teacher area qualifications with primary + secondary areas.
+- Capture teacher grade-band preferences for scheduling suggestions.
+- Add self-service professor registration flow with profile completion.
+
+**Matrículas y Promoción**
+- Allow enrollment by grade without section and assign sections at enrollment close.
+- Auto-create sections based on capacity and available classrooms.
+- Add method to distribute/assign students to sections by criteria (capacity, balance, performance, special needs).
+- Add optional student gender field to support balanced section distribution.
+- Apply academic criteria for promotion.
+
+**Currículo**
+- Fix weekly hours for grades 1-5 and 6-9; keep 10-11 specialization-specific.
+- Curriculum import pipeline (CSV, TXT, XLSX, PDF text, OCR) with preview + validation.
+- Separate curriculum per grade and expose details.
+- Link professors (teachers) to course instances during curriculum creation.
+- Link subject areas to specialization curricula.
+- Hide specialization-only subjects unless a specialization curriculum is selected.
+- Add specialization flag on areas (e.g., `is_specialization`).
+
+**Aulas y Edificios**
+- Add buildings and classroom templates (name + capacity) to seed/validate classrooms.
+- Provide building dropdowns in classroom creation/filtering.
+- Keep capacity defaults per building where applicable.
+- Support future class-group assignment to buildings without enforcing it yet.
+
+**Backend Cleanup**
+- Implement real "break at B" slot handling in timetable generator. `src/timetable_generator/timetable-generator.service.spec.ts:353`
+- Balance class group sections by gender once student gender exists. `src/class_groups/class_groups.service.ts:283`
+- Finish PDF layer for certificates endpoint. `docs/backend-overview.md:139`
+
+**Frontend Cleanup**
+- Handle pagination when timetable assignments exceed 100. `src/api/timetableAssignmentsApi.ts:12`
+- Support multiple patterns/breaks per day in timetable generator. `src/features/timetable/TimetableGeneratorPage.tsx:635`
+- Support multiple breaks and patterns per day in timetable generator. `src/features/timetable/TimetableGeneratorPage.tsx:888`
+- Hide school year reset button when a year is active; re-enable when inactive. `src/features/schoolYears/SchoolYearsStaticPage.tsx:129`
+- Wire awards endpoint in discipline view. `src/features/discipline/DisciplinePage.tsx:320`
+- Add disciplinary record form (create). `src/features/discipline/DisciplinePage.tsx:328`
+- Add disciplinary record form (edit). `src/features/discipline/DisciplinePage.tsx:336`

@@ -26,7 +26,7 @@ describe('StudentsService', () => {
     firstName: 'Juana',
     lastName: 'Gomez',
     guardianName: 'Maria Gomez',
-    guardianRelationship: 'Mother',
+    guardianRelationship: 'Madre',
     guardianPhone: '+573001234567',
     dob: '2010-05-15',
     address: 'Calle 123',

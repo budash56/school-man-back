@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class EnrollmentsQueryDto {
   @ApiPropertyOptional({
@@ -63,4 +64,30 @@ export class EnrollmentsQueryDto {
   @IsInt()
   @Min(1)
   pageSize?: number;
+
+  @ApiPropertyOptional({
+    description: 'Filter by active enrollments',
+    example: true,
+  })
+  @Transform(({ value }) =>
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
+  )
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Filter to only enrollments without class group assignment',
+    example: true,
+  })
+  @Transform(({ value }) =>
+    value === undefined || value === null
+      ? undefined
+      : value === 'true' || value === true,
+  )
+  @IsOptional()
+  @IsBoolean()
+  unassigned?: boolean;
 }

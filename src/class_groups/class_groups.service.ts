@@ -13,6 +13,9 @@ import { UpdateClassGroupDto } from './dto/update-class-group.dto';
 import { AutoAssignClassGroupsDto } from './dto/auto-assign-class-groups.dto';
 import { EnrollmentsRepository } from '../enrollments/enrollments.repository';
 import { Enrollments } from '../enrollments/enrollments.entity';
+import { ManualAssignClassGroupDto } from './dto/manual-assign-class-group.dto';
+import { ClassGroupFixedLocationsRepository } from '../class_group_fixed_locations/class_group_fixed_locations.repository';
+import { ClassGroupFixedLocations } from '../class_group_fixed_locations/class_group_fixed_locations.entity';
 import {
   buildPaginationResult,
   PaginatedResult,
@@ -38,6 +41,14 @@ export type AutoAssignSectionsResponse = {
   groups: ClassGroupResponse[];
 };
 
+export type ManualAssignSectionResponse = {
+  classGroup: ClassGroupResponse;
+  studentsAssigned: number;
+  capacity: number;
+  capacityWarning: boolean;
+  fixedLocationApplied: boolean;
+};
+
 const DEFAULT_SECTION_CAPACITY = 20;
 
 @Injectable()
@@ -47,6 +58,7 @@ export class ClassGroupsService {
     private readonly schoolYearsRepository: SchoolYearsRepository,
     private readonly classroomsRepository: ClassroomsRepository,
     private readonly enrollmentsRepository: EnrollmentsRepository,
+    private readonly fixedLocationsRepository: ClassGroupFixedLocationsRepository,
   ) {}
 
   async findAll(
@@ -121,6 +133,12 @@ export class ClassGroupsService {
       dto.defaultClassroomId !== undefined
         ? await this.getClassroomOrThrow(dto.defaultClassroomId)
         : undefined;
+    if (classroom) {
+      await this.assertClassroomAvailable(
+        dto.schoolYearId.toString(),
+        classroom.classroomId,
+      );
+    }
 
     const entity = this.classGroupsRepository.create({
       schoolYearId: dto.schoolYearId.toString(),
@@ -163,7 +181,13 @@ export class ClassGroupsService {
     }
 
     if (dto.defaultClassroomId !== undefined) {
-      entity.classroom = await this.getClassroomOrThrow(dto.defaultClassroomId);
+      const classroom = await this.getClassroomOrThrow(dto.defaultClassroomId);
+      await this.assertClassroomAvailable(
+        entity.schoolYearId,
+        classroom.classroomId,
+        entity.classGroupId,
+      );
+      entity.classroom = classroom;
     }
 
     try {
@@ -306,6 +330,194 @@ export class ClassGroupsService {
     };
   }
 
+  async manualAssignSection(
+    dto: ManualAssignClassGroupDto,
+  ): Promise<ManualAssignSectionResponse> {
+    await this.resolveSchoolYear(dto.schoolYearId);
+    const classroom = await this.getClassroomOrThrow(dto.classroomId);
+
+    await this.assertClassroomAvailable(
+      dto.schoolYearId.toString(),
+      classroom.classroomId,
+    );
+
+    const existingSection = await this.classGroupsRepository.findOne({
+      where: {
+        schoolYearId: dto.schoolYearId.toString(),
+        gradeLevel: dto.gradeLevel,
+        section: dto.section,
+      },
+    });
+
+    if (existingSection) {
+      throw new ConflictException(
+        'Class group already exists for this grade and section',
+      );
+    }
+
+    const enrollmentIds = dto.enrollmentIds.map((id) => id.toString());
+    const enrollments = await this.enrollmentsRepository.find({
+      where: { enrollmentId: In(enrollmentIds) },
+    });
+
+    if (enrollments.length !== dto.enrollmentIds.length) {
+      throw new NotFoundException('Some enrollments were not found');
+    }
+
+    enrollments.forEach((enrollment) => {
+      if (enrollment.schoolYearId !== dto.schoolYearId.toString()) {
+        throw new ConflictException(
+          'Enrollment belongs to a different school year',
+        );
+      }
+      if (enrollment.gradeLevel !== dto.gradeLevel) {
+        throw new ConflictException(
+          'Enrollment grade does not match the selected grade',
+        );
+      }
+      if (enrollment.classGroupId) {
+        throw new ConflictException(
+          'Enrollment is already assigned to a class group',
+        );
+      }
+      if (enrollment.active === false) {
+        throw new ConflictException('Enrollment is inactive');
+      }
+    });
+
+    const capacity = classroom.capacity ?? 0;
+    const studentCount = enrollments.length;
+    if (capacity > 0 && studentCount > capacity * 2) {
+      throw new ConflictException(
+        'Too many students for the selected classroom capacity',
+      );
+    }
+
+    const capacityWarning = capacity > 0 && studentCount > capacity;
+
+    const response = await this.enrollmentsRepository.manager.transaction(
+      async (manager) => {
+        const classGroupRepo = manager.getRepository(ClassGroups);
+        const enrollmentRepo = manager.getRepository(Enrollments);
+        const fixedRepo = manager.getRepository(ClassGroupFixedLocations);
+
+        const group = classGroupRepo.create({
+          schoolYearId: dto.schoolYearId.toString(),
+          gradeLevel: dto.gradeLevel,
+          section: dto.section,
+          classroom,
+        });
+
+        const savedGroup = await classGroupRepo.save(group);
+
+        await enrollmentRepo.update(
+          { enrollmentId: In(enrollmentIds) },
+          { classGroupId: savedGroup.classGroupId },
+        );
+
+        if (dto.fixedLocation) {
+          let fixedLocation = await fixedRepo.findOne({
+            where: {
+              gradeLevel: dto.gradeLevel,
+              section: dto.section,
+            },
+          });
+
+          if (!fixedLocation) {
+            fixedLocation = fixedRepo.create({
+              gradeLevel: dto.gradeLevel,
+              section: dto.section,
+              classroomId: classroom.classroomId,
+            });
+          } else {
+            fixedLocation.classroomId = classroom.classroomId;
+          }
+
+          await fixedRepo.save(fixedLocation);
+        }
+
+        return savedGroup;
+      },
+    );
+
+    return {
+      classGroup: this.toResponse(response),
+      studentsAssigned: studentCount,
+      capacity,
+      capacityWarning,
+      fixedLocationApplied: dto.fixedLocation ?? false,
+    };
+  }
+
+  async updateClassroomAssignment(
+    id: number,
+    classroomId: number,
+    fixedLocation?: boolean,
+  ): Promise<ManualAssignSectionResponse> {
+    const existingGroup = await this.getClassGroupEntity(id);
+    const classroom = await this.getClassroomOrThrow(classroomId);
+
+    await this.assertClassroomAvailable(
+      existingGroup.schoolYearId,
+      classroom.classroomId,
+      existingGroup.classGroupId,
+    );
+
+    const studentCount = await this.enrollmentsRepository.count({
+      where: { classGroupId: existingGroup.classGroupId, active: true },
+    });
+
+    const capacity = classroom.capacity ?? 0;
+    if (capacity > 0 && studentCount > capacity * 2) {
+      throw new ConflictException(
+        'Too many students for the selected classroom capacity',
+      );
+    }
+
+    const capacityWarning = capacity > 0 && studentCount > capacity;
+
+    const response = await this.enrollmentsRepository.manager.transaction(
+      async (manager) => {
+        const classGroupRepo = manager.getRepository(ClassGroups);
+        const fixedRepo = manager.getRepository(ClassGroupFixedLocations);
+
+        existingGroup.classroom = classroom;
+        const savedGroup = await classGroupRepo.save(existingGroup);
+
+        if (fixedLocation) {
+          let fixedLocationEntity = await fixedRepo.findOne({
+            where: {
+              gradeLevel: existingGroup.gradeLevel,
+              section: existingGroup.section,
+            },
+          });
+
+          if (!fixedLocationEntity) {
+            fixedLocationEntity = fixedRepo.create({
+              gradeLevel: existingGroup.gradeLevel,
+              section: existingGroup.section,
+              classroomId: classroom.classroomId,
+            });
+          } else {
+            fixedLocationEntity.classroomId = classroom.classroomId;
+          }
+
+          await fixedRepo.save(fixedLocationEntity);
+        }
+
+        return savedGroup;
+      },
+    );
+
+    return {
+      classGroup: this.toResponse(response),
+      studentsAssigned: studentCount,
+      capacity,
+      capacityWarning,
+      fixedLocationApplied: fixedLocation ?? false,
+    };
+  }
+
   private async getClassGroupEntity(id: number): Promise<ClassGroups> {
     const entity = await this.classGroupsRepository.findOne({
       where: { classGroupId: id.toString() },
@@ -341,6 +553,31 @@ export class ClassGroupsService {
     }
 
     return classroom;
+  }
+
+  private async assertClassroomAvailable(
+    schoolYearId: string,
+    classroomId: string,
+    excludeClassGroupId?: string,
+  ): Promise<void> {
+    const qb = this.classGroupsRepository
+      .createQueryBuilder('classGroups')
+      .leftJoin('classGroups.classroom', 'classroom')
+      .where('classGroups.schoolYearId = :schoolYearId', { schoolYearId })
+      .andWhere('classroom.classroomId = :classroomId', { classroomId });
+
+    if (excludeClassGroupId) {
+      qb.andWhere('classGroups.classGroupId != :excludeId', {
+        excludeId: excludeClassGroupId,
+      });
+    }
+
+    const existing = await qb.getOne();
+    if (existing) {
+      throw new ConflictException(
+        'Classroom already assigned to another class group for this year',
+      );
+    }
   }
 
   private toResponse(entity: ClassGroups): ClassGroupResponse {

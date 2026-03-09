@@ -1,15 +1,31 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateIf,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
 const NATIONAL_ID_REGEX = /^[A-Z0-9-_.]{3,32}$/i;
+const GUARDIAN_RELATIONSHIP_OPTIONS = [
+  'Madre',
+  'Padre',
+  'Hermana',
+  'Hermano',
+  'Abuela',
+  'Abuelo',
+  'Tia',
+  'Tio',
+  'Otro',
+] as const;
+
+export type GuardianRelationshipOption =
+  (typeof GUARDIAN_RELATIONSHIP_OPTIONS)[number];
 
 export class CreateStudentDto {
   @ApiProperty({
@@ -58,13 +74,24 @@ export class CreateStudentDto {
   guardianName: string;
 
   @ApiProperty({
-    example: 'Mother',
+    example: 'Madre',
     description: 'Relationship between guardian and student',
   })
+  @IsIn(GUARDIAN_RELATIONSHIP_OPTIONS, {
+    message:
+      'guardianRelationship must be one of: Madre, Padre, Hermana, Hermano, Abuela, Abuelo, Tia, Tio, Otro',
+  })
+  guardianRelationship: GuardianRelationshipOption;
+
+  @ApiPropertyOptional({
+    example: 'Padrino',
+    description: 'Specify the relationship when guardianRelationship is Otro',
+  })
+  @ValidateIf((dto) => dto.guardianRelationship === 'Otro')
   @IsString()
   @IsNotEmpty()
   @MaxLength(60)
-  guardianRelationship: string;
+  guardianRelationshipOther?: string;
 
   @ApiProperty({
     example: '+57 3001234567',
@@ -77,4 +104,4 @@ export class CreateStudentDto {
   guardianPhone: string;
 }
 
-export { NATIONAL_ID_REGEX };
+export { NATIONAL_ID_REGEX, GUARDIAN_RELATIONSHIP_OPTIONS };
