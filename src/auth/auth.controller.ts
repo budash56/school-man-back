@@ -6,6 +6,7 @@ import {
   Get,
   Post,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { AuthResponse, SanitizedUser } from './auth.types';
@@ -14,6 +15,8 @@ import { SignupDto } from './dto/signup.dto';
 import { CurrentUser } from './current-user.decorator';
 import { Public } from './public.decorator';
 import { AuthResponseDto, AuthUserDto } from './dto/auth-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')
 @ApiBearerAuth()
@@ -73,5 +76,14 @@ export class AuthController {
       throw new UnauthorizedException('Authentication required');
     }
     return user;
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @CurrentUser() user: SanitizedUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(user, dto);
   }
 }

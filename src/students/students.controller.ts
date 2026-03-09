@@ -26,6 +26,8 @@ import { StudentsService } from './students.service';
 import { READ_ROLES, Roles } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { SanitizedUser } from '../auth/auth.types';
 
 @ApiTags('students')
 @Roles(...READ_ROLES)
@@ -50,13 +52,13 @@ export class StudentsController {
     description: 'Filters students enrolled in the provided school year ID',
     example: 2025,
   })
-  findAll(@Query() query: StudentsQueryDto) {
-    return this.studentsService.findAll(query);
+  findAll(@Query() query: StudentsQueryDto, @CurrentUser() user?: SanitizedUser) {
+    return this.studentsService.findAll(query, user);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.studentsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user?: SanitizedUser) {
+    return this.studentsService.findOne(id, user);
   }
 
   @Roles('admin', 'coordinator')

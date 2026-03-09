@@ -19,6 +19,7 @@ import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { GradesRepository } from '../grades/grades.repository';
 import { AttendanceRepository } from '../attendance/attendance.repository';
 import { ClassGroupsRepository } from '../class_groups/class_groups.repository';
+import type { SanitizedUser } from '../auth/auth.types';
 
 @Injectable()
 export class StudentsService {
@@ -31,7 +32,10 @@ export class StudentsService {
     private readonly classGroupsRepository: ClassGroupsRepository,
   ) {}
 
-  async findAll(query: StudentsQueryDto): Promise<PaginatedResult<Students>> {
+  async findAll(
+    query: StudentsQueryDto,
+    currentUser?: SanitizedUser,
+  ): Promise<PaginatedResult<Students>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
     const qb = this.repository.createQueryBuilder('students');
 
@@ -61,6 +65,19 @@ export class StudentsService {
       );
     }
 
+    if (currentUser?.role === 'teacher') {
+      qb.andWhere(
+        `EXISTS (
+          SELECT 1
+          FROM enrollments e
+          JOIN courses c ON c.class_group_id = e.class_group_id
+          WHERE e.student_id = students.student_id
+            AND c.teacher_id = :teacherId
+        )`,
+        { teacherId: currentUser.nationalId },
+      );
+    }
+
     qb.orderBy('students.created_at', 'DESC');
     qb.skip((page - 1) * pageSize);
     qb.take(pageSize);
@@ -69,7 +86,24 @@ export class StudentsService {
     return buildPaginationResult(data, total, page, pageSize);
   }
 
-  async findOne(id: number): Promise<Students> {
+  async findOne(id: number, currentUser?: SanitizedUser): Promise<Students> {
+    if (currentUser?.role === 'teacher') {
+      const hasAccess = await this.repository
+        .createQueryBuilder('students')
+        .select('students.student_id')
+        .innerJoin('enrollments', 'e', 'e.student_id = students.student_id')
+        .innerJoin('courses', 'c', 'c.class_group_id = e.class_group_id')
+        .where('students.student_id = :id', { id })
+        .andWhere('c.teacher_id = :teacherId', {
+          teacherId: currentUser.nationalId,
+        })
+        .getRawOne();
+
+      if (!hasAccess) {
+        throw new NotFoundException('Student not found');
+      }
+    }
+
     return this.loadStudent(id);
   }
 

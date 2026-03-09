@@ -11,6 +11,7 @@ import { Users } from '../users/users.entity';
 import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import type { AuthResponse, SanitizedUser } from './auth.types';
 export type { AuthResponse, SanitizedUser } from './auth.types';
 
@@ -53,6 +54,34 @@ export class AuthService {
 
     const createdUser = await this.usersRepo.save(entity);
     return this.buildAuthResponse(createdUser);
+  }
+
+  async changePassword(
+    currentUser: SanitizedUser,
+    dto: ChangePasswordDto,
+  ): Promise<{ updated: true }> {
+    const user = await this.usersRepo.findOne({
+      where: { nationalId: currentUser.nationalId },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Contraseña actual inválida');
+    }
+
+    user.passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    user.mustChangePassword = false;
+    user.tempPasswordIssuedAt = null;
+    user.updatedAt = new Date();
+
+    await this.usersRepo.save(user);
+    return { updated: true };
   }
 
   private async validateUser(

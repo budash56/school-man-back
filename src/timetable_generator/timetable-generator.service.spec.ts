@@ -151,6 +151,7 @@ describe('TimetableGeneratorService', () => {
       lastName: null,
       email: null,
       phone: null,
+      mustChangePassword: false,
     });
 
     expect(assignmentsService.create).toHaveBeenCalledTimes(2);
