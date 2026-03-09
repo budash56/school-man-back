@@ -133,6 +133,7 @@ export class AuthService {
       lastName: user.lastName,
       email: user.email,
       phone: user.phone,
+      mustChangePassword: user.mustChangePassword,
     };
   }
 }

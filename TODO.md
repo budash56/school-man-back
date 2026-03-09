@@ -30,6 +30,11 @@
 - Keep capacity defaults per building where applicable.
 - Support future class-group assignment to buildings without enforcing it yet.
 
+**Creación Masiva de Usuarios**
+- Phase 1: bulk import teachers from CSV/XLSX (national_id, first_name, last_name, email) with temp passwords.
+- Phase 2: send emails with temp credentials to all imported users.
+- Phase 3: first-login flow to force password change and capture teacher skill tree.
+
 **Backend Cleanup**
 - Implement real "break at B" slot handling in timetable generator. `src/timetable_generator/timetable-generator.service.spec.ts:353`
 - Balance class group sections by gender once student gender exists. `src/class_groups/class_groups.service.ts:283`

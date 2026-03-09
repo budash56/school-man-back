@@ -21,6 +21,9 @@ export class AuthUserDto {
 
   @ApiProperty({ example: '+57 3001234567', nullable: true })
   phone: string | null;
+
+  @ApiProperty({ example: false })
+  mustChangePassword: boolean;
 }
 
 export class AuthResponseDto {

@@ -7,14 +7,19 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiForbiddenResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
 import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -81,6 +86,26 @@ export class UsersController {
   })
   create(@Body() dto: CreateUsersDto) {
     return this.service.create(dto);
+  }
+
+  @Roles(...WRITE_ROLES)
+  @Post('bulk-import')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
+  bulkImport(@UploadedFile() file: Express.Multer.File) {
+    return this.service.bulkImport(file);
   }
 
   @Roles(...WRITE_ROLES)

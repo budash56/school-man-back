@@ -53,6 +53,18 @@ export class Users {
   @Column('boolean', { name: 'is_active', default: () => 'true' })
   isActive: boolean;
 
+  @Column('boolean', {
+    name: 'must_change_password',
+    default: () => 'false',
+  })
+  mustChangePassword: boolean;
+
+  @Column('timestamp with time zone', {
+    name: 'temp_password_issued_at',
+    nullable: true,
+  })
+  tempPasswordIssuedAt: Date | null;
+
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,
