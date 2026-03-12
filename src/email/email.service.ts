@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/configuration';
 import { EMAIL_TRANSPORT } from './email.constants';
-import {
+import type {
   EmailSendPayload,
   EmailTransport,
   MeetingNotificationInput,
@@ -11,6 +11,7 @@ import {
 } from './email.types';
 import {
   buildMeetingNotificationEmail,
+  buildTestEmail,
   buildWelcomeEmail,
 } from './email.templates';
 
@@ -101,20 +102,53 @@ export class EmailService {
     return result;
   }
 
+  async sendTestEmail(to: string): Promise<{ sent: boolean }> {
+    const { subject, text, html } = buildTestEmail(this.getSchoolName());
+    const payload: EmailSendPayload = {
+      from: this.formatFrom(),
+      to,
+      subject,
+      text,
+      html,
+    };
+
+    await this.sendOrPreview('test', payload, {
+      subject,
+      recipient: to,
+    });
+
+    return { sent: this.emailConfig.enabled };
+  }
+
+  async verifyConnection(): Promise<{ ok: boolean }> {
+    this.assertConnectionConfig(this.emailConfig);
+    try {
+      await this.transport.verify();
+      this.logger.log('Email SMTP connection verified.');
+      return { ok: true };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        'Email SMTP verification failed.',
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw new Error(`Email SMTP verification failed: ${message}`);
+    }
+  }
+
   getSchoolName(): string {
     return this.emailConfig.fromName || this.emailConfig.fromAddress;
   }
 
   private async sendOrPreview(
-    type: 'welcome' | 'meeting',
+    type: 'welcome' | 'meeting' | 'test',
     payload: EmailSendPayload,
     meta: Record<string, unknown>,
   ) {
     if (!this.emailConfig.enabled) {
       this.logPreview(type, payload);
-      this.logger.log(
-        `Email preview logged (${type}).`,
-      );
+      this.logger.log(`Email preview logged (${type}).`);
       return;
     }
 
@@ -158,7 +192,10 @@ export class EmailService {
     if (!config.enabled) {
       return;
     }
+    this.assertConnectionConfig(config);
+  }
 
+  private assertConnectionConfig(config: AppConfig['email']) {
     const required = [
       { key: 'provider', value: config.provider },
       { key: 'host', value: config.host },

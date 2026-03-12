@@ -57,3 +57,21 @@ export const buildMeetingNotificationEmail = (
 
   return { subject, text, html };
 };
+
+export const buildTestEmail = (schoolName: string) => {
+  const subject = 'SMTP test from school system';
+  const text = [
+    'Hola,',
+    '',
+    'Este es un correo de prueba para confirmar la configuracion SMTP.',
+    `Sistema: ${schoolName}`,
+  ].join('\n');
+
+  const html = `
+    <p>Hola,</p>
+    <p>Este es un correo de prueba para confirmar la configuracion SMTP.</p>
+    <p><strong>Sistema:</strong> ${schoolName}</p>
+  `;
+
+  return { subject, text, html };
+};

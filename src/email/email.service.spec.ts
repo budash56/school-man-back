@@ -26,6 +26,7 @@ const buildService = async (overrides: Partial<AppConfig['email']> = {}) => {
   const emailConfig = createEmailConfig(overrides);
   const transport: EmailTransport = {
     send: jest.fn().mockResolvedValue(undefined),
+    verify: jest.fn().mockResolvedValue(undefined),
   };
 
   const moduleRef = await Test.createTestingModule({
@@ -135,6 +136,47 @@ describe('EmailService', () => {
     await moduleRef.close();
   });
 
+  it('verifies SMTP connection through provider', async () => {
+    const { service, transport, moduleRef } = await buildService();
+
+    await service.verifyConnection();
+
+    expect(transport.verify).toHaveBeenCalledTimes(1);
+
+    await moduleRef.close();
+  });
+
+  it('sends test email when enabled', async () => {
+    const { service, transport, moduleRef } = await buildService();
+
+    await service.sendTestEmail('prof1@example.com');
+
+    expect(transport.send).toHaveBeenCalledTimes(1);
+    const payload = (transport.send as jest.Mock).mock.calls[0][0];
+    expect(payload.to).toBe('prof1@example.com');
+    expect(payload.subject).toBe('SMTP test from school system');
+
+    await moduleRef.close();
+  });
+
+  it('previews test email when disabled', async () => {
+    const logSpy = jest
+      .spyOn(Logger.prototype, 'log')
+      .mockImplementation(() => undefined);
+    const { service, transport, moduleRef } = await buildService({
+      enabled: false,
+    });
+
+    await service.sendTestEmail('prof1@example.com');
+
+    expect(transport.send).not.toHaveBeenCalled();
+    expect(
+      logSpy.mock.calls.some((call) => String(call[0]).includes('EMAIL_PREVIEW')),
+    ).toBe(true);
+
+    await moduleRef.close();
+  });
+
   it('reports failures when a batch send fails', async () => {
     const { service, transport, emailConfig, moduleRef } = await buildService({
       bulkBatchSize: 2,
@@ -167,5 +209,14 @@ describe('EmailService', () => {
     expect(result.failures[0].batchIndex).toBe(1);
 
     await moduleRef.close();
+  });
+
+  it('throws on startup when enabled and config is missing', async () => {
+    await expect(
+      buildService({
+        enabled: true,
+        pass: '',
+      }),
+    ).rejects.toThrow(/Email configuration missing/);
   });
 });

@@ -85,6 +85,21 @@ Cómo probar localmente:
 - Mantén `EMAIL_ENABLED=false` para validar el contenido en logs.
 - Cambia a `EMAIL_ENABLED=true` y configura un app password de Gmail para envío real.
 
+Generar app password de Gmail:
+
+1. En la cuenta Gmail, ve a **Seguridad** → **Verificación en dos pasos**.
+2. Crea una **Contraseña de aplicación** para SMTP.
+3. Colócala en `.env` como `EMAIL_PASS` (no la subas a git).
+
+Comandos útiles:
+
+- Verificar conexión SMTP: `npm run email:verify`
+- Enviar un correo de prueba: `npm run email:test -- prof1@example.com`
+
+Importante:
+
+- No cometas `EMAIL_PASS` ni archivos `.env` en git.
+
 Ejemplo de uso (demo):
 
 ```ts

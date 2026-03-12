@@ -22,6 +22,11 @@ export class SmtpEmailProvider implements EmailTransport {
     });
   }
 
+  async verify(): Promise<void> {
+    const transporter = this.getTransporter();
+    await transporter.verify();
+  }
+
   private getTransporter(): Transporter {
     if (this.transporter) {
       return this.transporter;

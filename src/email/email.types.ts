@@ -35,4 +35,5 @@ export type EmailSendPayload = {
 
 export interface EmailTransport {
   send(payload: EmailSendPayload): Promise<void>;
+  verify(): Promise<void>;
 }
