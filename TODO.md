@@ -16,13 +16,9 @@
 - Apply academic criteria for promotion.
 
 **Currículo**
-- Fix weekly hours for grades 1-5 and 6-9; keep 10-11 specialization-specific.
 - Curriculum import pipeline (CSV, TXT, XLSX, PDF text, OCR) with preview + validation.
-- Separate curriculum per grade and expose details.
 - Link professors (teachers) to course instances during curriculum creation.
-- Link subject areas to specialization curricula.
-- Hide specialization-only subjects unless a specialization curriculum is selected.
-- Add specialization flag on areas (e.g., `is_specialization`).
+
 
 **Aulas y Edificios**
 - Add buildings and classroom templates (name + capacity) to seed/validate classrooms.
@@ -31,11 +27,13 @@
 - Support future class-group assignment to buildings without enforcing it yet.
 
 **Creación Masiva de Usuarios**
-- Phase 1: bulk import teachers from CSV/XLSX (national_id, first_name, last_name, email) with temp passwords.
-- Phase 2: send emails with temp credentials to all imported users.
+- ~~Phase 1: bulk import teachers from CSV/XLSX (national_id, first_name, last_name, email) with temp passwords.~~
+- ~~Phase 2: send emails with temp credentials to all imported users.~~
 - Phase 3: first-login flow to force password change and capture teacher skill tree.
-- Phase 2.1: configurable email system (SMTP/SendGrid) with templates and delivery logs.
-- Phase 2.2: bulk notifications to selected professors or all (events, announcements).
+- ~~Phase 3a: force password change on first login.~~
+- Phase 3b: capture teacher skill tree (subjects/grade bands/preferences).
+- ~~Phase 2.1: configurable email system (SMTP/SendGrid) with templates and delivery logs.~~
+- ~~Phase 2.2: bulk notifications to selected professors or all (events, announcements).~~
 
 **Calendario**
 - Add admin calendar for future events visible to all professors.
