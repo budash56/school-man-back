@@ -1,7 +1,7 @@
 export type WelcomeEmailInput = {
   recipientEmail: string;
   recipientName: string;
-  username: string;
+  nationalId: string;
   temporaryPassword: string;
   coordinatorName: string;
   schoolName: string;

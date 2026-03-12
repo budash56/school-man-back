@@ -1,11 +1,11 @@
 import { buildMeetingNotificationEmail, buildWelcomeEmail } from './email.templates';
 
 describe('Email templates', () => {
-  it('builds welcome email with username and temp password', () => {
+  it('builds welcome email with nationalId and temp password', () => {
     const result = buildWelcomeEmail({
       recipientEmail: 'prof1@example.com',
       recipientName: 'Ana Gomez',
-      username: 'ana.gomez',
+      nationalId: '950001',
       temporaryPassword: 'Temp#1234',
       coordinatorName: 'Coord. Maria',
       schoolName: 'Colegio Central',
@@ -13,11 +13,11 @@ describe('Email templates', () => {
 
     expect(result.subject).toBe('Your account has been created');
     expect(result.text).toContain('Ana Gomez');
-    expect(result.text).toContain('ana.gomez');
+    expect(result.text).toContain('950001');
     expect(result.text).toContain('Temp#1234');
     expect(result.text).toContain('Coord. Maria');
     expect(result.text).toContain('Colegio Central');
-    expect(result.html).toContain('ana.gomez');
+    expect(result.html).toContain('950001');
     expect(result.html).toContain('Temp#1234');
   });
 

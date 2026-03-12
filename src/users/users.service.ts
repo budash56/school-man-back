@@ -500,7 +500,7 @@ export class UsersService {
         recipientName:
           [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
           user.username,
-        username: user.username,
+        nationalId: user.nationalId,
         temporaryPassword,
         coordinatorName,
         schoolName: this.emailService.getSchoolName(),

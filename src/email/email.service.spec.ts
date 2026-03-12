@@ -122,7 +122,7 @@ describe('EmailService', () => {
     await service.sendWelcomeEmail({
       recipientEmail: 'prof1@example.com',
       recipientName: 'Ana Gomez',
-      username: 'ana.gomez',
+      nationalId: '950001',
       temporaryPassword: 'Temp#1234',
       coordinatorName: 'Coord. Maria',
       schoolName: emailConfig.fromName,

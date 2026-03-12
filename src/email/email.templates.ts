@@ -6,7 +6,7 @@ export const buildWelcomeEmail = (input: WelcomeEmailInput) => {
     `Hola ${input.recipientName},`,
     '',
     `Tu cuenta ha sido creada en ${input.schoolName}.`,
-    `Usuario: ${input.username}`,
+    `Documento: ${input.nationalId}`,
     `Contraseña temporal: ${input.temporaryPassword}`,
     'Por favor cambia la contraseña en tu primer inicio de sesión.',
     '',
@@ -17,7 +17,7 @@ export const buildWelcomeEmail = (input: WelcomeEmailInput) => {
   const html = `
     <p>Hola ${input.recipientName},</p>
     <p>Tu cuenta ha sido creada en <strong>${input.schoolName}</strong>.</p>
-    <p><strong>Usuario:</strong> ${input.username}<br/>
+    <p><strong>Documento:</strong> ${input.nationalId}<br/>
     <strong>Contraseña temporal:</strong> ${input.temporaryPassword}</p>
     <p>Por favor cambia la contraseña en tu primer inicio de sesión.</p>
     <p>Coordinación: ${input.coordinatorName}<br/>
