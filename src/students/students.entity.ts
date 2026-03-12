@@ -54,6 +54,13 @@ export class Students {
   @Column('character varying', { name: 'guardian_phone', length: 50 })
   guardianPhone: string;
 
+  @Column('character varying', {
+    name: 'gender',
+    length: 20,
+    default: () => "'No Binario'",
+  })
+  gender: string;
+
   @Column('boolean', {
     name: 'is_active',
     nullable: true,

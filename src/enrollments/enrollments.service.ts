@@ -38,6 +38,7 @@ export type EnrollmentResponse = {
     firstName: string;
     lastName: string;
     nationalId: string;
+    gender: string;
   } | null;
 };
 
@@ -351,12 +352,13 @@ export class EnrollmentsService {
       enrolledAt: enrollment.enrolledAt ?? null,
       student: enrollment.student
         ? {
-            studentId: Number(enrollment.student.studentId),
-            firstName: enrollment.student.firstName,
-            lastName: enrollment.student.lastName,
-            nationalId: enrollment.student.nationalId,
-          }
-        : null,
+          studentId: Number(enrollment.student.studentId),
+          firstName: enrollment.student.firstName,
+          lastName: enrollment.student.lastName,
+          nationalId: enrollment.student.nationalId,
+          gender: enrollment.student.gender,
+        }
+      : null,
     };
   }
 }

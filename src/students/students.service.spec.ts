@@ -30,6 +30,7 @@ describe('StudentsService', () => {
     guardianPhone: '+573001234567',
     dob: '2010-05-15',
     address: 'Calle 123',
+    gender: 'Femenino',
   };
 
   beforeEach(() => {

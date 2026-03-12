@@ -124,6 +124,7 @@ export class StudentsService {
       guardianName: dto.guardianName,
       guardianRelationship,
       guardianPhone: dto.guardianPhone,
+      gender: dto.gender,
       isActive: true,
     });
 

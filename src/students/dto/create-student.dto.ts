@@ -23,9 +23,11 @@ const GUARDIAN_RELATIONSHIP_OPTIONS = [
   'Tio',
   'Otro',
 ] as const;
+const STUDENT_GENDER_OPTIONS = ['Femenino', 'Masculino', 'No Binario'] as const;
 
 export type GuardianRelationshipOption =
   (typeof GUARDIAN_RELATIONSHIP_OPTIONS)[number];
+export type StudentGenderOption = (typeof STUDENT_GENDER_OPTIONS)[number];
 
 export class CreateStudentDto {
   @ApiProperty({
@@ -102,6 +104,21 @@ export class CreateStudentDto {
   @MinLength(7)
   @MaxLength(30)
   guardianPhone: string;
+
+  @ApiProperty({
+    example: 'Femenino',
+    description: 'Student gender',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(STUDENT_GENDER_OPTIONS, {
+    message: 'gender must be one of: Femenino, Masculino, No Binario',
+  })
+  gender: StudentGenderOption;
 }
 
-export { NATIONAL_ID_REGEX, GUARDIAN_RELATIONSHIP_OPTIONS };
+export {
+  NATIONAL_ID_REGEX,
+  GUARDIAN_RELATIONSHIP_OPTIONS,
+  STUDENT_GENDER_OPTIONS,
+};
