@@ -5,9 +5,9 @@ This document captures the current behaviour of the School Managament project ba
 ## At a Glance
 - **Stack:** [NestJS 11](https://docs.nestjs.com/) + TypeScript, [TypeORM](https://typeorm.io/) (PostgreSQL driver), [Jest](https://jestjs.io/) for tests, [Swagger](https://docs.nestjs.com/openapi/introduction) for API docs.
 - **Entry point:** `src/main.ts` bootstraps `AppModule` with global validation (`ValidationPipe`), config-driven server URL injection, RBAC guards, and Swagger UI at `/api/docs`.
-- **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, and `jwt` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, expiry). `buildDataSourceOptions` centralizes TypeORM defaults.
-- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, and grade-scheme catalogs in addition to school years, enrollments, attendance, grades, notifications, and timetable coordination.
-- **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization.
+- **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, `jwt`, and `email` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, JWT expiry, SMTP credentials). `buildDataSourceOptions` centralizes TypeORM defaults.
+- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, and **SMTP email delivery** alongside school years, enrollments, attendance, grades, notifications, and timetable coordination.
+- **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization. Users can be flagged with `mustChangePassword` to force credential rotation.
 - **Persistence & tooling:** PostgreSQL via environment-configured connection, `SnakeNamingStrategy`, `migrationsRun: true`, and a `scripts/export-openapi.ts` helper that stubs TypeORM when `OPENAPI_EXPORT=1` to export Swagger without a live DB.
 
 ## Repository Layout
@@ -44,7 +44,9 @@ This document captures the current behaviour of the School Managament project ba
   - `POST /auth/login` — Authenticates by `nationalId` + password, returns JWT + user.
   - `POST /auth/signup` — Creates a user; only admins can promote roles above teacher, but if the database has zero admins the first signup is promoted automatically (same flow the team uses to bootstrap new environments).
   - `GET /auth/me` — Returns the current user profile; requires authentication.
-- JWT payload carries `sub` (national ID), `username`, `role`, optional `jti`. Tokens signed with `JWT_SECRET` (default `change-me`) and expire after one hour.
+  - `POST /auth/change-password` — Authenticated endpoint to rotate the password and clear `mustChangePassword`.
+- JWT payload carries `sub` (national ID), `username`, `role`, optional `jti`. Tokens signed with `JWT_SECRET` (default `change-me`) and expire according to `JWT_EXPIRES_IN`.
+  - `JWT_EXPIRES_IN` defaults to `30d` in config (testing), but should be set per environment.
 - Guards:
   - `JwtAuthGuard` honours the `@Public()` decorator to allow unauthenticated routes.
   - `RolesGuard` inspects `@Roles(...)` metadata; `admin` is implicitly whitelisted for any protected route.
@@ -127,6 +129,15 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Admin/coordinator-managed directory of system users.
   - Pagination with keyword search across username/national ID/name.
   - Repository-level uniqueness enforced for nationalId/username; service leverages `DbErrorMapper` to map DB conflicts to HTTP 409.
+  - **Bulk import:** `POST /users/bulk-import` accepts CSV/XLSX with `nationalId`, `firstName`, `lastName`, `email` (optional `username`, `phone`), generates temporary passwords, and returns a credential summary for review.
+  - New users can be flagged with `mustChangePassword` and `tempPasswordIssuedAt` to enforce password rotation on first login.
+
+- **Email (SMTP) (`/emails`)**
+  - Gmail SMTP integration via `EmailService` and `SmtpEmailProvider` (Nodemailer).
+  - `POST /emails/meeting` sends coordinator announcements to multiple professors using **BCC** batches (`EMAIL_BULK_BATCH_SIZE`).
+  - Welcome emails are sent individually when teachers are created (single create or bulk import).
+  - Safe local behavior: if `EMAIL_ENABLED=false`, messages are logged as `EMAIL_PREVIEW` instead of being sent.
+  - CLI helpers: `npm run email:verify` (SMTP verify) and `npm run email:test -- you@example.com` (send test email).
 
 - **Grade Schemes & Scheme Values (`/grade-schemes`, `/grade-scheme-values`)**
   - Catalogs the SABJ letter system (or future grading variants) so admins can activate/deactivate entire schemes.
@@ -195,7 +206,17 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` | Discrete Postgres connection info | Defaults to `localhost:5432`, user `postgres`, empty password, DB `schoolmg` |
 | `DB_SSL` | Enables TLS | `false`; set to `'true'` when deploying outside the private network |
 | `JWT_SECRET` | Symmetric signing key | `change-me` (override in any shared environment) |
-| `JWT_EXPIRES_IN` | JWT lifetime (`1h`, `3600s`, etc.) | `1h` |
+| `JWT_EXPIRES_IN` | JWT lifetime (`1h`, `3600s`, etc.) | `30d` (testing default) |
+| `EMAIL_ENABLED` | Enable real SMTP sends | `false` logs previews only |
+| `EMAIL_PROVIDER` | Email provider | `smtp` |
+| `EMAIL_HOST` | SMTP host | `smtp.gmail.com` |
+| `EMAIL_PORT` | SMTP port | `465` |
+| `EMAIL_SECURE` | SMTP TLS | `true` |
+| `EMAIL_USER` | SMTP username | Gmail address |
+| `EMAIL_PASS` | SMTP app password | App password (never commit) |
+| `EMAIL_FROM_NAME` | Display name | School display name |
+| `EMAIL_FROM_ADDRESS` | Sender email | Same Gmail address |
+| `EMAIL_BULK_BATCH_SIZE` | BCC batch size | `20` |
 | `OPENAPI_EXPORT` | Stub TypeORM when exporting swagger | Set to `1` for `npm run openapi:export` |
 
 **Current deployment:** everything runs inside the school’s private network on local Postgres instances. Future Docker packaging is under evaluation; for now each developer / operator installs Postgres locally and points the app at it via the vars above.
@@ -207,7 +228,8 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
    npm install
    ```
 2. **Configure environment**
-   - Copy `.env.example` (not present yet) or export required DB/JWT variables manually.
+   - Copy `.env.example` to `.env` and fill DB/JWT/email values as needed.
+   - Email settings are optional unless you want real SMTP sends.
    - Ensure a PostgreSQL instance is running and reachable with the configured credentials.
 3. **Run database migrations**
    ```CLI
@@ -234,6 +256,11 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
    npm run openapi:export
    ```
    Produces `openapi.json` with endpoints; the script sets `OPENAPI_EXPORT=1` and monkeypatches TypeORM so no real DB connection is required.
+8. **SMTP verification / test**
+   ```CLI
+   npm run email:verify
+   npm run email:test -- prof1@example.com
+   ```
 
 ## Testing
 
