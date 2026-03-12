@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Brackets, In } from 'typeorm';
 import * as XLSX from 'xlsx';
@@ -16,10 +16,17 @@ import {
   resolvePagination,
 } from '../shared/pagination';
 import { DbErrorMapper } from '../shared/db-error.mapper';
+import type { SanitizedUser } from '../auth/auth.types';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repository: UsersRepository) {}
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    private readonly repository: UsersRepository,
+    private readonly emailService: EmailService,
+  ) {}
 
   async findAll(query: QueryUsersDto): Promise<PaginatedResult<Users>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
@@ -66,12 +73,13 @@ export class UsersService {
     return entity;
   }
 
-  async create(dto: CreateUsersDto): Promise<Users> {
+  async create(dto: CreateUsersDto, currentUser?: SanitizedUser): Promise<Users> {
     const providedPasswordHash = dto.passwordHash?.trim();
     const usesTempPassword = !providedPasswordHash;
+    const tempPassword = usesTempPassword ? this.buildTempPassword(dto) : null;
     const passwordHash = providedPasswordHash
       ? providedPasswordHash
-      : await this.buildTempPasswordHash(dto);
+      : await bcrypt.hash(tempPassword ?? '', 10);
     const entity = this.repository.create({
       nationalId: dto.nationalId,
       username: dto.username,
@@ -87,7 +95,11 @@ export class UsersService {
     });
 
     try {
-      return await this.repository.save(entity);
+      const created = await this.repository.save(entity);
+      if (usesTempPassword && tempPassword) {
+        await this.safeSendWelcomeEmail(created, tempPassword, currentUser);
+      }
+      return created;
     } catch (error) {
       DbErrorMapper.throwConflict(
         error,
@@ -151,7 +163,10 @@ export class UsersService {
     return { deleted: true };
   }
 
-  async bulkImport(file: Express.Multer.File): Promise<{
+  async bulkImport(
+    file: Express.Multer.File,
+    currentUser?: SanitizedUser,
+  ): Promise<{
     total: number;
     created: number;
     skipped: number;
@@ -310,6 +325,7 @@ export class UsersService {
           username,
           tempPassword,
         });
+        await this.safeSendWelcomeEmail(entity, tempPassword, currentUser);
       } catch (error) {
         skipped += 1;
         errors.push({
@@ -351,24 +367,22 @@ export class UsersService {
     return `%${escaped}%`;
   }
 
-  private async buildTempPasswordHash(dto: CreateUsersDto): Promise<string> {
+  private buildTempPassword(dto: CreateUsersDto): string {
     const lastNameRaw = dto.lastName?.trim();
-    if (!lastNameRaw) {
-      throw new BadRequestException(
-        'Last name is required to generate a temporary password.',
-      );
-    }
-    const firstLastName = lastNameRaw.split(/\s+/)[0];
+    const firstNameRaw = dto.firstName?.trim();
+    const baseName = (
+      lastNameRaw ||
+      firstNameRaw ||
+      dto.username ||
+      'Usuario'
+    ).split(/\s+/)[0];
 
     const digits = dto.nationalId.replace(/\D/g, '');
     if (digits.length < 4) {
-      throw new BadRequestException(
-        'National ID must contain at least 4 digits to generate a temporary password.',
-      );
+      return this.generateTempPassword();
     }
 
-    const tempPassword = `${firstLastName}${digits.slice(-4)}`;
-    return bcrypt.hash(tempPassword, 10);
+    return `${baseName}${digits.slice(-4)}`;
   }
 
   private mapBulkRow(raw: Record<string, unknown>): {
@@ -468,5 +482,45 @@ export class UsersService {
       result += alphabet[bytes[i] % alphabet.length];
     }
     return result;
+  }
+
+  private async safeSendWelcomeEmail(
+    user: Users,
+    temporaryPassword: string,
+    currentUser?: SanitizedUser,
+  ) {
+    if (user.role !== 'teacher' || !user.email) {
+      return;
+    }
+
+    const coordinatorName = this.formatCoordinatorName(currentUser);
+    try {
+      await this.emailService.sendWelcomeEmail({
+        recipientEmail: user.email,
+        recipientName:
+          [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+          user.username,
+        username: user.username,
+        temporaryPassword,
+        coordinatorName,
+        schoolName: this.emailService.getSchoolName(),
+      });
+    } catch (error) {
+      this.logger.error(
+        'Failed to send welcome email',
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+  }
+
+  private formatCoordinatorName(user?: SanitizedUser): string {
+    if (!user) {
+      return 'Coordinación';
+    }
+    const name = [user.firstName, user.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return name || user.username;
   }
 }

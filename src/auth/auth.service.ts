@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -14,12 +15,16 @@ import { SignupDto } from './dto/signup.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import type { AuthResponse, SanitizedUser } from './auth.types';
 export type { AuthResponse, SanitizedUser } from './auth.types';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersRepo: UsersRepository,
+    private readonly emailService: EmailService,
   ) {}
 
   async login(dto: LoginDto): Promise<AuthResponse> {
@@ -53,6 +58,7 @@ export class AuthService {
     });
 
     const createdUser = await this.usersRepo.save(entity);
+    await this.sendWelcomeIfTeacher(createdUser, dto.password, requestingUser);
     return this.buildAuthResponse(createdUser);
   }
 
@@ -164,5 +170,38 @@ export class AuthService {
       phone: user.phone,
       mustChangePassword: user.mustChangePassword,
     };
+  }
+
+  private async sendWelcomeIfTeacher(
+    user: Users,
+    temporaryPassword: string,
+    requestingUser?: SanitizedUser,
+  ) {
+    if (user.role !== 'teacher' || !user.email) {
+      return;
+    }
+
+    const coordinatorName = this.formatCoordinatorName(requestingUser);
+    try {
+      await this.emailService.sendWelcomeEmail({
+        recipientEmail: user.email,
+        recipientName: [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || user.username,
+        username: user.username,
+        temporaryPassword,
+        coordinatorName,
+        schoolName: this.emailService.getSchoolName(),
+      });
+    } catch (error) {
+      // Do not block user creation if email fails
+      this.logger.error('Failed to send welcome email', error instanceof Error ? error.stack : undefined);
+    }
+  }
+
+  private formatCoordinatorName(user?: SanitizedUser): string {
+    if (!user) {
+      return 'Coordinación';
+    }
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return name || user.username;
   }
 }

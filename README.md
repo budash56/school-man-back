@@ -57,6 +57,62 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Email (Gmail SMTP para profesores)
+
+Este backend envía correos salientes a profesores usando Gmail SMTP. No maneja respuestas.
+
+Variables requeridas:
+
+- `EMAIL_ENABLED=false`
+- `EMAIL_PROVIDER=smtp`
+- `EMAIL_HOST=smtp.gmail.com`
+- `EMAIL_PORT=465`
+- `EMAIL_SECURE=true`
+- `EMAIL_USER=__PUT_TEST_GMAIL_ADDRESS_HERE__`
+- `EMAIL_PASS=__PUT_GMAIL_APP_PASSWORD_HERE__`
+- `EMAIL_FROM_NAME=__PUT_SCHOOL_DISPLAY_NAME_HERE__`
+- `EMAIL_FROM_ADDRESS=__PUT_TEST_GMAIL_ADDRESS_HERE__`
+- `EMAIL_BULK_BATCH_SIZE=20`
+
+Comportamiento clave:
+
+- Si `EMAIL_ENABLED=false`, no se envían correos reales. Se registra un `EMAIL_PREVIEW` estructurado con asunto y vista previa del cuerpo.
+- Notificaciones masivas usan BCC y se envían en lotes para no exponer correos entre profesores.
+- El campo `to` se deja con `EMAIL_FROM_ADDRESS` como destinatario seguro.
+
+Cómo probar localmente:
+
+- Mantén `EMAIL_ENABLED=false` para validar el contenido en logs.
+- Cambia a `EMAIL_ENABLED=true` y configura un app password de Gmail para envío real.
+
+Ejemplo de uso (demo):
+
+```ts
+await emailService.sendWelcomeEmail({
+  recipientEmail: 'prof1@example.com',
+  recipientName: 'Ana Gomez',
+  username: 'ana.gomez',
+  temporaryPassword: 'Temp#1234',
+  coordinatorName: 'Coord. Maria',
+  schoolName: 'Colegio Central',
+})
+
+await emailService.sendMeetingNotification({
+  recipientEmails: [
+    'prof1@example.com',
+    'prof2@example.com',
+    'prof3@example.com',
+    'prof4@example.com',
+    'prof5@example.com',
+  ],
+  subject: 'Reunión general',
+  message: 'Reunión el viernes a las 3pm.',
+  meetingDate: '2026-03-20 15:00',
+  coordinatorName: 'Coord. Maria',
+  schoolName: 'Colegio Central',
+})
+```
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

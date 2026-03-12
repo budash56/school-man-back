@@ -23,6 +23,8 @@ import type { Express } from 'express';
 import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { SanitizedUser } from '../auth/auth.types';
 import { UsersService } from './users.service';
 import { QueryUsersDto } from './dto/query-users.dto';
 import { CreateUsersDto } from './dto/create-users.dto';
@@ -84,8 +86,8 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  create(@Body() dto: CreateUsersDto) {
-    return this.service.create(dto);
+  create(@Body() dto: CreateUsersDto, @CurrentUser() user?: SanitizedUser) {
+    return this.service.create(dto, user);
   }
 
   @Roles(...WRITE_ROLES)
@@ -104,8 +106,11 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  bulkImport(@UploadedFile() file: Express.Multer.File) {
-    return this.service.bulkImport(file);
+  bulkImport(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user?: SanitizedUser,
+  ) {
+    return this.service.bulkImport(file, user);
   }
 
   @Roles(...WRITE_ROLES)

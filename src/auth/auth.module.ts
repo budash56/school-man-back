@@ -9,10 +9,12 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
     ConfigModule,
+    EmailModule,
     TypeOrmModule.forFeature([Users]),
     RepositoriesModule,
     PassportModule,

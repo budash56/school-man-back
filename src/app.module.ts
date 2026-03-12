@@ -91,6 +91,7 @@ import { DashboardsService } from './dashboards/dashboards.service';
 import { DashboardsController } from './dashboards/dashboards.controller';
 import { TimetableGeneratorService } from './timetable_generator/timetable-generator.service';
 import { TimetableGeneratorController } from './timetable_generator/timetable-generator.controller';
+import { EmailModule } from './email/email.module';
 
 export const buildTypeOrmRootOptions = (
   configService: ConfigService,
@@ -120,6 +121,7 @@ export const buildTypeOrmRootOptions = (
       isGlobal: true,
       load: [configuration],
     }),
+    EmailModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

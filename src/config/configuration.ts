@@ -12,6 +12,18 @@ export type AppConfig = {
     secret: string;
     expiresIn: string;
   };
+  email: {
+    enabled: boolean;
+    provider: string;
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    fromName: string;
+    fromAddress: string;
+    bulkBatchSize: number;
+  };
 };
 
 const resolveDatabaseUrl = (env: NodeJS.ProcessEnv): string => {
@@ -40,6 +52,18 @@ const configuration = (env: NodeJS.ProcessEnv = process.env): AppConfig => ({
   jwt: {
     secret: env.JWT_SECRET ?? 'change-me',
     expiresIn: env.JWT_EXPIRES_IN ?? '30d', // testing
+  },
+  email: {
+    enabled: env.EMAIL_ENABLED === 'true',
+    provider: env.EMAIL_PROVIDER ?? 'smtp',
+    host: env.EMAIL_HOST ?? '',
+    port: parseInt(env.EMAIL_PORT ?? '465', 10),
+    secure: env.EMAIL_SECURE === 'true',
+    user: env.EMAIL_USER ?? '',
+    pass: env.EMAIL_PASS ?? '',
+    fromName: env.EMAIL_FROM_NAME ?? '',
+    fromAddress: env.EMAIL_FROM_ADDRESS ?? '',
+    bulkBatchSize: parseInt(env.EMAIL_BULK_BATCH_SIZE ?? '20', 10),
   },
 });
 

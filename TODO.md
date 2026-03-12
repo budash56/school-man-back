@@ -34,6 +34,13 @@
 - Phase 1: bulk import teachers from CSV/XLSX (national_id, first_name, last_name, email) with temp passwords.
 - Phase 2: send emails with temp credentials to all imported users.
 - Phase 3: first-login flow to force password change and capture teacher skill tree.
+- Phase 2.1: configurable email system (SMTP/SendGrid) with templates and delivery logs.
+- Phase 2.2: bulk notifications to selected professors or all (events, announcements).
+
+**Calendario**
+- Add admin calendar for future events visible to all professors.
+- Add personal calendar for professors (e.g., exams per grade/section).
+- Event model: title, description, start/end, visibility (global/personal), audience (roles, grades, groups).
 
 **Backend Cleanup**
 - Implement real "break at B" slot handling in timetable generator. `src/timetable_generator/timetable-generator.service.spec.ts:353`
