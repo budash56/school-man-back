@@ -26,7 +26,7 @@ export type CourseSummary = {
   courseId: number;
   courseInstanceId: number;
   classGroupId: number;
-  teacherId: number;
+  teacherId: string;
   schoolYearId: number;
   gradeLevel: number;
   section: string;
@@ -79,7 +79,7 @@ export class CoursesService {
 
     if (query.teacherId !== undefined) {
       qb.andWhere('course.teacherId = :teacherId', {
-        teacherId: query.teacherId.toString(),
+        teacherId: query.teacherId,
       });
     }
 
@@ -143,7 +143,7 @@ export class CoursesService {
     const entity = this.coursesRepository.create({
       courseInstanceId: dto.courseInstanceId.toString(),
       classGroupId: dto.classGroupId.toString(),
-      teacherId: dto.teacherId.toString(),
+      teacherId: dto.teacherId,
     });
 
     try {
@@ -163,7 +163,7 @@ export class CoursesService {
     const nextCourseInstanceId =
       dto.courseInstanceId ?? Number(course.courseInstanceId);
     const nextClassGroupId = dto.classGroupId ?? Number(course.classGroupId);
-    const nextTeacherId = dto.teacherId ?? Number(course.teacherId);
+    const nextTeacherId = dto.teacherId ?? course.teacherId;
 
     const { courseInstance, classGroup, teacher } = await this.resolveRelations(
       nextCourseInstanceId,
@@ -225,7 +225,7 @@ export class CoursesService {
   private async resolveRelations(
     courseInstanceId: number,
     classGroupId: number,
-    teacherId: number,
+    teacherId: string,
   ) {
     const courseInstance = await this.courseInstancesRepository.findOne({
       where: { courseInstanceId: courseInstanceId.toString() },
@@ -244,7 +244,7 @@ export class CoursesService {
     }
 
     const teacher = await this.usersRepository.findOne({
-      where: { nationalId: teacherId.toString() },
+      where: { nationalId: teacherId },
     });
 
     if (!teacher) {
@@ -324,7 +324,7 @@ export class CoursesService {
       courseId: Number(course.courseId),
       courseInstanceId: Number(course.courseInstanceId),
       classGroupId: Number(course.classGroupId),
-      teacherId: Number(course.teacherId),
+      teacherId: course.teacherId,
       schoolYearId: Number(course.courseInstance?.schoolYearId ?? 0),
       gradeLevel:
         classGroup?.gradeLevel ?? course.courseInstance?.gradeLevel ?? 0,

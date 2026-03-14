@@ -1,0 +1,37 @@
+Below is a simple, router-agnostic step-by-step you can follow at home, plus specific official guides you can open. If you share your router brand/model later, I can tailor it to your exact menus.
+
+Step-by-step (router + DNS)
+1) Find your router’s IP and log in
+   - On Windows, open Command Prompt and run ipconfig, then look for Default Gateway.
+   - On macOS, open Terminal and run route -n get default.
+   - Open that IP in your browser and log in.
+
+2) Reserve a static IP via DHCP (recommended)
+   - Look for DHCP, LAN, or Address Reservation in your router’s admin UI.
+   - Find your server in the DHCP client list, then reserve an IP for it.
+   - This makes the router always assign the same IP to that device.
+
+3) Apply/Save and renew the server’s IP
+   - Save the reservation.
+   - Reboot the server or renew DHCP, then confirm it got the reserved IP.
+
+4) (Optional) Add a local DNS name
+   - If your router supports local DNS/host entries, add a hostname like schoolman.lan -> 192.168.1.50.
+   - This allows devices on your LAN to reach the server by name, not just IP.
+
+5) Test from another device
+   - On another device in the same Wi-Fi/LAN, try:
+     - ping 192.168.1.50
+     - nslookup schoolman.lan (if local DNS is set)
+     - Open the app in a browser: http://192.168.1.50:5173 or http://schoolman.lan:5173
+
+If your router doesn’t support local DNS
+Use one of these simple options:
+1) Hosts file on each client (Windows/Mac/Linux)
+2) Local DNS appliance (Pi-hole or AdGuard Home) running on the same server
+
+Resources (official guides)
+- TP-Link DHCP reservation: https://www.tp-link.com/us/support/faq/1554/
+- ASUS DHCP reservation / IP binding: https://www.asus.com/support/FAQ/1000906/
+- D-Link DHCP reservation: https://www.dlink.com/en/support/faq/routers/wireless-routers/dir-series/dir-878/how-do-i-configure-dhcp-reservation
+- Cisco RV (local DNS host records): https://www.cisco.com/c/en/us/support/docs/smb/routers/cisco-rv-series-small-business-routers/smb4222-manage-dns-domain-name-system-local-database-on-rv320-and-rv.pdf

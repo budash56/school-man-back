@@ -1,4 +1,4 @@
-import { IsInt, Min } from 'class-validator';
+import { IsInt, IsString, Matches, MaxLength, Min } from 'class-validator';
 
 export class CreateCourseDto {
   @IsInt()
@@ -9,7 +9,10 @@ export class CreateCourseDto {
   @Min(1)
   classGroupId: number;
 
-  @IsInt()
-  @Min(1)
-  teacherId: number;
+  @IsString()
+  @MaxLength(50)
+  @Matches(/^\d+$/, {
+    message: 'teacherId must contain digits only',
+  })
+  teacherId: string;
 }

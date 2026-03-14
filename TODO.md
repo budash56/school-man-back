@@ -34,6 +34,9 @@
 - Phase 3b: capture teacher skill tree (subjects/grade bands/preferences).
 - ~~Phase 2.1: configurable email system (SMTP/SendGrid) with templates and delivery logs.~~
 - ~~Phase 2.2: bulk notifications to selected professors or all (events, announcements).~~
+- Email queue: store outgoing messages if offline, send when internet returns.
+- Health checks: add an “Email Status” indicator on the dashboard.
+- Optional fallback: when offline, log “email not sent” in UI.
 
 **Calendario**
 - Add admin calendar for future events visible to all professors.

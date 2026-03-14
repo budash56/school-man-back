@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Matches, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 
 export class CoursesQueryDto {
   @IsOptional()
@@ -18,7 +18,10 @@ export class CoursesQueryDto {
   section?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  teacherId?: number;
+  @IsString()
+  @MaxLength(50)
+  @Matches(/^\d+$/, {
+    message: 'teacherId must contain digits only',
+  })
+  teacherId?: string;
 }

@@ -31,6 +31,9 @@ export class Subjects {
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
 
+  @Column('bigint', { name: 'area_id' })
+  areaId: string;
+
   @Column('timestamp with time zone', {
     name: 'created_at',
     nullable: true,

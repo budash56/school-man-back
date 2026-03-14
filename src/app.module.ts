@@ -61,6 +61,7 @@ import { BuildingsController } from './buildings/buildings.controller';
 import { BuildingsService } from './buildings/buildings.service';
 import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
+import { CourseInstancesController } from './course_instances/course_instances.controller';
 import { CoursesController } from './courses/courses.controller';
 import { ClassGroupCurriculumOverridesController } from './class_group_curriculum_overrides/class_group_curriculum_overrides.controller';
 import { CurriculaController } from './curricula/curricula.controller';
@@ -167,6 +168,7 @@ export const buildTypeOrmRootOptions = (
     BuildingsController,
     ClassGroupsController,
     ClassroomsController,
+    CourseInstancesController,
     CoursesController,
     ClassGroupCurriculumOverridesController,
     CurriculaController,
