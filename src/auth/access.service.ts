@@ -5,10 +5,13 @@ import { CoursesRepository } from '../courses/courses.repository';
 export class AccessService {
   constructor(private readonly coursesRepository: CoursesRepository) {}
 
-  async isTeacherOfCourse(userId: number, courseId: number): Promise<boolean> {
+  async isTeacherOfCourse(
+    teacherId: string | number,
+    courseId: number,
+  ): Promise<boolean> {
     const count = await this.coursesRepository
       .createQueryBuilder('course')
-      .where('course.teacherId = :teacherId', { teacherId: userId.toString() })
+      .where('course.teacherId = :teacherId', { teacherId: String(teacherId) })
       .andWhere('course.courseId = :courseId', {
         courseId: courseId.toString(),
       })
@@ -17,11 +20,11 @@ export class AccessService {
     return count > 0;
   }
 
-  async classGroupIdsForTeacher(userId: number): Promise<number[]> {
+  async classGroupIdsForTeacher(teacherId: string | number): Promise<number[]> {
     const rows = await this.coursesRepository
       .createQueryBuilder('course')
       .select('DISTINCT course.classGroupId', 'classGroupId')
-      .where('course.teacherId = :teacherId', { teacherId: userId.toString() })
+      .where('course.teacherId = :teacherId', { teacherId: String(teacherId) })
       .andWhere('course.classGroupId IS NOT NULL')
       .getRawMany<{ classGroupId: string }>();
 
@@ -30,11 +33,11 @@ export class AccessService {
       .filter((value) => Number.isFinite(value));
   }
 
-  async courseIdsForTeacher(userId: number): Promise<number[]> {
+  async courseIdsForTeacher(teacherId: string | number): Promise<number[]> {
     const rows = await this.coursesRepository
       .createQueryBuilder('course')
       .select('course.courseId', 'courseId')
-      .where('course.teacherId = :teacherId', { teacherId: userId.toString() })
+      .where('course.teacherId = :teacherId', { teacherId: String(teacherId) })
       .getRawMany<{ courseId: string }>();
 
     return rows

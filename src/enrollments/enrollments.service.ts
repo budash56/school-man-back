@@ -18,10 +18,8 @@ import {
   PaginatedResult,
   resolvePagination,
 } from '../shared/pagination';
-import { AccessService } from '../auth/access.service';
-
 type ActingUser = {
-  userId: number;
+  teacherId?: string;
   role: string;
 };
 
@@ -103,18 +101,19 @@ export class EnrollmentsService {
     }
 
     if (currentUser?.role === 'teacher') {
-      const accessService = new AccessService(this.coursesRepository);
-      const classGroupIds = await accessService.classGroupIdsForTeacher(
-        currentUser.userId,
-      );
-
-      if (classGroupIds.length === 0) {
+      if (!currentUser.teacherId) {
         return buildPaginationResult([], 0, page, pageSize);
       }
 
-      qb.andWhere('enrollment.classGroupId IN (:...allowedClassGroupIds)', {
-        allowedClassGroupIds: classGroupIds.map((id) => id.toString()),
-      });
+      qb.andWhere(
+        `EXISTS (
+          SELECT 1
+          FROM courses c
+          WHERE c.class_group_id = enrollment.class_group_id
+            AND c.teacher_id = :teacherId
+        )`,
+        { teacherId: currentUser.teacherId },
+      );
     }
 
     qb.skip((page - 1) * pageSize);

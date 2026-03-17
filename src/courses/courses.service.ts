@@ -18,7 +18,7 @@ import { AccessService } from '../auth/access.service';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 
 type ActingUser = {
-  userId: number;
+  nationalId: string;
   role: string;
 };
 
@@ -85,7 +85,7 @@ export class CoursesService {
 
     if (currentUser?.role === 'teacher') {
       const teacherCourseIds = await this.access.courseIdsForTeacher(
-        currentUser.userId,
+        currentUser.nationalId,
       );
 
       if (teacherCourseIds.length === 0) {

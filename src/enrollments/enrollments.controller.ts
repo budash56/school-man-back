@@ -96,11 +96,8 @@ export class EnrollmentsController {
     if (!req.user) {
       return undefined;
     }
-    const rawId =
-      req.user.userId ??
-      (req.user.nationalId ? Number(req.user.nationalId) : NaN);
     return {
-      userId: Number.isFinite(rawId) ? Number(rawId) : 0,
+      teacherId: req.user.nationalId,
       role: req.user.role ?? 'teacher',
     };
   }

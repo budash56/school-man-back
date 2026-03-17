@@ -22,7 +22,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Request } from 'express';
 
 type ActingUser = {
-  userId: number;
+  nationalId: string;
   role: string;
 };
 
@@ -102,11 +102,8 @@ export class CoursesController {
     if (!req.user) {
       return undefined;
     }
-    const rawId =
-      req.user.userId ??
-      (req.user.nationalId ? Number(req.user.nationalId) : NaN);
     return {
-      userId: Number.isFinite(rawId) ? Number(rawId) : 0,
+      nationalId: req.user.nationalId ?? '',
       role: req.user.role ?? 'teacher',
     };
   }

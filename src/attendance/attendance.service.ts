@@ -95,7 +95,7 @@ export class AttendanceService {
     if (currentUser.role === 'teacher') {
       const accessService = this.createAccessHelper();
       const teacherCourseIds = await accessService.courseIdsForTeacher(
-        currentUser.userId,
+        currentUser.nationalId,
       );
 
       if (query.courseId !== undefined) {
@@ -106,7 +106,7 @@ export class AttendanceService {
 
       if ((scope ?? 'own') === 'group') {
         const classGroupIds = await accessService.classGroupIdsForTeacher(
-          currentUser.userId,
+          currentUser.nationalId,
         );
         if (classGroupIds.length === 0) {
           return buildPaginationResult([], 0, page, pageSize);
@@ -434,7 +434,7 @@ export class AttendanceService {
     }
 
     const canModify = await this.createAccessHelper().isTeacherOfCourse(
-      user.userId,
+      user.nationalId,
       courseId,
     );
     if (!canModify) {
@@ -460,8 +460,8 @@ export class AttendanceService {
 
     const accessService = this.createAccessHelper();
     const [teachesCourse, classGroupIds] = await Promise.all([
-      accessService.isTeacherOfCourse(user.userId, Number(course.courseId)),
-      accessService.classGroupIdsForTeacher(user.userId),
+      accessService.isTeacherOfCourse(user.nationalId, Number(course.courseId)),
+      accessService.classGroupIdsForTeacher(user.nationalId),
     ]);
 
     if (teachesCourse) {
