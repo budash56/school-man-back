@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { parse as parseCsv } from 'csv-parse/sync';
+import { Workbook } from 'exceljs';
 import { Brackets, In } from 'typeorm';
-import * as XLSX from 'xlsx';
 import { randomBytes } from 'crypto';
 import { isEmail } from 'class-validator';
 import type { Express } from 'express';
@@ -178,20 +179,14 @@ export class UsersService {
     }
 
     const extension = file.originalname.split('.').pop()?.toLowerCase();
-    if (!extension || !['csv', 'xlsx', 'xls'].includes(extension)) {
-      throw new BadRequestException('File must be CSV or Excel (.xlsx, .xls).');
+    if (!extension || !['csv', 'xlsx'].includes(extension)) {
+      throw new BadRequestException('File must be CSV or Excel (.xlsx).');
     }
 
-    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      throw new BadRequestException('File contains no sheets.');
-    }
-
-    const sheet = workbook.Sheets[sheetName];
-    const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
-      defval: '',
-    });
+    const rawRows =
+      extension === 'csv'
+        ? this.parseCsvRows(file.buffer)
+        : await this.parseExcelRows(file.buffer);
 
     if (rawRows.length === 0) {
       throw new BadRequestException('File is empty.');
@@ -402,6 +397,67 @@ export class UsersService {
       username: normalized.username ? String(normalized.username) : undefined,
       phone: normalized.phone ? String(normalized.phone) : undefined,
     };
+  }
+
+  private parseCsvRows(buffer: Buffer): Record<string, unknown>[] {
+    return parseCsv(buffer, {
+      columns: true,
+      skip_empty_lines: true,
+      bom: true,
+      trim: true,
+    }) as Record<string, unknown>[];
+  }
+
+  private async parseExcelRows(buffer: Buffer): Promise<Record<string, unknown>[]> {
+    const workbook = new Workbook();
+
+    try {
+      await workbook.xlsx.load(buffer as any);
+    } catch {
+      throw new BadRequestException('No se pudo procesar el archivo Excel (.xlsx).');
+    }
+
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      throw new BadRequestException('File contains no sheets.');
+    }
+
+    const headerRow = worksheet.getRow(1);
+    const headerValues = Array.isArray(headerRow.values) ? headerRow.values.slice(1) : [];
+    const headers = headerValues.map((value) => String(value ?? '').trim());
+
+    if (headers.every((header) => !header)) {
+      throw new BadRequestException('File is empty.');
+    }
+
+    const rows: Record<string, unknown>[] = [];
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) {
+        return;
+      }
+
+      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+      const record: Record<string, unknown> = {};
+      let hasData = false;
+
+      headers.forEach((header, index) => {
+        if (!header) {
+          return;
+        }
+        const value = values[index];
+        const normalizedValue = value == null ? '' : String(value).trim();
+        if (normalizedValue) {
+          hasData = true;
+        }
+        record[header] = normalizedValue;
+      });
+
+      if (hasData) {
+        rows.push(record);
+      }
+    });
+
+    return rows;
   }
 
   private normalizeRowKeys(raw: Record<string, unknown>): Record<string, unknown> {

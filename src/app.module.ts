@@ -40,6 +40,8 @@ import { GradeSchemeValues } from './grade_scheme_values/grade_scheme_values.ent
 import { Notifications } from './notifications/notifications.entity';
 import { NotificationsService } from './notifications/notifications.service';
 import { NotificationsAbsenceMonitorService } from './notifications/absence-monitor.service';
+import { PlanillaSheets } from './planillas/planilla_sheets.entity';
+import { PlanillasService } from './planillas/planillas.service';
 import { SchoolYears } from './school_years/school_years.entity';
 import { SchoolYearsService } from './school_years/school_years.service';
 import { Students } from './students/students.entity';
@@ -72,6 +74,7 @@ import { GradesController } from './grades/grades.controller';
 import { GradeSchemesController } from './grade_schemes/grade_schemes.controller';
 import { GradeSchemeValuesController } from './grade_scheme_values/grade_scheme_values.controller';
 import { NotificationsController } from './notifications/notifications.controller';
+import { PlanillasController } from './planillas/planillas.controller';
 import { SchoolYearsController } from './school_years/school_years.controller';
 import { StudentsController } from './students/students.controller';
 import { SubjectAreasController } from './subject_areas/subject_areas.controller';
@@ -146,6 +149,7 @@ export const buildTypeOrmRootOptions = (
       GradeSchemes,
       GradeSchemeValues,
       Notifications,
+      PlanillaSheets,
       SchoolYears,
       Students,
       SubjectAreas,
@@ -179,6 +183,7 @@ export const buildTypeOrmRootOptions = (
     GradeSchemesController,
     GradeSchemeValuesController,
     NotificationsController,
+    PlanillasController,
     SchoolYearsController,
     StudentsController,
     SubjectAreasController,
@@ -217,6 +222,7 @@ export const buildTypeOrmRootOptions = (
     GradesService,
     NotificationsService,
     NotificationsAbsenceMonitorService,
+    PlanillasService,
     TimetableAssignmentsService,
     StudentsService,
     SubjectAreasService,

@@ -15,6 +15,7 @@ import { GradeSchemeValuesRepository } from '../grade_scheme_values/grade_scheme
 import { GradeSchemesRepository } from '../grade_schemes/grade_schemes.repository';
 import { GradesRepository } from '../grades/grades.repository';
 import { NotificationsRepository } from '../notifications/notifications.repository';
+import { PlanillaSheetsRepository } from '../planillas/planillas.repository';
 import { SchoolYearsRepository } from '../school_years/school_years.repository';
 import { StudentsRepository } from '../students/students.repository';
 import { SubjectAreasRepository } from '../subject_areas/subject_areas.repository';
@@ -43,6 +44,7 @@ export const REPOSITORY_PROVIDERS = [
   GradeSchemesRepository,
   GradesRepository,
   NotificationsRepository,
+  PlanillaSheetsRepository,
   SchoolYearsRepository,
   StudentsRepository,
   SubjectAreasRepository,
@@ -72,6 +74,7 @@ export {
   GradeSchemesRepository,
   GradesRepository,
   NotificationsRepository,
+  PlanillaSheetsRepository,
   SchoolYearsRepository,
   StudentsRepository,
   SubjectAreasRepository,

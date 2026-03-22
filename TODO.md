@@ -43,6 +43,11 @@
 - Add personal calendar for professors (e.g., exams per grade/section).
 - Event model: title, description, start/end, visibility (global/personal), audience (roles, grades, groups).
 
+**Infra / Despliegue**
+- Move intranet access from `localhost:8080` to a stable LAN hostname such as `schoolman`, `schoolman.lan`, or `schoolman.local`.
+- Expose the frontend on port `80` so users can access a clean URL like `http://schoolman`.
+- Decide the LAN name-resolution strategy: router/local DNS first, `hosts` fallback only if necessary.
+
 **Backend Cleanup**
 - Implement real "break at B" slot handling in timetable generator. `src/timetable_generator/timetable-generator.service.spec.ts:353`
 - Balance class group sections by gender once student gender exists. `src/class_groups/class_groups.service.ts:283`
