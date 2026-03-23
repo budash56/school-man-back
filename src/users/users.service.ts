@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { parse as parseCsv } from 'csv-parse/sync';
 import { Workbook } from 'exceljs';
@@ -109,7 +115,11 @@ export class UsersService {
     }
   }
 
-  async update(id: string, dto: UpdateUsersDto): Promise<Users> {
+  async update(
+    id: string,
+    dto: UpdateUsersDto,
+    currentUser?: SanitizedUser,
+  ): Promise<Users> {
     const entity = await this.getEntity(id);
 
     if (dto.nationalId !== undefined) {
@@ -125,6 +135,9 @@ export class UsersService {
     }
 
     if (dto.role !== undefined) {
+      if (currentUser?.role !== 'admin') {
+        throw new ForbiddenException('Only admins can change user roles');
+      }
       entity.role = dto.role;
     }
 

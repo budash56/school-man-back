@@ -17,6 +17,7 @@ import { Public } from './public.decorator';
 import { AuthResponseDto, AuthUserDto } from './dto/auth-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './optional-jwt-auth.guard';
 
 @ApiTags('auth')
 @ApiBearerAuth()
@@ -37,6 +38,7 @@ export class AuthController {
 
   @Public()
   @Post('signup')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiBody({
     type: SignupDto,
     examples: {

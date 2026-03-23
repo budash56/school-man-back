@@ -29,6 +29,8 @@ const PLANILLA_TEMPLATE_KEY = 'iedrc-secondary-v1';
 const PLANILLA_GROUP_RE = /^\d{3,4}$/;
 const PLANILLA_NOTE_RE = /\(([^)]*)\)/g;
 const PLANILLA_HEADER_KEYWORDS = new Set(['ACTITUDINAL', 'PROCEDIMENTAL', 'COGNITIVO']);
+const PLANILLA_LETTER_MARK_DOMAIN = new Set(['S', 'A', 'B', 'J']);
+const PLANILLA_LETTER_MARK_KEY_RE = /^(act|proc|cog)_\d+$/;
 const PLANILLA_FOOTER_PREFIXES = [
   'CONVENCIONES',
   'ACTITUDINAL',
@@ -101,6 +103,55 @@ export type PlanillaResponse = {
   metadata: Record<string, unknown>;
   columns: PlanillaColumn[];
   rows: PlanillaRow[];
+  summary: PlanillaSummary;
+  isActive: boolean;
+  importedById: string | null;
+  importedAt: Date | null;
+  updatedAt: Date | null;
+};
+
+export type PlanillaSummary = {
+  total: number;
+  resolved: number;
+  pending: number;
+  retired: number;
+};
+
+export type PlanillaListResponse = {
+  planillaSheetId: number;
+  schoolYearId: number;
+  classGroupId: number | null;
+  gradeLevel: number;
+  section: string;
+  groupCode: string;
+  sourceSheet: string;
+  sourceFileName: string | null;
+  templateKey: string;
+  title: string;
+  metadata: Record<string, unknown>;
+  summary: PlanillaSummary;
+  isActive: boolean;
+  importedById: string | null;
+  importedAt: Date | null;
+  updatedAt: Date | null;
+};
+
+type PlanillaListRow = {
+  planillaSheetId: string;
+  schoolYearId: string;
+  classGroupId: string | null;
+  gradeLevel: number;
+  section: string;
+  groupCode: string;
+  sourceSheet: string;
+  sourceFileName: string | null;
+  templateKey: string;
+  title: string;
+  metadata: Record<string, unknown> | null;
+  summaryTotal: string | number;
+  summaryResolved: string | number;
+  summaryPending: string | number;
+  summaryRetired: string | number;
   isActive: boolean;
   importedById: string | null;
   importedAt: Date | null;
@@ -152,6 +203,17 @@ const PLANILLA_SOURCE_INDEX_BY_KEY = new Map<string, number>([
   ['inasistencia', 15],
 ]);
 
+const sanitizePlanillaCellValue = (key: string, value: unknown) => {
+  const normalized = String(value ?? '').trim();
+
+  if (!PLANILLA_LETTER_MARK_KEY_RE.test(key)) {
+    return normalized;
+  }
+
+  const upper = normalized.toUpperCase();
+  return PLANILLA_LETTER_MARK_DOMAIN.has(upper) ? upper : '';
+};
+
 @Injectable()
 export class PlanillasService {
   constructor(
@@ -166,7 +228,7 @@ export class PlanillasService {
   async findAll(
     query: QueryPlanillaDto,
     currentUser: ActingUser,
-  ): Promise<PaginatedResult<PlanillaResponse>> {
+  ): Promise<PaginatedResult<PlanillaListResponse>> {
     const { page, pageSize } = resolvePagination(query.page, query.pageSize);
 
     const qb = this.repository
@@ -206,13 +268,61 @@ export class PlanillasService {
       });
     }
 
+    const total = await qb.getCount();
+
     qb.skip((page - 1) * pageSize);
     qb.take(pageSize);
 
-    const [entities, total] = await qb.getManyAndCount();
+    qb.select('planilla.planillaSheetId', 'planillaSheetId')
+      .addSelect('planilla.schoolYearId', 'schoolYearId')
+      .addSelect('planilla.classGroupId', 'classGroupId')
+      .addSelect('planilla.gradeLevel', 'gradeLevel')
+      .addSelect('planilla.section', 'section')
+      .addSelect('planilla.groupCode', 'groupCode')
+      .addSelect('planilla.sourceSheet', 'sourceSheet')
+      .addSelect('planilla.sourceFileName', 'sourceFileName')
+      .addSelect('planilla.templateKey', 'templateKey')
+      .addSelect('planilla.title', 'title')
+      .addSelect('planilla.metadata', 'metadata')
+      .addSelect('planilla.isActive', 'isActive')
+      .addSelect('planilla.importedById', 'importedById')
+      .addSelect('planilla.importedAt', 'importedAt')
+      .addSelect('planilla.updatedAt', 'updatedAt')
+      .addSelect(
+        `jsonb_array_length(COALESCE(planilla.rows, '[]'::jsonb))`,
+        'summaryTotal',
+      )
+      .addSelect(
+        `(
+          SELECT COUNT(*)::int
+          FROM jsonb_array_elements(COALESCE(planilla.rows, '[]'::jsonb)) AS row(elem)
+          WHERE COALESCE(row.elem->>'retired', 'false') <> 'true'
+            AND row.elem->>'status' = 'resolved'
+        )`,
+        'summaryResolved',
+      )
+      .addSelect(
+        `(
+          SELECT COUNT(*)::int
+          FROM jsonb_array_elements(COALESCE(planilla.rows, '[]'::jsonb)) AS row(elem)
+          WHERE COALESCE(row.elem->>'retired', 'false') = 'true'
+        )`,
+        'summaryRetired',
+      )
+      .addSelect(
+        `(
+          SELECT COUNT(*)::int
+          FROM jsonb_array_elements(COALESCE(planilla.rows, '[]'::jsonb)) AS row(elem)
+          WHERE COALESCE(row.elem->>'retired', 'false') <> 'true'
+            AND COALESCE(row.elem->>'status', '') <> 'resolved'
+        )`,
+        'summaryPending',
+      );
+
+    const rows = await qb.getRawMany<PlanillaListRow>();
 
     return buildPaginationResult(
-      entities.map((entity) => this.toResponse(entity)),
+      rows.map((row) => this.toListResponse(row)),
       total,
       page,
       pageSize,
@@ -564,7 +674,7 @@ export class PlanillasService {
       const cells = this.createEmptyCells(columns);
       const rawCells = (raw.cells as Record<string, unknown> | undefined) ?? {};
       Object.keys(cells).forEach((key) => {
-        cells[key] = String(rawCells[key] ?? '').trim();
+        cells[key] = sanitizePlanillaCellValue(key, rawCells[key] ?? '');
       });
       const nationalId = this.cleanNationalId(raw.nationalId ?? null);
       const retired = Boolean(raw.retired);
@@ -597,8 +707,14 @@ export class PlanillasService {
   ): Record<string, string> {
     const merged = this.createEmptyCells(columns);
     columns.forEach((column) => {
-      const existingValue = String(existingCells?.[column.key] ?? '').trim();
-      const importedValue = String(importedCells[column.key] ?? '').trim();
+      const existingValue = sanitizePlanillaCellValue(
+        column.key,
+        existingCells?.[column.key] ?? '',
+      );
+      const importedValue = sanitizePlanillaCellValue(
+        column.key,
+        importedCells[column.key] ?? '',
+      );
       merged[column.key] = existingValue || importedValue;
     });
     return merged;
@@ -938,6 +1054,7 @@ export class PlanillasService {
   private toResponse(entity: PlanillaSheets): PlanillaResponse {
     const columns = (entity.columns ?? []) as PlanillaColumn[];
     const rows = this.sanitizeRows(entity.rows ?? [], columns);
+    const summary = this.buildSummary(rows);
     return {
       planillaSheetId: Number(entity.planillaSheetId),
       schoolYearId: Number(entity.schoolYearId),
@@ -952,11 +1069,55 @@ export class PlanillasService {
       metadata: (entity.metadata ?? {}) as Record<string, unknown>,
       columns,
       rows,
+      summary,
       isActive: entity.isActive,
       importedById: entity.importedById ?? null,
       importedAt: entity.importedAt ?? null,
       updatedAt: entity.updatedAt ?? null,
     };
+  }
+
+  private toListResponse(row: PlanillaListRow): PlanillaListResponse {
+    return {
+      planillaSheetId: Number(row.planillaSheetId),
+      schoolYearId: Number(row.schoolYearId),
+      classGroupId: row.classGroupId ? Number(row.classGroupId) : null,
+      gradeLevel: Number(row.gradeLevel),
+      section: row.section,
+      groupCode: row.groupCode,
+      sourceSheet: row.sourceSheet,
+      sourceFileName: row.sourceFileName ?? null,
+      templateKey: row.templateKey,
+      title: row.title,
+      metadata: (row.metadata ?? {}) as Record<string, unknown>,
+      summary: {
+        total: Number(row.summaryTotal ?? 0),
+        resolved: Number(row.summaryResolved ?? 0),
+        pending: Number(row.summaryPending ?? 0),
+        retired: Number(row.summaryRetired ?? 0),
+      },
+      isActive: Boolean(row.isActive),
+      importedById: row.importedById ?? null,
+      importedAt: row.importedAt ?? null,
+      updatedAt: row.updatedAt ?? null,
+    };
+  }
+
+  private buildSummary(rows: PlanillaRow[]): PlanillaSummary {
+    return rows.reduce<PlanillaSummary>(
+      (accumulator, row) => {
+        accumulator.total += 1;
+        if (row.retired) {
+          accumulator.retired += 1;
+        } else if (row.status === 'resolved') {
+          accumulator.resolved += 1;
+        } else {
+          accumulator.pending += 1;
+        }
+        return accumulator;
+      },
+      { total: 0, resolved: 0, pending: 0, retired: 0 },
+    );
   }
 
   private createAccessHelper(): AccessService {

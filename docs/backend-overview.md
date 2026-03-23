@@ -6,7 +6,7 @@ This document captures the current behaviour of the School Managament project ba
 - **Stack:** [NestJS 11](https://docs.nestjs.com/) + TypeScript, [TypeORM](https://typeorm.io/) (PostgreSQL driver), [Jest](https://jestjs.io/) for tests, [Swagger](https://docs.nestjs.com/openapi/introduction) for API docs.
 - **Entry point:** `src/main.ts` bootstraps `AppModule` with global validation (`ValidationPipe`), config-driven server URL injection, RBAC guards, and Swagger UI at `/api/docs`.
 - **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, `jwt`, and `email` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, JWT expiry, SMTP credentials). `buildDataSourceOptions` centralizes TypeORM defaults.
-- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, and school-year completion with promotion/graduation preparation.
+- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, planillas import/finalization, and school-year completion with promotion/graduation preparation.
 - **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization. Users can be flagged with `mustChangePassword` to force credential rotation.
 - **Persistence & tooling:** PostgreSQL via environment-configured connection, `SnakeNamingStrategy`, `migrationsRun: true`, and a `scripts/export-openapi.ts` helper that stubs TypeORM when `OPENAPI_EXPORT=1` to export Swagger without a live DB.
 
@@ -25,6 +25,7 @@ This document captures the current behaviour of the School Managament project ba
 | `src/reports` | Printable certificate + grade report endpoints, `PrintIdService`, DTOs. |
 | `src/grade_schemes`, `src/grade_scheme_values` | Catalog of grading scales and letter mappings consumed by grades + reports. |
 | `src/buildings`, `src/classrooms`, `src/class_group_fixed_locations` | Physical-space modeling: buildings, classrooms, and persisted fixed classroom locations for groups. |
+| `src/planillas` | XLSX-backed planilla import, editable stored sheets, teacher roster grading, and finalization into student/enrollment records. |
 | `src/teacher_subjects` | Teacher-to-subject eligibility used by workload assignment and teacher-facing filters. |
 | `src/audit_logs`, `src/disciplinary_records`, `src/notifications` | Operational logging, student behaviour, and in-app notification workflows. |
 | `src/database/base.repository.ts` | Generic repository wrapper that injects TypeORM `DataSource`. |
@@ -119,6 +120,14 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Listing supports search keyword and filtering by school year (via enrollment existence).
   - Deletes deactivate the student only for the active school year (enrollments/grades/attendance for that year removed) while preserving history; `POST /students/:id/restore?year=` reactivates a specific year’s enrollment.
   - Attendance rosters (`/attendance/sheet`) reuse the class-group enrollment state to exclude inactive students automatically.
+
+- **Planillas (`/planillas`)**
+  - Imports institutional XLSX gradebooks into persisted `planilla_sheets` rows with editable metadata, column definitions, and JSONB student rows.
+  - `GET /planillas` is optimized for list screens: it returns paginated lightweight summaries only (identity fields + `summary.total/resolved/pending/retired`) and intentionally omits the heavy `rows` / `columns` payload.
+  - `GET /planillas/:id` returns the full selected planilla so the frontend can render the professor-gradebook grid or the document-repair flow for a single group.
+  - Teacher access is scoped through `AccessService`, so professors only see planillas tied to their own class groups/courses.
+  - `PATCH /planillas/:id` persists roster edits: admins/coordinators can maintain import metadata + missing national IDs, while teachers can update the period valuation cells stored in `rows[*].cells`.
+  - `POST /planillas/:id/finalize` imports only rows with complete IDs, supports partial completion, auto-creates the target class group for `(schoolYear, gradeLevel, section)` when it does not yet exist, and returns unresolved student names for follow-up.
 
 - **Enrollments (`/enrollments`)**
   - Manage student membership in class groups per school year.
