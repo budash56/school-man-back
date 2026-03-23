@@ -108,6 +108,7 @@ export type PlanillaResponse = {
   importedById: string | null;
   importedAt: Date | null;
   updatedAt: Date | null;
+  importClosedAt: Date | null;
 };
 
 export type PlanillaSummary = {
@@ -134,6 +135,7 @@ export type PlanillaListResponse = {
   importedById: string | null;
   importedAt: Date | null;
   updatedAt: Date | null;
+  importClosedAt: Date | null;
 };
 
 type PlanillaListRow = {
@@ -156,6 +158,7 @@ type PlanillaListRow = {
   importedById: string | null;
   importedAt: Date | null;
   updatedAt: Date | null;
+  importClosedAt: Date | null;
 };
 
 const buildPlanillaColumns = (): PlanillaColumn[] => {
@@ -266,6 +269,8 @@ export class PlanillasService {
       qb.andWhere('planilla.classGroupId IN (:...allowedClassGroupIds)', {
         allowedClassGroupIds: allowedClassGroupIds.map((value) => value.toString()),
       });
+    } else {
+      qb.andWhere('planilla.importClosedAt IS NULL');
     }
 
     const total = await qb.getCount();
@@ -288,6 +293,7 @@ export class PlanillasService {
       .addSelect('planilla.importedById', 'importedById')
       .addSelect('planilla.importedAt', 'importedAt')
       .addSelect('planilla.updatedAt', 'updatedAt')
+      .addSelect('planilla.importClosedAt', 'importClosedAt')
       .addSelect(
         `jsonb_array_length(COALESCE(planilla.rows, '[]'::jsonb))`,
         'summaryTotal',
@@ -427,6 +433,7 @@ export class PlanillasService {
       entity.rows = this.buildRows(parsed, existing?.rows, parsed.columns);
       entity.isActive = true;
       entity.importedById = currentUser.nationalId || null;
+      entity.importClosedAt = null;
 
       const saved = await this.repository.save(entity);
       savedSheets.push(this.toResponse(saved));
@@ -544,6 +551,11 @@ export class PlanillasService {
     }
 
     entity.rows = rows;
+    const summary = this.buildSummary(rows);
+    entity.importClosedAt = summary.pending === 0 ? new Date() : null;
+    if (summary.pending === 0) {
+      entity.sourceFileName = null;
+    }
     await this.repository.save(entity);
 
     return {
@@ -1074,6 +1086,7 @@ export class PlanillasService {
       importedById: entity.importedById ?? null,
       importedAt: entity.importedAt ?? null,
       updatedAt: entity.updatedAt ?? null,
+      importClosedAt: entity.importClosedAt ?? null,
     };
   }
 
@@ -1100,6 +1113,7 @@ export class PlanillasService {
       importedById: row.importedById ?? null,
       importedAt: row.importedAt ?? null,
       updatedAt: row.updatedAt ?? null,
+      importClosedAt: row.importClosedAt ?? null,
     };
   }
 

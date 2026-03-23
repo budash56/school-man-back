@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
-import { Roles, WRITE_ROLES } from '../auth/roles.decorator';
+import { READ_ROLES, Roles, WRITE_ROLES } from '../auth/roles.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -41,6 +41,18 @@ export class UsersController {
   @Get()
   findAll(@Query() query: QueryUsersDto) {
     return this.service.findAll(query);
+  }
+
+  @Roles(...READ_ROLES)
+  @Get('teachers')
+  findTeachers(@Query() query: QueryUsersDto) {
+    return this.service.findTeachers(query);
+  }
+
+  @Roles(...READ_ROLES)
+  @Get('teachers/:id')
+  findTeacher(@Param('id') id: string) {
+    return this.service.findTeacher(id);
   }
 
   @Get(':id')

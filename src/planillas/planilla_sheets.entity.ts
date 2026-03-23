@@ -73,6 +73,9 @@ export class PlanillaSheets {
   @UpdateDateColumn({ type: 'timestamp with time zone', name: 'updated_at', default: () => 'now()' })
   updatedAt: Date;
 
+  @Column('timestamp with time zone', { name: 'import_closed_at', nullable: true })
+  importClosedAt: Date | null;
+
   @ManyToOne(() => SchoolYears, { onDelete: 'CASCADE' })
   @JoinColumn([{ name: 'school_year_id', referencedColumnName: 'schoolYearId' }])
   schoolYear: SchoolYears;

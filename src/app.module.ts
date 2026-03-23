@@ -14,6 +14,8 @@ import { AttendanceService } from './attendance/attendance.service';
 import { AttendanceRosterService } from './attendance/attendance-roster.service';
 import { AuditLogs } from './audit_logs/audit_logs.entity';
 import { Buildings } from './buildings/buildings.entity';
+import { CalendarEvents } from './calendar_events/calendar-events.entity';
+import { CalendarEventsService } from './calendar_events/calendar-events.service';
 import { ClassGroupFixedLocations } from './class_group_fixed_locations/class_group_fixed_locations.entity';
 import { ClassGroups } from './class_groups/class_groups.entity';
 import { ClassGroupsService } from './class_groups/class_groups.service';
@@ -60,6 +62,7 @@ import { AttendanceController } from './attendance/attendance.controller';
 import { AuditLogsController } from './audit_logs/audit_logs.controller';
 import { AuditLogsService } from './audit_logs/audit_logs.service';
 import { BuildingsController } from './buildings/buildings.controller';
+import { CalendarEventsController } from './calendar_events/calendar-events.controller';
 import { BuildingsService } from './buildings/buildings.service';
 import { ClassGroupsController } from './class_groups/class_groups.controller';
 import { ClassroomsController } from './classrooms/classrooms.controller';
@@ -135,6 +138,7 @@ export const buildTypeOrmRootOptions = (
       Attendance,
       AuditLogs,
       Buildings,
+      CalendarEvents,
       ClassGroupFixedLocations,
       ClassGroups,
       Classrooms,
@@ -170,6 +174,7 @@ export const buildTypeOrmRootOptions = (
     AttendanceController,
     AuditLogsController,
     BuildingsController,
+    CalendarEventsController,
     ClassGroupsController,
     ClassroomsController,
     CourseInstancesController,
@@ -210,6 +215,7 @@ export const buildTypeOrmRootOptions = (
     AttendanceRosterService,
     AuditLogsService,
     BuildingsService,
+    CalendarEventsService,
     ClassGroupsService,
     ClassroomsService,
     CourseInstancesService,

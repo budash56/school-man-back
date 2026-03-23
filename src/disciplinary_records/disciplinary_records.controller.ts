@@ -42,7 +42,7 @@ export class DisciplinaryRecordsController {
     return this.service.findOne(id);
   }
 
-  @Roles('admin', 'coordinator')
+  @Roles('admin')
   @Post()
   @ApiBody({
     type: CreateDisciplinaryRecordDto,
@@ -61,13 +61,13 @@ export class DisciplinaryRecordsController {
     },
   })
   @ApiForbiddenResponse({
-    description: 'Forbidden: requires role admin, coordinator',
+    description: 'Forbidden: requires role admin',
   })
   create(@Body() dto: CreateDisciplinaryRecordDto) {
     return this.service.create(dto);
   }
 
-  @Roles('admin', 'coordinator')
+  @Roles('admin')
   @Patch(':id')
   @ApiBody({
     type: UpdateDisciplinaryRecordDto,
@@ -82,7 +82,7 @@ export class DisciplinaryRecordsController {
     },
   })
   @ApiForbiddenResponse({
-    description: 'Forbidden: requires role admin, coordinator',
+    description: 'Forbidden: requires role admin',
   })
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -91,10 +91,10 @@ export class DisciplinaryRecordsController {
     return this.service.update(id, dto);
   }
 
-  @Roles('admin', 'coordinator')
+  @Roles('admin')
   @Delete(':id')
   @ApiForbiddenResponse({
-    description: 'Forbidden: requires role admin, coordinator',
+    description: 'Forbidden: requires role admin',
   })
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.service.remove(id);

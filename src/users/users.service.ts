@@ -26,6 +26,17 @@ import { DbErrorMapper } from '../shared/db-error.mapper';
 import type { SanitizedUser } from '../auth/auth.types';
 import { EmailService } from '../email/email.service';
 
+export type PublicTeacherProfile = {
+  nationalId: string;
+  username: string;
+  role: 'teacher';
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  isActive: boolean | null;
+};
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -78,6 +89,56 @@ export class UsersService {
     }
 
     return entity;
+  }
+
+  async findTeachers(
+    query: QueryUsersDto,
+  ): Promise<PaginatedResult<PublicTeacherProfile>> {
+    const { page, pageSize } = resolvePagination(query.page, query.pageSize);
+    const qb = this.repository.createQueryBuilder('users');
+
+    qb.andWhere('users.role = :role', { role: 'teacher' });
+
+    if (query.isActive !== undefined) {
+      qb.andWhere('users.is_active = :isActive', { isActive: query.isActive });
+    }
+
+    if (query.q?.trim()) {
+      const keyword = this.buildSearchKeyword(query.q);
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub
+            .where("users.username ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.national_id ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.first_name ILIKE :keyword ESCAPE \\'")
+            .orWhere("users.last_name ILIKE :keyword ESCAPE \\'");
+        }),
+      ).setParameter('keyword', keyword);
+    }
+
+    qb.orderBy('users.created_at', 'DESC');
+    qb.skip((page - 1) * pageSize);
+    qb.take(pageSize);
+
+    const [data, total] = await qb.getManyAndCount();
+    return buildPaginationResult(
+      data.map((entity) => this.toPublicTeacherProfile(entity)),
+      total,
+      page,
+      pageSize,
+    );
+  }
+
+  async findTeacher(id: string): Promise<PublicTeacherProfile> {
+    const entity = await this.repository.findOne({
+      where: { nationalId: id, role: 'teacher' },
+    });
+
+    if (!entity) {
+      throw new NotFoundException('Teacher not found');
+    }
+
+    return this.toPublicTeacherProfile(entity);
   }
 
   async create(dto: CreateUsersDto, currentUser?: SanitizedUser): Promise<Users> {
@@ -591,5 +652,18 @@ export class UsersService {
       .join(' ')
       .trim();
     return name || user.username;
+  }
+
+  private toPublicTeacherProfile(entity: Users): PublicTeacherProfile {
+    return {
+      nationalId: entity.nationalId,
+      username: entity.username,
+      role: 'teacher',
+      firstName: entity.firstName ?? null,
+      lastName: entity.lastName ?? null,
+      email: entity.email ?? null,
+      phone: entity.phone ?? null,
+      isActive: entity.isActive ?? null,
+    };
   }
 }

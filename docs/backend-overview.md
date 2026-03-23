@@ -317,6 +317,7 @@ When running tests locally, ensure the configured database is disposable; tests 
 - **RBAC(Role-Based Acess Control):** Global guards ensure consistent enforcement; controllers annotate exceptions (e.g., `@Public()`, `@Roles('admin', …)`).
 - **Error surfacing:** Services favour explicit `NotFoundException`, `ConflictException`, `ForbiddenException`, `BadRequestException` for predictable API error responses.
 - **Database migrations:** Ensure migrations exist for any schema change; repository expects `migrationsRun: true` so production boots apply pending migrations automatically.
+- **Calendar model:** Official school-year and P1-P4 dates continue to live in `school_years` + `terms`; the new `calendar_events` table stores breaks, enrollment/retake windows, communications, graduation, and teacher-created class-group events with role-based visibility filtering.
 - **Printable IDs:** `/reports/*` endpoints call `PrintIdService.nextId()` which fetches `nextval('print_generation_seq')`; create that sequence (or equivalent) in every environment otherwise report generation will fail.
 - **Timezones:** Dates stored as strings or timestamps; ensure clients honour UTC vs local conversions (e.g., attendance `date` expected as ISO string, weekly slot comparisons done in UTC). Consider standardizing timezone handling if needed.
 
