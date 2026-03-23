@@ -1,6 +1,7 @@
 // Handles credential validation and JWT token issuance for the authentication workflow.
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
   Logger,
@@ -130,15 +131,35 @@ export class AuthService {
     requestedRole: SignupDto['role'],
     requestingUser?: SanitizedUser,
   ): Promise<Users['role']> {
+    const nextRole = requestedRole ?? 'teacher';
+
     if (requestingUser?.role === 'admin') {
-      return requestedRole ?? 'teacher';
+      return nextRole;
     }
-    if (requestedRole === 'admin') {
+
+    if (requestingUser?.role === 'coordinator') {
+      if (nextRole === 'teacher' || nextRole === 'registrar') {
+        return nextRole;
+      }
+
+      throw new ForbiddenException(
+        'Coordinators can only create teacher or registrar users',
+      );
+    }
+
+    if (requestingUser) {
+      throw new ForbiddenException(
+        'Only admins or coordinators can create users',
+      );
+    }
+
+    if (nextRole === 'admin') {
       const admins = await this.usersRepo.count({ where: { role: 'admin' } });
       if (admins === 0) {
         return 'admin';
       }
     }
+
     return 'teacher';
   }
 

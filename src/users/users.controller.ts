@@ -131,8 +131,12 @@ export class UsersController {
   @ApiForbiddenResponse({
     description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
   })
-  update(@Param('id') id: string, @Body() dto: UpdateUsersDto) {
-    return this.service.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUsersDto,
+    @CurrentUser() user?: SanitizedUser,
+  ) {
+    return this.service.update(id, dto, user);
   }
 
   @Roles(...WRITE_ROLES)
