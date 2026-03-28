@@ -6,7 +6,7 @@ This document captures the current behaviour of the School Managament project ba
 - **Stack:** [NestJS 11](https://docs.nestjs.com/) + TypeScript, [TypeORM](https://typeorm.io/) (PostgreSQL driver), [Jest](https://jestjs.io/) for tests, [Swagger](https://docs.nestjs.com/openapi/introduction) for API docs.
 - **Entry point:** `src/main.ts` bootstraps `AppModule` with global validation (`ValidationPipe`), config-driven server URL injection, RBAC guards, and Swagger UI at `/api/docs`.
 - **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, `jwt`, and `email` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, JWT expiry, SMTP credentials). `buildDataSourceOptions` centralizes TypeORM defaults.
-- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, planillas import/finalization, and school-year completion with promotion/graduation preparation.
+- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, planillas import/finalization, **planilla-based printable student records / promotion / graduation documents**, and school-year completion with promotion/graduation preparation.
 - **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization. Users can be flagged with `mustChangePassword` to force credential rotation.
 - **Persistence & tooling:** PostgreSQL via environment-configured connection, `SnakeNamingStrategy`, `migrationsRun: true`, and a `scripts/export-openapi.ts` helper that stubs TypeORM when `OPENAPI_EXPORT=1` to export Swagger without a live DB.
 
@@ -22,7 +22,7 @@ This document captures the current behaviour of the School Managament project ba
 | `src/repositories` | Providers exposing TypeORM repositories built on `BaseRepository`. |
 | `src/{feature}` | Feature-specific folders, entity definitions, DTOs, repositories, controllers, services. |
 | `src/dashboards` | Raw-SQL powered analytics endpoints (attendance trend, failing rate, discipline heatmap, teacher workload). |
-| `src/reports` | Printable certificate + grade report endpoints, `PrintIdService`, DTOs. |
+| `src/reports` | Printable certificate, grade-report, and planilla-based document endpoints plus `PrintIdService` and report DTOs. |
 | `src/grade_schemes`, `src/grade_scheme_values` | Catalog of grading scales and letter mappings consumed by grades + reports. |
 | `src/buildings`, `src/classrooms`, `src/class_group_fixed_locations` | Physical-space modeling: buildings, classrooms, and persisted fixed classroom locations for groups. |
 | `src/planillas` | XLSX-backed planilla import, editable stored sheets, teacher roster grading, and finalization into student/enrollment records. |
@@ -39,7 +39,7 @@ This document captures the current behaviour of the School Managament project ba
 - **ConfigModule:** Loads `configuration.ts` once for the process; exposes `app.port`, `app.apiBaseUrl`, DB URL/SSL, and JWT secrets/expiry to both `main.ts` and the TypeORM factory.
 - **RepositoriesModule:** Registers injectable repositories for each entity (e.g. `AttendanceRepository`). Each repository extends `BaseRepository` to reuse the TypeORM entity manager supplied by the injected `DataSource`.
 - **SharedModule:** Exposes framework-neutral utilities (pagination, DB error mapping) for reuse.
-- **ReportsModule:** Houses `/reports/grades/*` and `/reports/certificates/*` controllers plus `PrintIdService`; depends on course/student repositories and `AccessService`.
+- **ReportsModule:** Houses `/reports/grades/*`, `/reports/certificates/*`, and `/reports/documents/*` controllers plus `PrintIdService`; depends on course/student/planilla repositories and `AccessService`.
 - **DashboardsService/Controller:** Registered directly in `AppModule`, runs raw SQL against `DataSource` for analytics endpoints; RBAC-restricted to `admin`/`coordinator`.
 
 ### Authentication & Authorization
@@ -128,6 +128,7 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Teacher access is scoped through `AccessService`, so professors only see planillas tied to their own class groups/courses.
   - `PATCH /planillas/:id` persists roster edits: admins/coordinators can maintain import metadata + missing national IDs, while teachers can update the period valuation cells stored in `rows[*].cells`.
   - `POST /planillas/:id/finalize` imports only rows with complete IDs, supports partial completion, auto-creates the target class group for `(schoolYear, gradeLevel, section)` when it does not yet exist, and returns unresolved student names for follow-up.
+  - Planilla JSON now also feeds printable documents: student records read `rows[*].cells.proc_*`, `rows[*].cells.cog_*`, and `rows[*].cells.act_*`, and promotion/graduation eligibility is evaluated from the same stored subject rows.
 
 - **Enrollments (`/enrollments`)**
   - Manage student membership in class groups per school year.
@@ -170,10 +171,13 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Scheme names are unique; scheme values are unique per `(scheme_id, code)` and expose label, order, and `isPassing`.
   - Controllers are repository-backed CRUD endpoints; writes require `WRITE_ROLES` so coordinators/admins gate configuration changes.
 
-- **Reports (`/reports/grades/*`, `/reports/certificates/*`)**
+- **Reports (`/reports/grades/*`, `/reports/certificates/*`, `/reports/documents/*`)**
   - Grade term/final reports return printable-friendly payloads plus a sequential `printId` generated via `PrintIdService` (`SELECT nextval('print_generation_seq')`—ensure that sequence exists in every environment).
   - Teachers calling grade reports are validated through `AccessService.isTeacherOfCourse`; admins/coordinators bypass.
   - Certificate endpoint (`POST /reports/certificates/active-student`) assembles student + school-year metadata and surfaces TODOs for the PDF layer.
+  - `GET /reports/documents/student-record` assembles a printable student record from planillas for selected periods (`1`, `1,2,3`, `4`, or `all`) and returns subject name plus `Proc`, `Cog`, and `Act` marks per period.
+  - `GET /reports/documents/eligibility` evaluates promotion or graduation for a year + grade (+ optional class group). Students are eligible only when all required subjects exist, all four periods are present, and no planilla component mark is `J`.
+  - Grade `11` is treated as graduation; grades `1..10` are treated as promotion to the next grade.
 
 - **Dashboards (`/dashboards`)**
   - Guarded to `admin`/`coordinator` and backed by raw SQL through the shared `DataSource`.
@@ -301,6 +305,7 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
   - `test/attendance-uniqueness.e2e-spec.ts`, `test/timetable-collisions.e2e-spec.ts`, `test/timetable-guards.e2e-spec.ts` cover invariants for scheduling.
   - `test/students-soft-delete.e2e-spec.ts`, `test/enrollments-*.e2e-spec.ts`, `test/student-roster.e2e-spec.ts` ensure student lifecycle + roster logic.
   - `test/notifications*.e2e-spec.ts` and `test/reports.e2e-spec.ts` guard the absence monitor (verifying the three-day window/weekend skipping rules) and printable outputs.
+  - `src/reports/reports.service.spec.ts` exercises the planilla-based document rules directly, including period parsing, missing-grade detection, and graduation/promotion eligibility.
   - Seeder utilities live inline within tests (`await repository.delete({})` resets tables).
 - **Coverage:** `npm run test:cov`.
 
@@ -319,6 +324,7 @@ When running tests locally, ensure the configured database is disposable; tests 
 - **Database migrations:** Ensure migrations exist for any schema change; repository expects `migrationsRun: true` so production boots apply pending migrations automatically.
 - **Calendar model:** Official school-year and P1-P4 dates continue to live in `school_years` + `terms`; the new `calendar_events` table stores breaks, enrollment/retake windows, communications, graduation, and teacher-created class-group events with role-based visibility filtering.
 - **Printable IDs:** `/reports/*` endpoints call `PrintIdService.nextId()` which fetches `nextval('print_generation_seq')`; create that sequence (or equivalent) in every environment otherwise report generation will fail.
+- **OCR roadmap for planillas:** photo-based import is not implemented yet. The planned direction is a template-aware OCR pipeline: Python image preprocessing (deskew/dewarp), table/grid detection, OCR extraction, strict validation against the known planilla schema, and a human review loop that stores corrected outputs as labeled examples for future tuning. Recommended first stack: Python + OpenCV + PaddleOCR.
 - **Timezones:** Dates stored as strings or timestamps; ensure clients honour UTC vs local conversions (e.g., attendance `date` expected as ISO string, weekly slot comparisons done in UTC). Consider standardizing timezone handling if needed.
 
 ## Deployment Notes

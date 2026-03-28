@@ -228,7 +228,7 @@ export async function seedBasicData(
     { name: classroomName },
     {
       name: classroomName,
-      building: 'Main',
+      buildingId: null,
       capacity: 30,
     },
   );
@@ -306,6 +306,7 @@ export async function seedBasicData(
       enrollmentsRepo.create({
         studentId: student.studentId,
         classGroupId: classGroup.classGroupId,
+        gradeLevel: classGroup.gradeLevel,
         schoolYearId: schoolYear.schoolYearId,
         active: true,
       }),
