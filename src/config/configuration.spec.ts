@@ -18,6 +18,8 @@ describe('configuration', () => {
     process.env.JWT_SECRET = 'spec-secret';
     process.env.DB_NAME = 'config_spec';
     process.env.DB_SSL = 'true';
+    process.env.SCANNER_BASE_URL = 'http://scanner:8010';
+    process.env.SCANNER_TIMEOUT_MS = '25000';
 
     const cfg = configuration();
 
@@ -26,6 +28,8 @@ describe('configuration', () => {
     expect(cfg.jwt.secret).toBe('spec-secret');
     expect(cfg.database.url).toContain('config_spec');
     expect(cfg.database.ssl).toBe(true);
+    expect(cfg.scanner.baseUrl).toBe('http://scanner:8010');
+    expect(cfg.scanner.timeoutMs).toBe(25000);
   });
 });
 

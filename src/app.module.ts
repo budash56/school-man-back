@@ -99,6 +99,8 @@ import { DashboardsController } from './dashboards/dashboards.controller';
 import { TimetableGeneratorService } from './timetable_generator/timetable-generator.service';
 import { TimetableGeneratorController } from './timetable_generator/timetable-generator.controller';
 import { EmailModule } from './email/email.module';
+import { ScannerController } from './scanner/scanner.controller';
+import { ScannerService } from './scanner/scanner.service';
 
 export const buildTypeOrmRootOptions = (
   configService: ConfigService,
@@ -200,6 +202,7 @@ export const buildTypeOrmRootOptions = (
     UsersController,
     DashboardsController,
     TimetableGeneratorController,
+    ScannerController,
   ],
   providers: [
     {
@@ -240,6 +243,7 @@ export const buildTypeOrmRootOptions = (
     TeacherSubjectsService,
     DashboardsService,
     TimetableGeneratorService,
+    ScannerService,
   ],
 })
 export class AppModule {}

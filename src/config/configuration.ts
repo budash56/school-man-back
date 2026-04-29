@@ -24,6 +24,15 @@ export type AppConfig = {
     fromAddress: string;
     bulkBatchSize: number;
   };
+  scanner: {
+    baseUrl: string | null;
+    timeoutMs: number;
+  };
+};
+
+const parseInteger = (value: string | undefined, fallback: number): number => {
+  const parsed = parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 const resolveDatabaseUrl = (env: NodeJS.ProcessEnv): string => {
@@ -57,13 +66,17 @@ const configuration = (env: NodeJS.ProcessEnv = process.env): AppConfig => ({
     enabled: env.EMAIL_ENABLED === 'true',
     provider: env.EMAIL_PROVIDER ?? 'smtp',
     host: env.EMAIL_HOST ?? '',
-    port: parseInt(env.EMAIL_PORT ?? '465', 10),
+    port: parseInteger(env.EMAIL_PORT, 465),
     secure: env.EMAIL_SECURE === 'true',
     user: env.EMAIL_USER ?? '',
     pass: env.EMAIL_PASS ?? '',
     fromName: env.EMAIL_FROM_NAME ?? '',
     fromAddress: env.EMAIL_FROM_ADDRESS ?? '',
-    bulkBatchSize: parseInt(env.EMAIL_BULK_BATCH_SIZE ?? '20', 10),
+    bulkBatchSize: parseInteger(env.EMAIL_BULK_BATCH_SIZE, 20),
+  },
+  scanner: {
+    baseUrl: env.SCANNER_BASE_URL?.trim() || null,
+    timeoutMs: parseInteger(env.SCANNER_TIMEOUT_MS, 15000),
   },
 });
 

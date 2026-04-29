@@ -2,7 +2,6 @@
 /dist
 /node_modules
 /build
-AGENTS.md
 # Logs
 logs
 *.log
@@ -15,6 +14,15 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+
+# Presentation-only files
+AGENTS.md
+/docs/
+*.zip
+**/*.zip
+*.md
+**/*.md
+!README.md
 
 # Tests
 /coverage

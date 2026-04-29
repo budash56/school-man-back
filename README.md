@@ -6,7 +6,7 @@ This document captures the current behaviour of the School Managament project ba
 - **Stack:** [NestJS 11](https://docs.nestjs.com/) + TypeScript, [TypeORM](https://typeorm.io/) (PostgreSQL driver), [Jest](https://jestjs.io/) for tests, [Swagger](https://docs.nestjs.com/openapi/introduction) for API docs.
 - **Entry point:** `src/main.ts` bootstraps `AppModule` with global validation (`ValidationPipe`), config-driven server URL injection, RBAC guards, and Swagger UI at `/api/docs`.
 - **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, `jwt`, and `email` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, JWT expiry, SMTP credentials). `buildDataSourceOptions` centralizes TypeORM defaults.
-- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, and **SMTP email delivery** alongside school years, enrollments, attendance, grades, notifications, and timetable coordination.
+- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, **role-scoped calendar events**, planillas import/finalization, **planilla-based printable student records / promotion / graduation documents**, and school-year completion with promotion/graduation preparation.
 - **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization. Users can be flagged with `mustChangePassword` to force credential rotation.
 - **Persistence & tooling:** PostgreSQL via environment-configured connection, `SnakeNamingStrategy`, `migrationsRun: true`, and a `scripts/export-openapi.ts` helper that stubs TypeORM when `OPENAPI_EXPORT=1` to export Swagger without a live DB.
 
@@ -22,8 +22,11 @@ This document captures the current behaviour of the School Managament project ba
 | `src/repositories` | Providers exposing TypeORM repositories built on `BaseRepository`. |
 | `src/{feature}` | Feature-specific folders, entity definitions, DTOs, repositories, controllers, services. |
 | `src/dashboards` | Raw-SQL powered analytics endpoints (attendance trend, failing rate, discipline heatmap, teacher workload). |
-| `src/reports` | Printable certificate + grade report endpoints, `PrintIdService`, DTOs. |
+| `src/reports` | Printable certificate, grade-report, and planilla-based document endpoints plus `PrintIdService` and report DTOs. |
 | `src/grade_schemes`, `src/grade_scheme_values` | Catalog of grading scales and letter mappings consumed by grades + reports. |
+| `src/buildings`, `src/classrooms`, `src/class_group_fixed_locations` | Physical-space modeling: buildings, classrooms, and persisted fixed classroom locations for groups. |
+| `src/calendar_events` | Role-aware calendar events for official dates, communications, retakes, enrollment windows, and teacher-created class-group events. |
+| `src/planillas` | XLSX-backed planilla import, editable stored sheets, teacher roster grading, and finalization into student/enrollment records. |
 | `src/audit_logs`, `src/disciplinary_records`, `src/notifications` | Operational logging, student behaviour, and in-app notification workflows. |
 | `src/database/base.repository.ts` | Generic repository wrapper that injects TypeORM `DataSource`. |
 | `scripts/export-openapi.ts` | CLI script to export Swagger spec without touching a real DB. |
@@ -36,13 +39,13 @@ This document captures the current behaviour of the School Managament project ba
 - **ConfigModule:** Loads `configuration.ts` once for the process; exposes `app.port`, `app.apiBaseUrl`, DB URL/SSL, and JWT secrets/expiry to both `main.ts` and the TypeORM factory.
 - **RepositoriesModule:** Registers injectable repositories for each entity (e.g. `AttendanceRepository`). Each repository extends `BaseRepository` to reuse the TypeORM entity manager supplied by the injected `DataSource`.
 - **SharedModule:** Exposes framework-neutral utilities (pagination, DB error mapping) for reuse.
-- **ReportsModule:** Houses `/reports/grades/*` and `/reports/certificates/*` controllers plus `PrintIdService`; depends on course/student repositories and `AccessService`.
+- **ReportsModule:** Houses `/reports/grades/*`, `/reports/certificates/*`, and `/reports/documents/*` controllers plus `PrintIdService`; depends on course/student/planilla repositories and `AccessService`.
 - **DashboardsService/Controller:** Registered directly in `AppModule`, runs raw SQL against `DataSource` for analytics endpoints; RBAC-restricted to `admin`/`coordinator`.
 
 ### Authentication & Authorization
 - `AuthController` exposes:
   - `POST /auth/login` — Authenticates by `nationalId` + password, returns JWT + user.
-  - `POST /auth/signup` — Creates a user; only admins can promote roles above teacher, but if the database has zero admins the first signup is promoted automatically (same flow the team uses to bootstrap new environments).
+  - `POST /auth/signup` — Public endpoint wrapped in `OptionalJwtAuthGuard`. Anonymous callers only bootstrap the very first `admin`; after that, unauthenticated signup falls back to `teacher`. Authenticated `admin` callers preserve any requested role, while `coordinator` callers may create only `teacher` or `registrar` users.
   - `GET /auth/me` — Returns the current user profile; requires authentication.
   - `POST /auth/change-password` — Authenticated endpoint to rotate the password and clear `mustChangePassword`.
 - JWT payload carries `sub` (national ID), `username`, `role`, optional `jti`. Tokens signed with `JWT_SECRET` (default `change-me`) and expire according to `JWT_EXPIRES_IN`.
@@ -68,6 +71,16 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 - **Terms (`/terms`)**
   - CRUD constrained to existing school years; term names aligned with `TermName` enum (`P1`-`P4`, `Final`), with derived `sortOrder`.
   - Validates date ranges and overlap, ensuring term windows sit within the parent school year.
+
+- **Calendar Events (`/calendar-events`)**
+  - Readable by all authenticated roles, but results are filtered by role-aware visibility rules.
+  - Admin/coordinator categories: `communication`, `official`, `retake_period`, `enrollment_period`.
+  - Teacher categories: `teacher_exam`, `teacher_homework`, `teacher_custom`.
+  - Official categories are always stored with visibility `everyone`.
+  - Administrative communications support `everyone`, `registrars`, `all_teachers`, `selected_teachers`, and `teacher_areas`.
+  - Teachers may create events only for their own class groups in the selected school year; these are stored with visibility `class_groups`.
+  - Registrars only see `everyone` and `registrars` events. Teachers see their own created events plus communications targeted to all teachers, selected teachers, or the subject areas they teach.
+  - Admins/coordinators can edit any calendar event; teachers can edit only their own events.
 
 - **Subject Areas & Subjects (`/subject-areas`, `/subjects`)**
   - Manage taxonomy of curriculum areas and individual subjects.
@@ -106,6 +119,16 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Deletes deactivate the student only for the active school year (enrollments/grades/attendance for that year removed) while preserving history; `POST /students/:id/restore?year=` reactivates a specific year’s enrollment.
   - Attendance rosters (`/attendance/sheet`) reuse the class-group enrollment state to exclude inactive students automatically.
 
+- **Planillas (`/planillas`)**
+  - Imports institutional XLSX gradebooks into persisted `planilla_sheets` rows with editable metadata, column definitions, and JSONB student rows.
+  - `GET /planillas` is optimized for list screens: it returns paginated lightweight summaries only (identity fields + `summary.total/resolved/pending/retired`) and intentionally omits the heavy `rows` / `columns` payload.
+  - Admin/coordinator list queries exclude planillas whose import workflow is already closed (`import_closed_at IS NOT NULL`); teachers still access their planillas by class-group assignment.
+  - `GET /planillas/:id` returns the full selected planilla so the frontend can render the professor-gradebook grid or the document-repair flow for a single group.
+  - Teacher access is scoped through `AccessService`, so professors only see planillas tied to their own class groups/courses.
+  - `PATCH /planillas/:id` persists roster edits: admins/coordinators can maintain import metadata + missing national IDs, while teachers can update the period valuation cells stored in `rows[*].cells`.
+  - `POST /planillas/:id/finalize` imports only rows with complete IDs, supports partial completion, auto-creates the target class group for `(schoolYear, gradeLevel, section)` when it does not yet exist, and returns unresolved student names for follow-up.
+  - When a finalize/update cycle leaves `pending = 0`, the backend marks the import as closed (`importClosedAt`) and clears the stored source filename. The academic content remains in DB for teacher gradebooks and printable documents, but the admin import queue stays permanently clean across sessions.
+
 - **Enrollments (`/enrollments`)**
   - Manage student membership in class groups per school year.
   - Service validates student, class group, and school year alignment; ensures one active enrollment per `(student, year)`.
@@ -128,9 +151,11 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 - **Users (`/users`)**
   - Admin/coordinator-managed directory of system users.
   - Pagination with keyword search across username/national ID/name.
+  - `GET /users/teachers` and `GET /users/teachers/:id` expose a teacher-safe public directory payload to all authenticated roles without leaking password fields or non-teacher accounts.
   - Repository-level uniqueness enforced for nationalId/username; service leverages `DbErrorMapper` to map DB conflicts to HTTP 409.
   - **Bulk import:** `POST /users/bulk-import` accepts CSV/XLSX with `nationalId`, `firstName`, `lastName`, `email` (optional `username`, `phone`), generates temporary passwords, and returns a credential summary for review.
   - New users can be flagged with `mustChangePassword` and `tempPasswordIssuedAt` to enforce password rotation on first login.
+  - `PATCH /users/:id` supports general profile updates for admins/coordinators, but changing the `role` field is restricted to `admin` only.
 
 - **Email (SMTP) (`/emails`)**
   - Gmail SMTP integration via `EmailService` and `SmtpEmailProvider` (Nodemailer).
@@ -144,10 +169,13 @@ The backend follows a consistent pattern: controller -> service -> repository/en
   - Scheme names are unique; scheme values are unique per `(scheme_id, code)` and expose label, order, and `isPassing`.
   - Controllers are repository-backed CRUD endpoints; writes require `WRITE_ROLES` so coordinators/admins gate configuration changes.
 
-- **Reports (`/reports/grades/*`, `/reports/certificates/*`)**
+- **Reports (`/reports/grades/*`, `/reports/certificates/*`, `/reports/documents/*`)**
   - Grade term/final reports return printable-friendly payloads plus a sequential `printId` generated via `PrintIdService` (`SELECT nextval('print_generation_seq')`—ensure that sequence exists in every environment).
   - Teachers calling grade reports are validated through `AccessService.isTeacherOfCourse`; admins/coordinators bypass.
   - Certificate endpoint (`POST /reports/certificates/active-student`) assembles student + school-year metadata and surfaces TODOs for the PDF layer.
+  - `GET /reports/documents/student-record` assembles a printable student record from planillas for selected periods (`1`, `1,2,3`, `4`, or `all`) and returns subject name plus `Proc`, `Cog`, and `Act` marks per period.
+  - `GET /reports/documents/eligibility` evaluates promotion or graduation for a year + grade (+ optional class group). Students are eligible only when all required subjects exist, all four periods are present, and no planilla component mark is `J`.
+  - Grade `11` is treated as graduation; grades `1..10` are treated as promotion to the next grade.
 
 - **Dashboards (`/dashboards`)**
   - Guarded to `admin`/`coordinator` and backed by raw SQL through the shared `DataSource`.
@@ -178,10 +206,11 @@ The backend follows a consistent pattern: controller -> service -> repository/en
 ## Data Model Overview
 
 Entities are defined directly from the PostgreSQL schema under `src/{feature}/*.entity.ts`. Notable attributes:
-- **Users:** `nationalId` (PK), `role`, `passwordHash`, contact info, `isActive`.
-- **Students:** Guardian contact must be present; `deleted_at` column used for soft-delete semantics in queries.
+- **Users:** `nationalId` (PK), `role`, `passwordHash`, contact info, `isActive`, plus `mustChangePassword` and `temp_password_issued_at` for first-login rotation flows.
+- **Students:** Guardian contact must be present; gender is required (`Femenino`, `Masculino`, `No Binario`); `deleted_at` column used for soft-delete semantics in queries.
 - **SchoolYears:** `yearStart`, `yearEnd`, `isActive`; `rollover` ensures only one active record.
 - **Terms:** Associated with school year; `sortOrder` derived from enum.
+- **CalendarEvents:** Role-scoped calendar items with `category`, `kind`, `visibility_scope`, target arrays (`teacher_ids`, `area_ids`, `class_group_ids`), author metadata, and date range constrained to the parent school year.
 - **ClassGroups:** Unique per `(year, grade, section)`; relation to `Classrooms`.
 - **CourseInstances:** Unique codes per `(subject, grade, year)`; attributes for weekly hours, descriptive name.
 - **Courses:** Join table connecting course instances, class groups, teachers; cascaded relations used throughout access checks.
@@ -193,6 +222,7 @@ Entities are defined directly from the PostgreSQL schema under `src/{feature}/*.
 - **Notifications:** Persist notification category, target role, payload JSON, resolution metadata, and the author/suggester (absence monitor).
 - **AuditLogs:** Capture `entity_name`, optional `entity_id`, action, JSON payload, and FK to the performing user for traceability.
 - **DisciplinaryRecords:** Store incident category, description, `date_happened`, and optional course/teacher pointers surfaced in dashboards.
+- **PlanillaSheets:** Persist imported sheet metadata, JSONB `columns`/`rows`, nullable `source_file_name`, and `import_closed_at` so completed admin import sessions disappear without deleting academic records.
 
 Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of DTOs.
 
@@ -219,7 +249,7 @@ Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of
 | `EMAIL_BULK_BATCH_SIZE` | BCC batch size | `20` |
 | `OPENAPI_EXPORT` | Stub TypeORM when exporting swagger | Set to `1` for `npm run openapi:export` |
 
-**Current deployment:** everything runs inside the school’s private network on local Postgres instances. Future Docker packaging is under evaluation; for now each developer / operator installs Postgres locally and points the app at it via the vars above.
+**Deployment env source:** the deployed stack reads these values from `/Users/juandelgado/schoolMan/school-man-deploy/.env`. Review and rotate the JWT/SMTP credentials before any real deployment.
 
 ## Local Development Workflow
 
@@ -292,7 +322,51 @@ When running tests locally, ensure the configured database is disposable; tests 
 
 ## Deployment Notes
 
-- **Target environment:** the service currently runs on hosts inside the school’s private network. A future Docker/Compose setup may be added, but for now every operator runs Node + Postgres natively.
-- **Database lifecycle:** each developer uses a personal Postgres instance; migrations (`npm run migration:run`) are applied locally. If we containerize later we’ll add Compose instructions here.
-- **First admin provisioning:** `POST /auth/signup` automatically grants the admin role when the database has zero admins, so new installations can bootstrap themselves securely without hard-coded credentials.
-- **Notifications:** the `notifications` module surfaces updates inside the web UI only (no SMTP/SMS yet). The absence monitor can be invoked via `/notifications/suggestions/absence/run` to raise coordinator suggestions (`category = 'attendance-absence-streak'`) when students accumulate three consecutive unexcused days; coordinators resolve/dismiss via `PATCH /notifications/:id/resolve`.
+The real deployment assets live in the sibling folder `/Users/juandelgado/schoolMan/school-man-deploy`.
+
+### Compose stack
+
+- `db`: `postgres:16`, persistent volume `schoolman_postgres_data`
+- `back`: builds this repository and publishes `3000:3000`
+- `front`: builds `school-man-front`, serves it through nginx, publishes `8080:80`
+
+### Network flow
+
+- Users open `http://<host>:8080`
+- nginx serves the SPA and proxies `/api/*` to `http://back:3000/`
+- Swagger remains directly reachable on `http://<host>:3000/api/docs`
+
+### Start the deployed stack
+
+From `/Users/juandelgado/schoolMan/school-man-deploy`:
+
+```CLI
+docker compose up --build -d
+```
+
+### Database bootstrap
+
+Use one of these paths:
+
+1. Empty volume + backend migrations on boot
+2. Restore the provided snapshot `SchoolManBeta.sql`
+
+Snapshot restore example:
+
+```CLI
+docker compose up -d db
+docker compose exec -T db sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < SchoolManBeta.sql
+docker compose up -d back front
+```
+
+### Reset database volume
+
+```CLI
+docker compose down -v
+```
+
+### Operational notes
+
+- `POST /auth/signup` automatically grants admin to the first account when the database has zero admins.
+- The `notifications` module surfaces updates inside the web UI; the absence monitor can be invoked via `/notifications/suggestions/absence/run`.
+- Replace the committed JWT and SMTP credentials in `school-man-deploy/.env` before any non-test use.
