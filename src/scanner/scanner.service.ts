@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Express } from 'express';
@@ -36,6 +37,7 @@ type ScannerRawResponse = {
   uploaded_file?: unknown;
   metadata?: unknown;
   rows?: unknown;
+  warnings?: unknown;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -156,6 +158,9 @@ const mapScannerResponse = (payload: unknown): ScannedPlanillaResponse => {
     rows: rowsSource
       .map((row, index) => mapRow(row, index))
       .filter((row): row is ScannedPlanillaRow => row !== null),
+    warnings: Array.isArray(response.warnings)
+      ? response.warnings.map((warning) => toStringValue(warning)).filter(Boolean)
+      : [],
   };
 };
 
@@ -184,7 +189,7 @@ export class ScannerService {
     }
 
     const timeoutMs =
-      this.configService.get<number>('scanner.timeoutMs') ?? 15000;
+      this.configService.get<number>('scanner.timeoutMs') ?? 120000;
     const url = `${baseUrl.replace(/\/$/, '')}/scan/planilla`;
     const formData = new FormData();
     const bytes = Uint8Array.from(file.buffer);
@@ -211,6 +216,12 @@ export class ScannerService {
     const body = await this.parseResponse(response);
 
     if (!response.ok) {
+      if (response.status === 422) {
+        throw new UnprocessableEntityException(
+          extractMessage(body, 'SchoolScanner could not parse the uploaded file.'),
+        );
+      }
+
       throw new BadGatewayException(
         extractMessage(
           body,

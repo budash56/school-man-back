@@ -76,7 +76,7 @@ const configuration = (env: NodeJS.ProcessEnv = process.env): AppConfig => ({
   },
   scanner: {
     baseUrl: env.SCANNER_BASE_URL?.trim() || null,
-    timeoutMs: parseInteger(env.SCANNER_TIMEOUT_MS, 15000),
+    timeoutMs: parseInteger(env.SCANNER_TIMEOUT_MS, 120000),
   },
 });
 

@@ -2,6 +2,7 @@ import {
   BadGatewayException,
   BadRequestException,
   ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { Express } from 'express';
@@ -23,7 +24,7 @@ const createConfigService = (
       if (key === 'scanner.timeoutMs') {
         return 'scanner.timeoutMs' in overrides
           ? overrides['scanner.timeoutMs']
-          : 15000;
+          : 120000;
       }
       return undefined;
     }),
@@ -104,6 +105,7 @@ describe('ScannerService', () => {
               cells: { cog_1: 'A' },
             },
           ],
+          warnings: ['Review names for OCR typos.'],
         }),
       ),
     });
@@ -149,6 +151,7 @@ describe('ScannerService', () => {
           cells: { cog_1: 'A' },
         },
       ],
+      warnings: ['Review names for OCR typos.'],
     });
   });
 
@@ -167,6 +170,25 @@ describe('ScannerService', () => {
       expect.objectContaining({
         constructor: BadGatewayException,
         message: 'File must be JPG, PNG, WEBP, or PDF.',
+      }),
+    );
+  });
+
+  it('throws UnprocessableEntityException when SchoolScanner cannot parse the upload', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      text: jest
+        .fn()
+        .mockResolvedValue(JSON.stringify({ detail: 'OCR failed during model initialization.' })),
+    }) as typeof global.fetch;
+
+    const service = new ScannerService(createConfigService());
+
+    await expect(service.scanPlanilla(createFile())).rejects.toEqual(
+      expect.objectContaining({
+        constructor: UnprocessableEntityException,
+        message: 'OCR failed during model initialization.',
       }),
     );
   });

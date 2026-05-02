@@ -1,372 +1,99 @@
-# SchoolMan Backend — Project Documentation
+# SchoolMan Backend
 
-This document captures the current behaviour of the School Managament project backend codebase (`school-man-back`) as of the latest update.
+SchoolMan Backend is the API and business-rule layer for the SchoolMan school management system. It is built for day-to-day administration of a Colombian K-11 institution: students, enrollments, class groups, teachers, attendance, grades, planillas, reports, calendars, and operational records.
 
-## At a Glance
-- **Stack:** [NestJS 11](https://docs.nestjs.com/) + TypeScript, [TypeORM](https://typeorm.io/) (PostgreSQL driver), [Jest](https://jestjs.io/) for tests, [Swagger](https://docs.nestjs.com/openapi/introduction) for API docs.
-- **Entry point:** `src/main.ts` bootstraps `AppModule` with global validation (`ValidationPipe`), config-driven server URL injection, RBAC guards, and Swagger UI at `/api/docs`.
-- **Configuration:** `ConfigModule` + `src/config/configuration.ts` expose typed `app`, `database`, `jwt`, and `email` settings (port, API base URL, `OPENAPI_EXPORT`, DSN, SSL, JWT expiry, SMTP credentials). `buildDataSourceOptions` centralizes TypeORM defaults.
-- **Domain scope:** Single-school administration for Colombian K–11. Beyond CRUD it now covers dashboards, printable certificates, audit logs, behaviour tracking, teacher workload insights, grade-scheme catalogs, **bulk teacher import**, **SMTP email delivery**, buildings/classrooms, exact teacher-subject eligibility, manual group-to-classroom assignment, **role-scoped calendar events**, planillas import/finalization, **planilla-based printable student records / promotion / graduation documents**, and school-year completion with promotion/graduation preparation.
-- **Security:** JWT bearer authentication with role-based access control. Roles: `admin`, `coordinator`, `registrar`, `teacher`. Two global guards (`JwtAuthGuard`, `RolesGuard`) enforce authentication/authorization. Users can be flagged with `mustChangePassword` to force credential rotation.
-- **Persistence & tooling:** PostgreSQL via environment-configured connection, `SnakeNamingStrategy`, `migrationsRun: true`, and a `scripts/export-openapi.ts` helper that stubs TypeORM when `OPENAPI_EXPORT=1` to export Swagger without a live DB.
+The backend is the source of truth for SchoolMan. The frontend, scanner, and deployment repositories all depend on it for authentication, permissions, persistence, and academic workflows.
 
-## Repository Layout
+## What It Does
 
-| Path | Description |
-| ---- | ----------- |
-| `src/main.ts` | Nest bootstrap, validation pipe, Swagger setup. |
-| `src/app.module.ts` | Root module wiring guards, repositories, controllers, and feature services. |
-| `src/config/` | Typed configuration (`configuration.ts`) plus schema-aware helpers consumed by `ConfigModule`. |
-| `src/auth` | Authentication flow (login/signup/me), JWT strategy, decorators/guards, access helper. |
-| `src/shared` | Cross-cutting utilities: pagination helpers, DB error mapper, shared module exports. |
-| `src/repositories` | Providers exposing TypeORM repositories built on `BaseRepository`. |
-| `src/{feature}` | Feature-specific folders, entity definitions, DTOs, repositories, controllers, services. |
-| `src/dashboards` | Raw-SQL powered analytics endpoints (attendance trend, failing rate, discipline heatmap, teacher workload). |
-| `src/reports` | Printable certificate, grade-report, and planilla-based document endpoints plus `PrintIdService` and report DTOs. |
-| `src/grade_schemes`, `src/grade_scheme_values` | Catalog of grading scales and letter mappings consumed by grades + reports. |
-| `src/buildings`, `src/classrooms`, `src/class_group_fixed_locations` | Physical-space modeling: buildings, classrooms, and persisted fixed classroom locations for groups. |
-| `src/calendar_events` | Role-aware calendar events for official dates, communications, retakes, enrollment windows, and teacher-created class-group events. |
-| `src/planillas` | XLSX-backed planilla import, editable stored sheets, teacher roster grading, and finalization into student/enrollment records. |
-| `src/audit_logs`, `src/disciplinary_records`, `src/notifications` | Operational logging, student behaviour, and in-app notification workflows. |
-| `src/database/base.repository.ts` | Generic repository wrapper that injects TypeORM `DataSource`. |
-| `scripts/export-openapi.ts` | CLI script to export Swagger spec without touching a real DB. |
-| `test/` | E2E test suite with realistic seeding around authz and school-year write locks. |
+SchoolMan Backend manages the operational data that a school office and teaching staff need every day:
 
-## Runtime Architecture
+- Keeps student, guardian, user, teacher, subject, course, classroom, and class-group records organized.
+- Handles school years, terms, enrollments, promotions, and year locks.
+- Supports attendance, grades, discipline, notifications, audit logs, and dashboards.
+- Imports institutional planillas from spreadsheets and stores them as editable gradebook records.
+- Connects with the scanner service so photographed planillas can become reviewable draft data.
+- Generates report-ready data for certificates, student records, promotion checks, and graduation checks.
+- Enforces role-based access for admins, coordinators, registrars, and teachers.
 
-### Module Graph
-- **AppModule:** Imports TypeORM (global connection or stubbed when `OPENAPI_EXPORT=1`), feature repositories (`RepositoriesModule`), authentication (`AuthModule`), and shared helpers (`SharedModule`). Declares every REST controller and service.
-- **ConfigModule:** Loads `configuration.ts` once for the process; exposes `app.port`, `app.apiBaseUrl`, DB URL/SSL, and JWT secrets/expiry to both `main.ts` and the TypeORM factory.
-- **RepositoriesModule:** Registers injectable repositories for each entity (e.g. `AttendanceRepository`). Each repository extends `BaseRepository` to reuse the TypeORM entity manager supplied by the injected `DataSource`.
-- **SharedModule:** Exposes framework-neutral utilities (pagination, DB error mapping) for reuse.
-- **ReportsModule:** Houses `/reports/grades/*`, `/reports/certificates/*`, and `/reports/documents/*` controllers plus `PrintIdService`; depends on course/student/planilla repositories and `AccessService`.
-- **DashboardsService/Controller:** Registered directly in `AppModule`, runs raw SQL against `DataSource` for analytics endpoints; RBAC-restricted to `admin`/`coordinator`.
+## How It Fits In The System
 
-### Authentication & Authorization
-- `AuthController` exposes:
-  - `POST /auth/login` — Authenticates by `nationalId` + password, returns JWT + user.
-  - `POST /auth/signup` — Public endpoint wrapped in `OptionalJwtAuthGuard`. Anonymous callers only bootstrap the very first `admin`; after that, unauthenticated signup falls back to `teacher`. Authenticated `admin` callers preserve any requested role, while `coordinator` callers may create only `teacher` or `registrar` users.
-  - `GET /auth/me` — Returns the current user profile; requires authentication.
-  - `POST /auth/change-password` — Authenticated endpoint to rotate the password and clear `mustChangePassword`.
-- JWT payload carries `sub` (national ID), `username`, `role`, optional `jti`. Tokens signed with `JWT_SECRET` (default `change-me`) and expire according to `JWT_EXPIRES_IN`.
-  - `JWT_EXPIRES_IN` defaults to `30d` in config (testing), but should be set per environment.
-- Guards:
-  - `JwtAuthGuard` honours the `@Public()` decorator to allow unauthenticated routes.
-  - `RolesGuard` inspects `@Roles(...)` metadata; `admin` is implicitly whitelisted for any protected route.
-  - `AccessService` centralizes teacher-permitted resource checks (courses, class groups).
-- Default global role scopes (see `src/auth/roles.decorator.ts`):
-  - **Read** (`READ_ROLES`): all roles.
-  - **Write** (`WRITE_ROLES`): `admin`, `coordinator`.
-  - Specialized constants restrict attendance/grade mutations.
+SchoolMan is split into four repositories:
 
-### Core Feature Modules
-The backend follows a consistent pattern: controller -> service -> repository/entity. Controllers are heavily annotated with Swagger metadata, request DTOs, and RBAC decorators.
+- `school-man-back`: NestJS API, database model, permissions, and business workflows.
+- `school-man-front`: React dashboard used by staff.
+- `school-man-scanner`: OCR service for reading photographed planillas.
+- `school-man-deploy`: Docker Compose deployment wrapper.
 
-- **School Years (`/school-years`)**
-  - CRUD with optional filtering (by name or active flag).
-  - `POST /school-years/rollover` — Admin-only transactional rollover that archives the current year and promotes the next active year while enforcing “exactly only one active year”.
-  - `POST /school-years/:id/lock` — Admin-only lock (marks year inactive).
-  - Services enforce chronological ordering and uniqueness; inactive years become read-only for dependent features via shared `assertYearWritable` guards.
+The backend talks to PostgreSQL for storage and to SchoolScanner when a user uploads an image/PDF for planilla scanning. The frontend talks to this backend through the `/api` route.
 
-- **Terms (`/terms`)**
-  - CRUD constrained to existing school years; term names aligned with `TermName` enum (`P1`-`P4`, `Final`), with derived `sortOrder`.
-  - Validates date ranges and overlap, ensuring term windows sit within the parent school year.
+## Main User Workflows
 
-- **Calendar Events (`/calendar-events`)**
-  - Readable by all authenticated roles, but results are filtered by role-aware visibility rules.
-  - Admin/coordinator categories: `communication`, `official`, `retake_period`, `enrollment_period`.
-  - Teacher categories: `teacher_exam`, `teacher_homework`, `teacher_custom`.
-  - Official categories are always stored with visibility `everyone`.
-  - Administrative communications support `everyone`, `registrars`, `all_teachers`, `selected_teachers`, and `teacher_areas`.
-  - Teachers may create events only for their own class groups in the selected school year; these are stored with visibility `class_groups`.
-  - Registrars only see `everyone` and `registrars` events. Teachers see their own created events plus communications targeted to all teachers, selected teachers, or the subject areas they teach.
-  - Admins/coordinators can edit any calendar event; teachers can edit only their own events.
+Typical workflows supported by this service include:
 
-- **Subject Areas & Subjects (`/subject-areas`, `/subjects`)**
-  - Manage taxonomy of curriculum areas and individual subjects.
-  - Subject creation checks for area existence; updates manage associations and unique codes.
+- A coordinator creates or imports students and enrolls them into class groups.
+- Teachers view assigned planillas and record grades.
+- Staff record attendance and follow up on absence patterns.
+- Coordinators manage calendars, classrooms, subjects, courses, and workload.
+- Administrators import planillas, resolve missing student IDs, and finalize academic data.
+- Registrars generate printable student records and promotion/graduation eligibility reports.
+- The scanner service returns OCR drafts that the backend normalizes for review.
 
-- **Course Instances & Courses (`/course-instances`, `/courses`)**
-  - Course instances bind subject + grade + school year with metadata (weekly hours, names).
-  - Courses link instances to class groups and teachers; services enforce:
-    - Grade-level parity between course instance and class group.
-    - Teacher role validation (`teacher` only).
-    - Active-year write lock (no updates to archived years).
-  - Teacher-scoped queries restrict results to assigned courses.
+## Technology
 
-- **Class Groups & Classrooms (`/class-groups`, `/classrooms`)**
-  - Class groups represent grade/section/year, optionally with a default classroom.
-  - Unique composite `(school_year_id, grade_level, section)` constraint; `code` derived as `{grade}{section}`.
-  - Services support pagination, keyword search, and default classroom validation.
+- NestJS and TypeScript
+- PostgreSQL with TypeORM
+- JWT authentication
+- Role-based guards
+- Swagger/OpenAPI documentation
+- Jest tests
 
-- **Timetable (`/timetable-slots`, `/timetable-assignments`, `/timetable-generator`)**
-  - Slots define weekly schedule positions (day-of-week, start/end) and persist `durationMinutes` so downstream scheduling aligns with bell times.
-  - When creating slots the user chooses a division (`elementary` grades 1‑5, `secondary` grades 6‑9, `senior` grades 10‑11). Each division maintains its own slot skeleton, so generators can run independently without slot collisions.
-  - Timetable assignments bind courses to slots (and optional room overrides) with collision checks across class group, teacher, course, classroom, and teacher+class-group combinations; warnings surface when classroom capacity is exceeded.
-  - Classroom/slot combinations are unique whenever a classroom is set, preventing double-booking shared rooms.
-  - Write operations inherit school-year write locks through course associations, and teachers may only view assignments tied to their courses.
-  - **Generator:** coordinators call `POST /timetable-generator/preview` per division (`elementary`, `secondary`, `senior`). The payload carries the school year, global teacher weekly-hour cap, division, and optional teacher/course constraints (morning-only, avoid last slot, block size, manual session counts). The generator pulls courses only for the chosen division, expands them into “session demands”, then runs a greedy constraint solver that:
-    1. Decorates slots with shift metadata (morning/afternoon, last-of-day) and groups them per weekday.
-    2. Seeds usage maps with existing assignments so new runs don’t collide.
-    3. Sorts demands by block length + strictness, then scans each day for the earliest block of consecutive slots that fits the teacher/class-group availability, shift preferences, and the shared weekly-hour cap.
-    4. Returns the proposed slot placements plus a queue of unassigned sessions (with reasons). `POST /timetable-generator/apply` reuses that plan and persists each slot through the existing timetable-assignment service so all FK/guardrail checks remain centralized.
-  - Generator responses include detailed metadata (day, shift, human-readable label) so operators can review or export before applying.
-  - Preview rejects early if staff capacity is insufficient: it sums the weekly demand per grade/subject within the requested division (`sections * weeklyHours`) and compares it against the provided `teacherWeeklyHourCap`. If the current teacher roster can’t cover that load, the API returns `insufficientTeacherCapacity` plus the missing teacher count so the user can seed more staff before scheduling.
+## Running Locally
 
-- **Students (`/students`)**
-  - CRUD with guardian data requirements (`guardianPhone` non-null), soft constraints on uniqueness by `nationalId`.
-  - Listing supports search keyword and filtering by school year (via enrollment existence).
-  - Deletes deactivate the student only for the active school year (enrollments/grades/attendance for that year removed) while preserving history; `POST /students/:id/restore?year=` reactivates a specific year’s enrollment.
-  - Attendance rosters (`/attendance/sheet`) reuse the class-group enrollment state to exclude inactive students automatically.
+Install dependencies:
 
-- **Planillas (`/planillas`)**
-  - Imports institutional XLSX gradebooks into persisted `planilla_sheets` rows with editable metadata, column definitions, and JSONB student rows.
-  - `GET /planillas` is optimized for list screens: it returns paginated lightweight summaries only (identity fields + `summary.total/resolved/pending/retired`) and intentionally omits the heavy `rows` / `columns` payload.
-  - Admin/coordinator list queries exclude planillas whose import workflow is already closed (`import_closed_at IS NOT NULL`); teachers still access their planillas by class-group assignment.
-  - `GET /planillas/:id` returns the full selected planilla so the frontend can render the professor-gradebook grid or the document-repair flow for a single group.
-  - Teacher access is scoped through `AccessService`, so professors only see planillas tied to their own class groups/courses.
-  - `PATCH /planillas/:id` persists roster edits: admins/coordinators can maintain import metadata + missing national IDs, while teachers can update the period valuation cells stored in `rows[*].cells`.
-  - `POST /planillas/:id/finalize` imports only rows with complete IDs, supports partial completion, auto-creates the target class group for `(schoolYear, gradeLevel, section)` when it does not yet exist, and returns unresolved student names for follow-up.
-  - When a finalize/update cycle leaves `pending = 0`, the backend marks the import as closed (`importClosedAt`) and clears the stored source filename. The academic content remains in DB for teacher gradebooks and printable documents, but the admin import queue stays permanently clean across sessions.
-
-- **Enrollments (`/enrollments`)**
-  - Manage student membership in class groups per school year.
-  - Service validates student, class group, and school year alignment; ensures one active enrollment per `(student, year)`.
-  - Teacher queries scoped to their class groups via `AccessService`.
-  - Admins and coordinators can continue adjusting archived-year enrollments when business rules require corrections; other roles are blocked once a year is locked.
-  - Database enforces the “single active enrollment” rule via a partial unique index (only `active = true` rows participate), allowing historical/inactive enrollments to coexist.
-  - Includes `deactivate` logic (not exposed via controller yet) and delete endpoints.
-
-- **Grades (`/grades`)**
-  - CRUD for SABJ grading scale per `(student, course, term)`.
-  - Teachers restricted to own courses; coordinators forbidden from write operations.
-  - Validations include: student enrollment, course/term school-year alignment, archived-year lock, uniqueness detection via `DbErrorMapper`.
-
-- **Attendance (`/attendance`)**
-  - Track per student/course/date/slot with statuses `P` (present), `A` (absent), `AE` (excused); uniqueness enforced on both `(student, date, slot)` and the legacy `(student, course, date)` path when `slotId` is null.
-  - Teacher-scoped reads (`scope=own|group`) and strict mutation checks ensuring teachers change only their courses.
-  - Validates slot-day alignment, per-day uniqueness, and archived-year write protection.
-  - `/attendance/sheet?classGroupId=&date=` generates the expected roster for a class group on a given day, respecting enrollment state.
-
-- **Users (`/users`)**
-  - Admin/coordinator-managed directory of system users.
-  - Pagination with keyword search across username/national ID/name.
-  - `GET /users/teachers` and `GET /users/teachers/:id` expose a teacher-safe public directory payload to all authenticated roles without leaking password fields or non-teacher accounts.
-  - Repository-level uniqueness enforced for nationalId/username; service leverages `DbErrorMapper` to map DB conflicts to HTTP 409.
-  - **Bulk import:** `POST /users/bulk-import` accepts CSV/XLSX with `nationalId`, `firstName`, `lastName`, `email` (optional `username`, `phone`), generates temporary passwords, and returns a credential summary for review.
-  - New users can be flagged with `mustChangePassword` and `tempPasswordIssuedAt` to enforce password rotation on first login.
-  - `PATCH /users/:id` supports general profile updates for admins/coordinators, but changing the `role` field is restricted to `admin` only.
-
-- **Email (SMTP) (`/emails`)**
-  - Gmail SMTP integration via `EmailService` and `SmtpEmailProvider` (Nodemailer).
-  - `POST /emails/meeting` sends coordinator announcements to multiple professors using **BCC** batches (`EMAIL_BULK_BATCH_SIZE`).
-  - Welcome emails are sent individually when teachers are created (single create or bulk import).
-  - Safe local behavior: if `EMAIL_ENABLED=false`, messages are logged as `EMAIL_PREVIEW` instead of being sent.
-  - CLI helpers: `npm run email:verify` (SMTP verify) and `npm run email:test -- you@example.com` (send test email).
-
-- **Grade Schemes & Scheme Values (`/grade-schemes`, `/grade-scheme-values`)**
-  - Catalogs the SABJ letter system (or future grading variants) so admins can activate/deactivate entire schemes.
-  - Scheme names are unique; scheme values are unique per `(scheme_id, code)` and expose label, order, and `isPassing`.
-  - Controllers are repository-backed CRUD endpoints; writes require `WRITE_ROLES` so coordinators/admins gate configuration changes.
-
-- **Reports (`/reports/grades/*`, `/reports/certificates/*`, `/reports/documents/*`)**
-  - Grade term/final reports return printable-friendly payloads plus a sequential `printId` generated via `PrintIdService` (`SELECT nextval('print_generation_seq')`—ensure that sequence exists in every environment).
-  - Teachers calling grade reports are validated through `AccessService.isTeacherOfCourse`; admins/coordinators bypass.
-  - Certificate endpoint (`POST /reports/certificates/active-student`) assembles student + school-year metadata and surfaces TODOs for the PDF layer.
-  - `GET /reports/documents/student-record` assembles a printable student record from planillas for selected periods (`1`, `1,2,3`, `4`, or `all`) and returns subject name plus `Proc`, `Cog`, and `Act` marks per period.
-  - `GET /reports/documents/eligibility` evaluates promotion or graduation for a year + grade (+ optional class group). Students are eligible only when all required subjects exist, all four periods are present, and no planilla component mark is `J`.
-  - Grade `11` is treated as graduation; grades `1..10` are treated as promotion to the next grade.
-
-- **Dashboards (`/dashboards`)**
-  - Guarded to `admin`/`coordinator` and backed by raw SQL through the shared `DataSource`.
-  - `GET /dashboards/attendance/weekly` buckets attendance statuses per ISO week (filterable by grade, default trailing 8 weeks).
-  - `GET /dashboards/failing-rate` computes failing vs total grades for a resolved term (auto-detects latest active term if not provided).
-  - `GET /dashboards/discipline/heatmap` aggregates disciplinary records per day/category across a sliding window.
-  - `GET /dashboards/teacher-workload` summarizes weekly session counts per weekday for a given teacher (optionally offsetting the week).
-
-- **Audit Logs (`/audit-logs`)**
-  - Admin/coordinator endpoints to record and inspect domain changes; supports filtering by entity, action, performer, and date range with pagination.
-  - `AuditLogsService` resolves `performedBy` to a `Users` entity, normalizes payload JSON, and exposes strongly typed DTOs.
-
-- **Disciplinary Records (`/disciplinary-records`)**
-  - Tracks behaviour incidents with category + description, linked to students and optionally courses/teachers.
-  - Feeds the dashboards heatmap and coordinator workflows; controllers support CRUD with RBAC similar to notifications.
-
-- **Notifications (`/notifications`)**
-  - Web-only notification center (no outbound email/SMS yet).
-  - Absence monitor (`/notifications/suggestions/absence/run`) inspects the three most recent *school* days prior to the requested run date (weekends skipped). A day counts as “absent without excuse” if the student has at least one `A` status slot and zero `AE` slots that day. When all three days meet that rule, the monitor emits (or leaves untouched) an active coordinator suggestion with category `attendance-absence-streak`.
-  - Coordinators resolve/dismiss suggestions via `PATCH /notifications/:id/resolve`; teachers have read-only access. Notifications now persist the scalar `student_id` column so services can query by student without loading the relation.
-
-### Cross-Cutting Behaviours
-- **Pagination:** All list endpoints return `{ data, total, page, pageSize }` using `shared/pagination.ts`.
-- **Error Mapping:** Unique constraint violations bubble up as `ConflictException` via `DbErrorMapper.throwConflict`.
-- **School-Year Write Locks:** Attendance, grades, enrollments, timetable assignments, and courses consult `SchoolYearsRepository` to prevent writes to inactive years (teachers cannot override; admins can everywhere, coordinators only within enrollment workflows).
-- **AccessService:** Instantiated per request in services needing scoped visibility; centralizes teacher-level lookups for allowed course/class group IDs.
-
-## Data Model Overview
-
-Entities are defined directly from the PostgreSQL schema under `src/{feature}/*.entity.ts`. Notable attributes:
-- **Users:** `nationalId` (PK), `role`, `passwordHash`, contact info, `isActive`, plus `mustChangePassword` and `temp_password_issued_at` for first-login rotation flows.
-- **Students:** Guardian contact must be present; gender is required (`Femenino`, `Masculino`, `No Binario`); `deleted_at` column used for soft-delete semantics in queries.
-- **SchoolYears:** `yearStart`, `yearEnd`, `isActive`; `rollover` ensures only one active record.
-- **Terms:** Associated with school year; `sortOrder` derived from enum.
-- **CalendarEvents:** Role-scoped calendar items with `category`, `kind`, `visibility_scope`, target arrays (`teacher_ids`, `area_ids`, `class_group_ids`), author metadata, and date range constrained to the parent school year.
-- **ClassGroups:** Unique per `(year, grade, section)`; relation to `Classrooms`.
-- **CourseInstances:** Unique codes per `(subject, grade, year)`; attributes for weekly hours, descriptive name.
-- **Courses:** Join table connecting course instances, class groups, teachers; cascaded relations used throughout access checks.
-- **Enrollments:** Unique active enrollment per `(student, school_year)` matched by service logic and DB constraints.
-- **Grades:** Records SABJ mark per `(student, course, term)`; optional comment.
-- **Attendance:** Unique `(student, date, slot)`; includes `recordedBy`, `reasonNote`, `excusedAt`.
-- **TimetableAssignments:** Connect courses to timetable slots with optional classroom override, plus redundant teacher/classGroup columns for querying.
-- **GradeSchemes / GradeSchemeValues:** Define grading catalogs, including letter code, label, ordering, and `isPassing`, referenced by `grades.schemeValue`.
-- **Notifications:** Persist notification category, target role, payload JSON, resolution metadata, and the author/suggester (absence monitor).
-- **AuditLogs:** Capture `entity_name`, optional `entity_id`, action, JSON payload, and FK to the performing user for traceability.
-- **DisciplinaryRecords:** Store incident category, description, `date_happened`, and optional course/teacher pointers surfaced in dashboards.
-- **PlanillaSheets:** Persist imported sheet metadata, JSONB `columns`/`rows`, nullable `source_file_name`, and `import_closed_at` so completed admin import sessions disappear without deleting academic records.
-
-Refer to `openapi.json` (generated) or Swagger UI for full schema definitions of DTOs.
-
-## Environment & Configuration
-
-| Variable | Purpose | Default / Notes |
-| --- | --- | --- |
-| `PORT` | HTTP port | `3000` |
-| `API_BASE_URL` | Swagger server URL + hyperlink base | `null` (falls back to `http://localhost:${PORT}`) |
-| `DATABASE_URL` | Full Postgres DSN | Optional; overrides discrete DB vars |
-| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` | Discrete Postgres connection info | Defaults to `localhost:5432`, user `postgres`, empty password, DB `schoolmg` |
-| `DB_SSL` | Enables TLS | `false`; set to `'true'` when deploying outside the private network |
-| `JWT_SECRET` | Symmetric signing key | `change-me` (override in any shared environment) |
-| `JWT_EXPIRES_IN` | JWT lifetime (`1h`, `3600s`, etc.) | `30d` (testing default) |
-| `EMAIL_ENABLED` | Enable real SMTP sends | `false` logs previews only |
-| `EMAIL_PROVIDER` | Email provider | `smtp` |
-| `EMAIL_HOST` | SMTP host | `smtp.gmail.com` |
-| `EMAIL_PORT` | SMTP port | `465` |
-| `EMAIL_SECURE` | SMTP TLS | `true` |
-| `EMAIL_USER` | SMTP username | Gmail address |
-| `EMAIL_PASS` | SMTP app password | App password (never commit) |
-| `EMAIL_FROM_NAME` | Display name | School display name |
-| `EMAIL_FROM_ADDRESS` | Sender email | Same Gmail address |
-| `EMAIL_BULK_BATCH_SIZE` | BCC batch size | `20` |
-| `OPENAPI_EXPORT` | Stub TypeORM when exporting swagger | Set to `1` for `npm run openapi:export` |
-
-**Deployment env source:** the deployed stack reads these values from `/Users/juandelgado/schoolMan/school-man-deploy/.env`. Review and rotate the JWT/SMTP credentials before any real deployment.
-
-## Local Development Workflow
-
-1. **Install dependencies**
-   ```CLI
-   npm install
-   ```
-2. **Configure environment**
-   - Copy `.env.example` to `.env` and fill DB/JWT/email values as needed.
-   - Email settings are optional unless you want real SMTP sends.
-   - Ensure a PostgreSQL instance is running and reachable with the configured credentials.
-3. **Run database migrations**
-   ```CLI
-   npm run migration:run
-   ```
-   (Create the `print_generation_seq` sequence manually if migrations have not done so yet.)
-4. **Run the API**
-   ```CLI
-   npm run start:dev
-   ```
-   Swagger UI will be available at `http://localhost:3000/api/docs` (Bearer auth).
-5. **Build for production**
-   ```CLI
-   npm run build
-   npm run start:prod
-   ```
-6. **Lint & formatting**
-   ```CLI
-   npm run lint
-   npm run format
-   ```
-7. **Generate OpenAPI spec**
-   ```CLI
-   npm run openapi:export
-   ```
-   Produces `openapi.json` with endpoints; the script sets `OPENAPI_EXPORT=1` and monkeypatches TypeORM so no real DB connection is required.
-8. **SMTP verification / test**
-   ```CLI
-   npm run email:verify
-   npm run email:test -- prof1@example.com
-   ```
-
-## Testing
-
-- **Unit tests:** `npm run test` (currently limited).
-- **E2E tests:** `npm run test:e2e` uses `test/jest-e2e.json`.
-  - `test/authz.e2e-spec.ts` ensures RBAC + guards behave as expected (401/403, teacher scoping).
-  - `test/year-write-lock.e2e-spec.ts` verifies rollover and archived-year immutability.
-  - `test/attendance-uniqueness.e2e-spec.ts`, `test/timetable-collisions.e2e-spec.ts`, `test/timetable-guards.e2e-spec.ts` cover invariants for scheduling.
-  - `test/students-soft-delete.e2e-spec.ts`, `test/enrollments-*.e2e-spec.ts`, `test/student-roster.e2e-spec.ts` ensure student lifecycle + roster logic.
-  - `test/notifications*.e2e-spec.ts` and `test/reports.e2e-spec.ts` guard the absence monitor (verifying the three-day window/weekend skipping rules) and printable outputs.
-  - Seeder utilities live inline within tests (`await repository.delete({})` resets tables).
-- **Coverage:** `npm run test:cov`.
-
-When running tests locally, ensure the configured database is disposable; tests truncate tables before seeding.
-
-## API Documentation
-
-- Swagger UI is hosted at `/api/docs` and includes all controllers, DTO schemas, request/response examples, and bearer auth configuration.
-- `openapi.json` (checked into the repo) mirrors the current contract; regenerate after changing controllers/DTOs using `npm run openapi:export`.
-
-## Operational Considerations
-
-- **Authentication policy:** Passwords stored as bcrypt hashes (`AuthService` uses `bcrypt.hash` with cost 10). Signup flow ensures unique `nationalId` & `username`; first admin auto-promotion if no admins exist.
-- **RBAC(Role-Based Acess Control):** Global guards ensure consistent enforcement; controllers annotate exceptions (e.g., `@Public()`, `@Roles('admin', …)`).
-- **Error surfacing:** Services favour explicit `NotFoundException`, `ConflictException`, `ForbiddenException`, `BadRequestException` for predictable API error responses.
-- **Database migrations:** Ensure migrations exist for any schema change; repository expects `migrationsRun: true` so production boots apply pending migrations automatically.
-- **Printable IDs:** `/reports/*` endpoints call `PrintIdService.nextId()` which fetches `nextval('print_generation_seq')`; create that sequence (or equivalent) in every environment otherwise report generation will fail.
-- **Timezones:** Dates stored as strings or timestamps; ensure clients honour UTC vs local conversions (e.g., attendance `date` expected as ISO string, weekly slot comparisons done in UTC). Consider standardizing timezone handling if needed.
-
-## Deployment Notes
-
-The real deployment assets live in the sibling folder `/Users/juandelgado/schoolMan/school-man-deploy`.
-
-### Compose stack
-
-- `db`: `postgres:16`, persistent volume `schoolman_postgres_data`
-- `back`: builds this repository and publishes `3000:3000`
-- `front`: builds `school-man-front`, serves it through nginx, publishes `8080:80`
-
-### Network flow
-
-- Users open `http://<host>:8080`
-- nginx serves the SPA and proxies `/api/*` to `http://back:3000/`
-- Swagger remains directly reachable on `http://<host>:3000/api/docs`
-
-### Start the deployed stack
-
-From `/Users/juandelgado/schoolMan/school-man-deploy`:
-
-```CLI
-docker compose up --build -d
+```bash
+npm install
 ```
 
-### Database bootstrap
+Create an environment file with database, JWT, email, and scanner settings. For local development the scanner usually runs at:
 
-Use one of these paths:
-
-1. Empty volume + backend migrations on boot
-2. Restore the provided snapshot `SchoolManBeta.sql`
-
-Snapshot restore example:
-
-```CLI
-docker compose up -d db
-docker compose exec -T db sh -lc 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < SchoolManBeta.sql
-docker compose up -d back front
+```dotenv
+SCANNER_BASE_URL=http://localhost:8010
+SCANNER_TIMEOUT_MS=120000
 ```
 
-### Reset database volume
+Start the API:
 
-```CLI
-docker compose down -v
+```bash
+npm run start:dev
 ```
 
-### Operational notes
+Swagger is available at:
 
-- `POST /auth/signup` automatically grants admin to the first account when the database has zero admins.
-- The `notifications` module surfaces updates inside the web UI; the absence monitor can be invoked via `/notifications/suggestions/absence/run`.
-- Replace the committed JWT and SMTP credentials in `school-man-deploy/.env` before any non-test use.
+```text
+http://localhost:3000/api/docs
+```
+
+## Validation
+
+Useful checks:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+Focused scanner/config tests can be run with:
+
+```bash
+npm test -- scanner.service.spec.ts configuration.spec.ts --runInBand
+```
+
+## Notes For Contributors
+
+- Keep academic rules in the backend, not in the frontend or scanner.
+- Treat scanner output as a draft that must be reviewed before final persistence.
+- Keep role checks enforced server-side even when the frontend hides actions.
+- Prefer small, workflow-focused changes over broad refactors.
