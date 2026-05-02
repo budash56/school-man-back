@@ -18,6 +18,7 @@ describe('configuration', () => {
     process.env.JWT_SECRET = 'spec-secret';
     process.env.DB_NAME = 'config_spec';
     process.env.DB_SSL = 'true';
+    process.env.DB_MIGRATIONS_RUN = 'false';
     process.env.SCANNER_BASE_URL = 'http://scanner:8010';
     process.env.SCANNER_TIMEOUT_MS = '25000';
 
@@ -28,8 +29,17 @@ describe('configuration', () => {
     expect(cfg.jwt.secret).toBe('spec-secret');
     expect(cfg.database.url).toContain('config_spec');
     expect(cfg.database.ssl).toBe(true);
+    expect(cfg.database.migrationsRun).toBe(false);
     expect(cfg.scanner.baseUrl).toBe('http://scanner:8010');
     expect(cfg.scanner.timeoutMs).toBe(25000);
+  });
+
+  it('runs migrations by default', () => {
+    delete process.env.DB_MIGRATIONS_RUN;
+
+    const cfg = configuration();
+
+    expect(cfg.database.migrationsRun).toBe(true);
   });
 });
 
@@ -52,12 +62,14 @@ describe('buildDataSourceOptions', () => {
       const options = buildDataSourceOptions({
         databaseUrl: 'postgres://spec-user:pass@localhost:5432/specdb',
         ssl: true,
+        migrationsRun: false,
       });
 
       expect(options.url).toBe(
         'postgres://spec-user:pass@localhost:5432/specdb',
       );
       expect(options.ssl).toEqual({ rejectUnauthorized: false });
+      expect(options.migrationsRun).toBe(false);
     });
   });
 

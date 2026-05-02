@@ -7,6 +7,7 @@ export type AppConfig = {
   database: {
     url: string;
     ssl: boolean;
+    migrationsRun: boolean;
   };
   jwt: {
     secret: string;
@@ -57,6 +58,7 @@ const configuration = (env: NodeJS.ProcessEnv = process.env): AppConfig => ({
   database: {
     url: resolveDatabaseUrl(env),
     ssl: env.DB_SSL === 'true',
+    migrationsRun: env.DB_MIGRATIONS_RUN !== 'false',
   },
   jwt: {
     secret: env.JWT_SECRET ?? 'change-me',

@@ -18,6 +18,9 @@ describe('AppModule configuration', () => {
         if (key === 'database.ssl') {
           return true;
         }
+        if (key === 'database.migrationsRun') {
+          return false;
+        }
         if (key === 'app.isOpenApiExport') {
           return false;
         }
@@ -32,6 +35,7 @@ describe('AppModule configuration', () => {
     expect(dataSource.buildDataSourceOptions).toHaveBeenCalledWith({
       databaseUrl: 'postgres://config-user:pass@db:5432/configdb',
       ssl: true,
+      migrationsRun: false,
     });
   });
 });

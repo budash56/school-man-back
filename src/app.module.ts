@@ -108,6 +108,7 @@ export const buildTypeOrmRootOptions = (
   const options = buildDataSourceOptions({
     databaseUrl: configService.get<string>('database.url') ?? undefined,
     ssl: configService.get<boolean>('database.ssl') ?? undefined,
+    migrationsRun: configService.get<boolean>('database.migrationsRun') ?? undefined,
   });
   const isOpenApiExport =
     configService.get<boolean>('app.isOpenApiExport') ?? false;
