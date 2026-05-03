@@ -37,6 +37,7 @@ type ImportCountKey =
 type ImportCounts = Record<ImportCountKey, number>;
 
 const DEFAULT_TEACHER_PASSWORD = 'SchoolMan#2026';
+const SPECIALIZATION_GRADES = new Set([10, 11]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -72,6 +73,15 @@ const getDivisionForGrade = (gradeLevel: number): 'elementary' | 'secondary' | '
     return 'secondary';
   }
   return 'senior';
+};
+
+const getSpecializationTrack = (
+  assignment: ScannedTimetableAssignment,
+): string | null => {
+  if (!SPECIALIZATION_GRADES.has(assignment.gradeLevel)) {
+    return null;
+  }
+  return assignment.section.padStart(2, '0');
 };
 
 @Injectable()
@@ -125,7 +135,8 @@ export class TimetableImportService {
       const area = await this.getOrCreateSubjectArea(manager, counts);
       const subjectByCode = new Map<string, Subjects>();
       const groupByCode = new Map<string, ClassGroups>();
-      const curriculumByGrade = new Map<number, Curricula>();
+      const specializationAreaByTrack = new Map<string, SubjectAreas>();
+      const curriculumByKey = new Map<string, Curricula>();
       const curriculumItemByKey = new Map<string, CurriculumItems>();
       const courseInstanceByKey = new Map<string, CourseInstances>();
       const courseByKey = new Map<string, Courses>();
@@ -143,8 +154,9 @@ export class TimetableImportService {
         );
         const curriculum = await this.getOrCreateCurriculum(
           manager,
-          assignment.gradeLevel,
-          curriculumByGrade,
+          assignment,
+          specializationAreaByTrack,
+          curriculumByKey,
           counts,
         );
         const curriculumItem = await this.getOrCreateCurriculumItem(
@@ -161,6 +173,7 @@ export class TimetableImportService {
           assignment,
           subject,
           curriculumItem,
+          group,
           courseInstanceByKey,
           counts,
         );
@@ -314,32 +327,104 @@ export class TimetableImportService {
 
   private async getOrCreateCurriculum(
     manager: any,
-    gradeLevel: number,
-    cache: Map<number, Curricula>,
+    assignment: ScannedTimetableAssignment,
+    specializationAreaCache: Map<string, SubjectAreas>,
+    cache: Map<string, Curricula>,
     counts: ImportCounts,
   ): Promise<Curricula> {
-    const cached = cache.get(gradeLevel);
+    const trackName = getSpecializationTrack(assignment);
+    const key = trackName
+      ? `${assignment.gradeLevel}:${trackName}`
+      : `${assignment.gradeLevel}:base`;
+    const cached = cache.get(key);
     if (cached) {
       return cached;
     }
 
     const repo = manager.getRepository(Curricula);
+    const specializationArea = trackName
+      ? await this.getOrCreateSpecializationArea(
+          manager,
+          trackName,
+          specializationAreaCache,
+          counts,
+        )
+      : null;
+
     let curriculum = await repo.findOne({
-      where: { gradeLevel, trackName: IsNull(), specializationAreaId: IsNull() },
+      where: trackName
+        ? {
+            gradeLevel: assignment.gradeLevel,
+            trackName,
+          }
+        : {
+            gradeLevel: assignment.gradeLevel,
+            trackName: IsNull(),
+            specializationAreaId: IsNull(),
+          },
     });
     if (!curriculum) {
       curriculum = repo.create({
-        gradeLevel,
-        name: `Currículo importado grado ${gradeLevel}`,
-        trackName: null,
-        specializationAreaId: null,
+        gradeLevel: assignment.gradeLevel,
+        name: trackName
+          ? `${trackName} grado ${assignment.gradeLevel}`
+          : `Currículo importado grado ${assignment.gradeLevel}`,
+        trackName,
+        specializationAreaId: specializationArea?.areaId ?? null,
         isActive: true,
       });
       curriculum = await repo.save(curriculum);
       counts.curricula += 1;
+    } else if (
+      trackName &&
+      specializationArea &&
+      curriculum.specializationAreaId !== specializationArea.areaId
+    ) {
+      await repo.update(
+        { curriculumId: curriculum.curriculumId },
+        { specializationAreaId: specializationArea.areaId },
+      );
+      curriculum.specializationAreaId = specializationArea.areaId;
     }
-    cache.set(gradeLevel, curriculum);
+    cache.set(key, curriculum);
     return curriculum;
+  }
+
+  private async getOrCreateSpecializationArea(
+    manager: any,
+    trackName: string,
+    cache: Map<string, SubjectAreas>,
+    counts: ImportCounts,
+  ): Promise<SubjectAreas> {
+    const cached = cache.get(trackName);
+    if (cached) {
+      return cached;
+    }
+
+    const repo = manager.getRepository(SubjectAreas);
+    const code = `SPEC-${trackName}`;
+    let area = await repo.findOne({ where: { code } });
+    if (!area) {
+      area = await repo.findOne({ where: { name: trackName } });
+    }
+    if (!area) {
+      area = repo.create({
+        code,
+        name: trackName,
+        isSpecialization: true,
+      });
+      area = await repo.save(area);
+      counts.subjectAreas += 1;
+    } else if (!area.isSpecialization || area.code !== code) {
+      await repo.update(
+        { areaId: area.areaId },
+        { isSpecialization: true, code: area.code ?? code },
+      );
+      area.isSpecialization = true;
+      area.code = area.code ?? code;
+    }
+    cache.set(trackName, area);
+    return area;
   }
 
   private async getOrCreateCurriculumItem(
@@ -368,7 +453,8 @@ export class TimetableImportService {
             .filter(
               (assignment) =>
                 assignment.gradeLevel === curriculum.gradeLevel &&
-                assignment.subjectCode === subject.subjectCode,
+                assignment.subjectCode === subject.subjectCode &&
+                getSpecializationTrack(assignment) === curriculum.trackName,
             )
             .map((assignment) => `${assignment.groupCode}:${assignment.dayOfWeek}:${assignment.period}`),
         ).size,
@@ -393,10 +479,15 @@ export class TimetableImportService {
     assignment: ScannedTimetableAssignment,
     subject: Subjects,
     curriculumItem: CurriculumItems,
+    group: ClassGroups,
     cache: Map<string, CourseInstances>,
     counts: ImportCounts,
   ): Promise<CourseInstances> {
-    const key = `${schoolYearId}:${assignment.gradeLevel}:${subject.subjectId}`;
+    const trackName = getSpecializationTrack(assignment);
+    const scopeType = trackName ? 'CLASS_GROUP' : 'GRADE';
+    const key = trackName
+      ? `${schoolYearId}:${group.classGroupId}:${subject.subjectId}`
+      : `${schoolYearId}:${assignment.gradeLevel}:base:${subject.subjectId}`;
     const cached = cache.get(key);
     if (cached) {
       return cached;
@@ -408,21 +499,27 @@ export class TimetableImportService {
         schoolYearId: String(schoolYearId),
         gradeLevel: assignment.gradeLevel,
         subjectId: subject.subjectId,
-        scopeType: 'GRADE',
+        scopeType,
+        ...(trackName
+          ? { classGroupId: group.classGroupId }
+          : { classGroupId: IsNull() }),
       },
     });
     if (!instance) {
+      const scopeSuffix = trackName ? `-${assignment.groupCode}` : '';
       instance = repo.create({
         subjectId: subject.subjectId,
         gradeLevel: assignment.gradeLevel,
         schoolYearId: String(schoolYearId),
-        classGroupId: null,
-        scopeType: 'GRADE',
+        classGroupId: trackName ? group.classGroupId : null,
+        scopeType,
         curriculumItemId: curriculumItem.curriculumItemId,
         weeklyHours: curriculumItem.weeklyHours,
         doubleSessionRequired: false,
-        courseCode: `${subject.subjectCode}-G${assignment.gradeLevel}`.slice(0, 50),
-        courseName: `${assignment.subjectName} grado ${assignment.gradeLevel}`,
+        courseCode: `${subject.subjectCode}-G${assignment.gradeLevel}${scopeSuffix}`.slice(0, 50),
+        courseName: trackName
+          ? `${assignment.subjectName} ${assignment.groupCode}`
+          : `${assignment.subjectName} grado ${assignment.gradeLevel}`,
         description: 'Imported from teacher timetable PDF.',
         isActive: true,
       });
