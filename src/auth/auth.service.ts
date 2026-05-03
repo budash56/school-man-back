@@ -14,6 +14,7 @@ import { UsersRepository } from '../users/users.repository';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import type { AuthResponse, SanitizedUser } from './auth.types';
 export type { AuthResponse, SanitizedUser } from './auth.types';
 import { EmailService } from '../email/email.service';
@@ -89,6 +90,26 @@ export class AuthService {
 
     await this.usersRepo.save(user);
     return { updated: true };
+  }
+
+  async updateProfile(
+    currentUser: SanitizedUser,
+    dto: UpdateProfileDto,
+  ): Promise<SanitizedUser> {
+    const user = await this.usersRepo.findOne({
+      where: { nationalId: currentUser.nationalId },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (dto.email !== undefined) {
+      user.email = dto.email?.trim() || null;
+    }
+    user.updatedAt = new Date();
+
+    const saved = await this.usersRepo.save(user);
+    return this.sanitizeUser(saved);
   }
 
   private async validateUser(
