@@ -36,8 +36,22 @@ type ImportCountKey =
 
 type ImportCounts = Record<ImportCountKey, number>;
 
+type SharedCurriculumConflict = {
+  gradeLevel: number;
+  subjectCode: string;
+  subjectName: string;
+  expectedWeeklyHours: number;
+  groups: Array<{
+    groupCode: string;
+    weeklyHours: number;
+    slots: string[];
+  }>;
+};
+
 const DEFAULT_TEACHER_PASSWORD = 'SchoolMan#2026';
 const SPECIALIZATION_GRADES = new Set([10, 11]);
+const SHARED_CURRICULUM_GRADES = new Set([6, 7, 8, 9]);
+const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -84,6 +98,28 @@ const getSpecializationTrack = (
   return assignment.section.padStart(2, '0');
 };
 
+const getSlotKey = (assignment: ScannedTimetableAssignment): string =>
+  `${assignment.dayOfWeek}:${assignment.period}:${assignment.startTime}:${assignment.endTime}`;
+
+const formatSlot = (assignment: ScannedTimetableAssignment): string => {
+  const day = WEEKDAYS[assignment.dayOfWeek - 1] ?? `Día ${assignment.dayOfWeek}`;
+  return `${day} P${assignment.period} ${assignment.startTime.slice(0, 5)}-${assignment.endTime.slice(0, 5)}`;
+};
+
+const getMostCommonCount = (counts: number[]): number => {
+  const comparableCounts = counts.some((count) => count > 0)
+    ? counts.filter((count) => count > 0)
+    : counts;
+  const frequency = new Map<number, number>();
+  for (const count of comparableCounts) {
+    frequency.set(count, (frequency.get(count) ?? 0) + 1);
+  }
+  return [...frequency.entries()].sort((left, right) => {
+    const byFrequency = right[1] - left[1];
+    return byFrequency === 0 ? right[0] - left[0] : byFrequency;
+  })[0]?.[0] ?? 0;
+};
+
 @Injectable()
 export class TimetableImportService {
   constructor(private readonly dataSource: DataSource) {}
@@ -119,6 +155,7 @@ export class TimetableImportService {
     if (assignments.length === 0) {
       throw new BadRequestException('No valid timetable assignments were provided.');
     }
+    this.assertSharedCurriculumHours(assignments);
 
     const passwordHash = await bcrypt.hash(DEFAULT_TEACHER_PASSWORD, 10);
     const counts = this.emptyCounts();
@@ -217,6 +254,72 @@ export class TimetableImportService {
       slots: 0,
       assignments: 0,
     };
+  }
+
+  private assertSharedCurriculumHours(assignments: ScannedTimetableAssignment[]): void {
+    const conflicts: SharedCurriculumConflict[] = [];
+
+    for (const gradeLevel of SHARED_CURRICULUM_GRADES) {
+      const gradeAssignments = assignments.filter(
+        (assignment) => assignment.gradeLevel === gradeLevel,
+      );
+      if (gradeAssignments.length === 0) {
+        continue;
+      }
+
+      const groups = [...new Set(gradeAssignments.map((assignment) => assignment.groupCode))].sort();
+      const subjectKeys = [
+        ...new Set(
+          gradeAssignments.map(
+            (assignment) => `${assignment.subjectCode}::${assignment.subjectName}`,
+          ),
+        ),
+      ].sort();
+
+      for (const subjectKey of subjectKeys) {
+        const [subjectCode, subjectName] = subjectKey.split('::');
+        const groupDetails = groups.map((groupCode) => {
+          const groupSubjectAssignments = gradeAssignments.filter(
+            (assignment) =>
+              assignment.groupCode === groupCode &&
+              assignment.subjectCode === subjectCode,
+          );
+          const slotsByKey = new Map<string, string>();
+          for (const assignment of groupSubjectAssignments) {
+            slotsByKey.set(getSlotKey(assignment), formatSlot(assignment));
+          }
+          return {
+            groupCode,
+            weeklyHours: slotsByKey.size,
+            slots: [...slotsByKey.values()].sort(),
+          };
+        });
+
+        const weeklyHourCounts = groupDetails.map((group) => group.weeklyHours);
+        const uniqueCounts = new Set(weeklyHourCounts);
+        if (uniqueCounts.size <= 1) {
+          continue;
+        }
+
+        conflicts.push({
+          gradeLevel,
+          subjectCode,
+          subjectName,
+          expectedWeeklyHours: getMostCommonCount(weeklyHourCounts),
+          groups: groupDetails,
+        });
+      }
+    }
+
+    if (conflicts.length === 0) {
+      return;
+    }
+
+    throw new BadRequestException({
+      message:
+        'Grades 6-9 have inconsistent weekly subject hours. Resolve these timetable differences before importing.',
+      conflicts,
+    });
   }
 
   private async getOrCreateSubjectArea(manager: any, counts: ImportCounts): Promise<SubjectAreas> {
@@ -446,19 +549,7 @@ export class TimetableImportService {
       where: { curriculumId: curriculum.curriculumId, subjectId: subject.subjectId },
     });
     if (!item) {
-      const weeklyHours = Math.max(
-        1,
-        new Set(
-          assignments
-            .filter(
-              (assignment) =>
-                assignment.gradeLevel === curriculum.gradeLevel &&
-                assignment.subjectCode === subject.subjectCode &&
-                getSpecializationTrack(assignment) === curriculum.trackName,
-            )
-            .map((assignment) => `${assignment.groupCode}:${assignment.dayOfWeek}:${assignment.period}`),
-        ).size,
-      );
+      const weeklyHours = this.getCurriculumWeeklyHours(curriculum, subject, assignments);
       item = repo.create({
         curriculumId: curriculum.curriculumId,
         subjectId: subject.subjectId,
@@ -471,6 +562,42 @@ export class TimetableImportService {
     }
     cache.set(key, item);
     return item;
+  }
+
+  private getCurriculumWeeklyHours(
+    curriculum: Curricula,
+    subject: Subjects,
+    assignments: ScannedTimetableAssignment[],
+  ): number {
+    const relevantAssignments = assignments.filter(
+      (assignment) =>
+        assignment.gradeLevel === curriculum.gradeLevel &&
+        assignment.subjectCode === subject.subjectCode &&
+        getSpecializationTrack(assignment) === curriculum.trackName,
+    );
+
+    if (
+      SHARED_CURRICULUM_GRADES.has(curriculum.gradeLevel) &&
+      !curriculum.trackName
+    ) {
+      const countsByGroup = new Map<string, Set<string>>();
+      for (const assignment of relevantAssignments) {
+        const slots = countsByGroup.get(assignment.groupCode) ?? new Set<string>();
+        slots.add(getSlotKey(assignment));
+        countsByGroup.set(assignment.groupCode, slots);
+      }
+      const firstGroupSlots = countsByGroup.values().next().value as Set<string> | undefined;
+      return Math.max(1, firstGroupSlots?.size ?? 0);
+    }
+
+    return Math.max(
+      1,
+      new Set(
+        relevantAssignments.map(
+          (assignment) => `${assignment.groupCode}:${getSlotKey(assignment)}`,
+        ),
+      ).size,
+    );
   }
 
   private async getOrCreateCourseInstance(
