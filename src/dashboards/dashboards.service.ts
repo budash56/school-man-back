@@ -435,7 +435,7 @@ export class DashboardsService {
     params: Array<number | string>,
   ) {
     const where = clauses.join(' AND ');
-    const [summaryRows, courseRows, subjectRows] = await Promise.all([
+    const [summaryRows, courseRows, subjectRows, teacherRows] = await Promise.all([
       this.dataSource.query(
         `
           SELECT
@@ -494,6 +494,28 @@ export class DashboardsService {
         `,
         params,
       ),
+      this.dataSource.query(
+        `
+          SELECT
+            c.teacher_id,
+            COALESCE(NULLIF(TRIM(CONCAT_WS(' ', teacher.first_name, teacher.last_name)), ''), teacher.username, c.teacher_id) AS teacher_name,
+            COUNT(*)::int AS total,
+            AVG(grade.mark)::float AS average,
+            COUNT(*) FILTER (WHERE grade.mark = 1)::int AS low,
+            COUNT(DISTINCT grade.student_id)::int AS students,
+            COUNT(DISTINCT c.course_id)::int AS courses
+          FROM grades grade
+          JOIN courses c ON c.course_id = grade.course_id
+          JOIN users teacher ON teacher.national_id = c.teacher_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+          GROUP BY c.teacher_id, teacher.first_name, teacher.last_name, teacher.username
+          ORDER BY low DESC, average ASC NULLS LAST, teacher_name
+          LIMIT 8
+        `,
+        params,
+      ),
     ]);
     return {
       ...this.toAcademicSummary(summaryRows[0]),
@@ -506,6 +528,12 @@ export class DashboardsService {
       bySubject: subjectRows.map((row: SqlRow) => ({
         subjectCode: row.subject_code,
         label: row.subject_name,
+        ...this.toAcademicSummary(row),
+      })),
+      byTeacher: teacherRows.map((row: SqlRow) => ({
+        teacherId: row.teacher_id,
+        label: row.teacher_name,
+        courses: Number(row.courses ?? 0),
         ...this.toAcademicSummary(row),
       })),
     };
@@ -531,6 +559,7 @@ export class DashboardsService {
       lowRate: 0,
       byCourse: [],
       bySubject: [],
+      byTeacher: [],
     };
   }
 
