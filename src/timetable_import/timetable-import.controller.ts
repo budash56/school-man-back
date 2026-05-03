@@ -17,4 +17,9 @@ export class TimetableImportController {
   confirmImport(@Body() body: unknown) {
     return this.service.confirmImport(body);
   }
+
+  @Post('curriculum-schedule/confirm')
+  confirmCurriculumScheduleImport(@Body() body: unknown) {
+    return this.service.confirmCurriculumScheduleImport(body);
+  }
 }

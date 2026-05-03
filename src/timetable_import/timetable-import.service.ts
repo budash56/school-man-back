@@ -13,12 +13,17 @@ import { TimetableAssignments } from '../timetable_assignments/timetable_assignm
 import { TimetableSlot } from '../timetable_slots/timetable_slots.entity';
 import { Users } from '../users/users.entity';
 import type {
+  ScannedCurriculumScheduleCurriculum,
   ScannedTimetableAssignment,
   ScannedTimetableResponse,
 } from '../scanner/timetable-scanner.types';
 
 type ConfirmTimetableImportPayload = {
   schoolYearId?: unknown;
+  scan?: unknown;
+};
+
+type ConfirmCurriculumScheduleImportPayload = {
   scan?: unknown;
 };
 
@@ -241,6 +246,87 @@ export class TimetableImportService {
     };
   }
 
+  async confirmCurriculumScheduleImport(payload: unknown) {
+    if (!isRecord(payload)) {
+      throw new BadRequestException('Invalid curriculum schedule import payload.');
+    }
+
+    const { scan } = payload as ConfirmCurriculumScheduleImportPayload;
+    if (!isRecord(scan) || !Array.isArray(scan.curricula)) {
+      throw new BadRequestException('A scanned curriculum schedule payload is required.');
+    }
+
+    const warnings = Array.isArray(scan.warnings)
+      ? scan.warnings.map((warning) => String(warning)).filter(Boolean)
+      : [];
+    if (warnings.length > 0) {
+      throw new BadRequestException({
+        message:
+          'The curriculum schedule has inconsistent groups. Resolve these differences before importing.',
+        warnings,
+      });
+    }
+
+    const scannedCurricula = (scan.curricula as ScannedCurriculumScheduleCurriculum[]).filter(
+      (curriculum) =>
+        curriculum.gradeLevel > 0 &&
+        curriculum.weeklyHours > 0 &&
+        Array.isArray(curriculum.items) &&
+        curriculum.items.length > 0,
+    );
+
+    if (scannedCurricula.length === 0) {
+      throw new BadRequestException('No valid curricula were provided.');
+    }
+
+    const counts = this.emptyCounts();
+    await this.dataSource.transaction(async (manager) => {
+      const subjectArea = await this.getOrCreateCurriculumScheduleSubjectArea(manager, counts);
+      const specializationAreaByTrack = new Map<string, SubjectAreas>();
+      const subjectByCode = new Map<string, Subjects>();
+
+      for (const scannedCurriculum of scannedCurricula) {
+        const specializationArea = scannedCurriculum.trackName
+          ? await this.getOrCreateSpecializationArea(
+              manager,
+              scannedCurriculum.trackName,
+              specializationAreaByTrack,
+              counts,
+            )
+          : null;
+        const curriculum = await this.getOrCreateScheduleCurriculum(
+          manager,
+          scannedCurriculum,
+          specializationArea,
+          counts,
+        );
+
+        for (const item of scannedCurriculum.items) {
+          const subject = await this.getOrCreateScheduleSubject(
+            manager,
+            item.subjectCode,
+            item.subjectName,
+            subjectArea,
+            subjectByCode,
+            counts,
+          );
+          await this.upsertScheduleCurriculumItem(
+            manager,
+            curriculum,
+            subject,
+            item.weeklyHours,
+            counts,
+          );
+        }
+      }
+    });
+
+    return {
+      imported: counts,
+      message: `Imported ${counts.curricula} curricula and ${counts.curriculumItems} curriculum items from class schedules.`,
+    };
+  }
+
   private emptyCounts(): ImportCounts {
     return {
       teachers: 0,
@@ -335,6 +421,126 @@ export class TimetableImportService {
       counts.subjectAreas += 1;
     }
     return area;
+  }
+
+  private async getOrCreateCurriculumScheduleSubjectArea(
+    manager: any,
+    counts: ImportCounts,
+  ): Promise<SubjectAreas> {
+    const repo = manager.getRepository(SubjectAreas);
+    let area = await repo.findOne({ where: { code: 'CURRICULUM-SCHEDULE' } });
+    if (!area) {
+      area = repo.create({
+        code: 'CURRICULUM-SCHEDULE',
+        name: 'Currículo importado',
+        isSpecialization: false,
+      });
+      area = await repo.save(area);
+      counts.subjectAreas += 1;
+    }
+    return area;
+  }
+
+  private async getOrCreateScheduleSubject(
+    manager: any,
+    subjectCode: string,
+    subjectName: string,
+    area: SubjectAreas,
+    cache: Map<string, Subjects>,
+    counts: ImportCounts,
+  ): Promise<Subjects> {
+    const cached = cache.get(subjectCode);
+    if (cached) {
+      return cached;
+    }
+
+    const repo = manager.getRepository(Subjects);
+    let subject = await repo.findOne({ where: { subjectCode } });
+    if (!subject) {
+      subject = repo.create({
+        subjectCode,
+        name: subjectName,
+        description: 'Imported from class schedule PDF.',
+        areaId: area.areaId,
+      });
+      subject = await repo.save(subject);
+      counts.subjects += 1;
+    }
+    cache.set(subjectCode, subject);
+    return subject;
+  }
+
+  private async getOrCreateScheduleCurriculum(
+    manager: any,
+    scannedCurriculum: ScannedCurriculumScheduleCurriculum,
+    specializationArea: SubjectAreas | null,
+    counts: ImportCounts,
+  ): Promise<Curricula> {
+    const repo = manager.getRepository(Curricula);
+    let curriculum = await repo.findOne({
+      where: scannedCurriculum.trackName
+        ? {
+            gradeLevel: scannedCurriculum.gradeLevel,
+            trackName: scannedCurriculum.trackName,
+          }
+        : {
+            gradeLevel: scannedCurriculum.gradeLevel,
+            trackName: IsNull(),
+            specializationAreaId: IsNull(),
+          },
+    });
+    if (!curriculum) {
+      curriculum = repo.create({
+        gradeLevel: scannedCurriculum.gradeLevel,
+        name: scannedCurriculum.trackName
+          ? `${scannedCurriculum.trackName} grado ${scannedCurriculum.gradeLevel}`
+          : `Currículo grado ${scannedCurriculum.gradeLevel}`,
+        trackName: scannedCurriculum.trackName,
+        specializationAreaId: specializationArea?.areaId ?? null,
+        isActive: true,
+      });
+      curriculum = await repo.save(curriculum);
+      counts.curricula += 1;
+    } else if (
+      specializationArea &&
+      curriculum.specializationAreaId !== specializationArea.areaId
+    ) {
+      await repo.update(
+        { curriculumId: curriculum.curriculumId },
+        { specializationAreaId: specializationArea.areaId },
+      );
+      curriculum.specializationAreaId = specializationArea.areaId;
+    }
+    return curriculum;
+  }
+
+  private async upsertScheduleCurriculumItem(
+    manager: any,
+    curriculum: Curricula,
+    subject: Subjects,
+    weeklyHours: number,
+    counts: ImportCounts,
+  ): Promise<CurriculumItems> {
+    const repo = manager.getRepository(CurriculumItems);
+    let item = await repo.findOne({
+      where: { curriculumId: curriculum.curriculumId, subjectId: subject.subjectId },
+    });
+    if (!item) {
+      item = repo.create({
+        curriculumId: curriculum.curriculumId,
+        subjectId: subject.subjectId,
+        weeklyHours,
+        doubleSessionRequired: weeklyHours > 1,
+        notes: 'Imported from class schedule PDF.',
+      });
+      item = await repo.save(item);
+      counts.curriculumItems += 1;
+    } else if (item.weeklyHours !== weeklyHours) {
+      item.weeklyHours = weeklyHours;
+      item.doubleSessionRequired = weeklyHours > 1;
+      item = await repo.save(item);
+    }
+    return item;
   }
 
   private async getOrCreateTeacher(

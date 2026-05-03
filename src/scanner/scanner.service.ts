@@ -10,6 +10,10 @@ import { ConfigService } from '@nestjs/config';
 import type { Express } from 'express';
 import type { ScannedPlanillaResponse, ScannedPlanillaRow } from './scanner.types';
 import type {
+  ScannedCurriculumScheduleCurriculum,
+  ScannedCurriculumScheduleItem,
+  ScannedCurriculumScheduleResponse,
+  ScannedCurriculumScheduleSession,
   ScannedTimetableAssignment,
   ScannedTimetableClassGroup,
   ScannedTimetableResponse,
@@ -79,6 +83,32 @@ type ScannerRawTimetableAssignment = ScannerRawTimetableSlot &
     subject_name?: unknown;
   };
 
+type ScannerRawCurriculumScheduleItem = {
+  subject_code?: unknown;
+  subject_name?: unknown;
+  weekly_hours?: unknown;
+};
+
+type ScannerRawCurriculumScheduleCurriculum = {
+  grade_level?: unknown;
+  track_name?: unknown;
+  specialization_name?: unknown;
+  group_codes?: unknown;
+  weekly_hours?: unknown;
+  items?: unknown;
+};
+
+type ScannerRawCurriculumScheduleSession = {
+  group_code?: unknown;
+  grade_level?: unknown;
+  section?: unknown;
+  subject_code?: unknown;
+  subject_name?: unknown;
+  period?: unknown;
+  day_of_week?: unknown;
+  is_continuation?: unknown;
+};
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -112,6 +142,8 @@ const toNullableNumber = (value: unknown): number | null => {
   }
   return null;
 };
+
+const toBooleanValue = (value: unknown): boolean => value === true;
 
 const toStringMap = (value: unknown): Record<string, string> => {
   if (!isRecord(value)) {
@@ -339,6 +371,123 @@ const mapTimetableScannerResponse = (
   };
 };
 
+const mapCurriculumScheduleItem = (
+  value: unknown,
+): ScannedCurriculumScheduleItem | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const item = value as ScannerRawCurriculumScheduleItem;
+  return {
+    subjectCode: toStringValue(item.subject_code),
+    subjectName: toStringValue(item.subject_name),
+    weeklyHours: toNullableNumber(item.weekly_hours) ?? 0,
+  };
+};
+
+const mapCurriculumScheduleCurriculum = (
+  value: unknown,
+): ScannedCurriculumScheduleCurriculum | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const curriculum = value as ScannerRawCurriculumScheduleCurriculum;
+  return {
+    gradeLevel: toNullableNumber(curriculum.grade_level) ?? 0,
+    trackName: toNullableString(curriculum.track_name),
+    specializationName: toNullableString(curriculum.specialization_name),
+    groupCodes: Array.isArray(curriculum.group_codes)
+      ? curriculum.group_codes.map((item) => toStringValue(item)).filter(Boolean)
+      : [],
+    weeklyHours: toNullableNumber(curriculum.weekly_hours) ?? 0,
+    items: Array.isArray(curriculum.items)
+      ? curriculum.items
+          .map(mapCurriculumScheduleItem)
+          .filter((item): item is ScannedCurriculumScheduleItem => item !== null)
+      : [],
+  };
+};
+
+const mapCurriculumScheduleSession = (
+  value: unknown,
+): ScannedCurriculumScheduleSession | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const session = value as ScannerRawCurriculumScheduleSession;
+  return {
+    groupCode: toStringValue(session.group_code),
+    gradeLevel: toNullableNumber(session.grade_level) ?? 0,
+    section: toStringValue(session.section),
+    subjectCode: toStringValue(session.subject_code),
+    subjectName: toStringValue(session.subject_name),
+    period: toNullableNumber(session.period) ?? 0,
+    dayOfWeek: toNullableNumber(session.day_of_week) ?? 0,
+    isContinuation: toBooleanValue(session.is_continuation),
+  };
+};
+
+const mapCurriculumScheduleScannerResponse = (
+  payload: unknown,
+): ScannedCurriculumScheduleResponse => {
+  if (!isRecord(payload)) {
+    throw new BadGatewayException(
+      'SchoolScanner returned an invalid response payload.',
+    );
+  }
+
+  const response = payload as ScannerRawResponse & {
+    class_groups?: unknown;
+    subjects?: unknown;
+    curricula?: unknown;
+    sessions?: unknown;
+  };
+  const uploadedFile = isRecord(response.uploaded_file)
+    ? (response.uploaded_file as ScannerRawFile)
+    : {};
+
+  return {
+    status: toStringValue(response.status, 'unknown'),
+    message: toStringValue(
+      response.message,
+      'Scanner response received without a message.',
+    ),
+    uploadedFile: {
+      filename: toStringValue(uploadedFile.filename, 'unknown'),
+      contentType: toStringValue(
+        uploadedFile.content_type,
+        'application/octet-stream',
+      ),
+      sizeBytes: toNullableNumber(uploadedFile.size_bytes) ?? 0,
+    },
+    classGroups: Array.isArray(response.class_groups)
+      ? response.class_groups
+          .map(mapTimetableClassGroup)
+          .filter((item): item is ScannedTimetableClassGroup => item !== null)
+      : [],
+    subjects: Array.isArray(response.subjects)
+      ? response.subjects
+          .map(mapTimetableSubject)
+          .filter((item): item is ScannedTimetableSubject => item !== null)
+      : [],
+    curricula: Array.isArray(response.curricula)
+      ? response.curricula
+          .map(mapCurriculumScheduleCurriculum)
+          .filter(
+            (item): item is ScannedCurriculumScheduleCurriculum => item !== null,
+          )
+      : [],
+    sessions: Array.isArray(response.sessions)
+      ? response.sessions
+          .map(mapCurriculumScheduleSession)
+          .filter((item): item is ScannedCurriculumScheduleSession => item !== null)
+      : [],
+    warnings: Array.isArray(response.warnings)
+      ? response.warnings.map((warning) => toStringValue(warning)).filter(Boolean)
+      : [],
+  };
+};
+
 @Injectable()
 export class ScannerService {
   private readonly logger = new Logger(ScannerService.name);
@@ -403,6 +552,36 @@ export class ScannerService {
     });
 
     return mapTimetableScannerResponse(body);
+  }
+
+  async scanCurriculumSchedule(
+    file: Express.Multer.File | undefined,
+  ): Promise<ScannedCurriculumScheduleResponse> {
+    if (!file) {
+      throw new BadRequestException('A file upload is required.');
+    }
+
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('Uploaded file is empty.');
+    }
+
+    const baseUrl = this.configService.get<string>('scanner.baseUrl')?.trim();
+    if (!baseUrl) {
+      throw new ServiceUnavailableException(
+        'SchoolScanner is not configured for this environment.',
+      );
+    }
+
+    const timeoutMs =
+      this.configService.get<number>('scanner.timeoutMs') ?? 120000;
+    const body = await this.postFileToScanner({
+      baseUrl,
+      timeoutMs,
+      path: '/scan/curriculum-schedule',
+      file,
+    });
+
+    return mapCurriculumScheduleScannerResponse(body);
   }
 
   private async postFileToScanner({

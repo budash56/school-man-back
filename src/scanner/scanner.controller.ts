@@ -64,4 +64,23 @@ export class ScannerController {
   scanTimetable(@UploadedFile() file: Express.Multer.File) {
     return this.scannerService.scanTimetable(file);
   }
+
+  @Post('curriculum-schedule')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
+  scanCurriculumSchedule(@UploadedFile() file: Express.Multer.File) {
+    return this.scannerService.scanCurriculumSchedule(file);
+  }
 }
