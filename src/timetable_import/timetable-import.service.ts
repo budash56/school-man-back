@@ -511,26 +511,27 @@ export class TimetableImportService {
     slot: TimetableSlot,
   ): Promise<boolean> {
     const repo = manager.getRepository(TimetableAssignments);
+    const slotId = String(slot.slotId);
     const existing = await repo.findOne({
-      where: { courseId: course.courseId, slotId: String(slot.slotId) },
+      where: [
+        { courseId: course.courseId, slotId },
+        { classGroupId: group.classGroupId, slotId },
+        { teacherId: teacher.nationalId, slotId },
+      ],
     });
     if (existing) {
       return false;
     }
 
-    try {
-      await repo.save(
-        repo.create({
-          courseId: course.courseId,
-          slotId: String(slot.slotId),
-          teacherId: teacher.nationalId,
-          classGroupId: group.classGroupId,
-          classroomId: null,
-        }),
-      );
-      return true;
-    } catch {
-      return false;
-    }
+    await repo.save(
+      repo.create({
+        courseId: course.courseId,
+        slotId,
+        teacherId: teacher.nationalId,
+        classGroupId: group.classGroupId,
+        classroomId: null,
+      }),
+    );
+    return true;
   }
 }
