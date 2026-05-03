@@ -2,10 +2,62 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 type SqlRow = Record<string, any>;
+type MetricsUser = { nationalId: string; role: string };
 
 @Injectable()
 export class DashboardsService {
   constructor(private readonly dataSource: DataSource) {}
+
+  async getMetrics(
+    query: {
+      schoolYearId?: number;
+      gradeLevel?: number;
+      classGroupId?: number;
+      courseId?: number;
+    },
+    user: MetricsUser,
+  ) {
+    const schoolYearId =
+      query.schoolYearId ?? (await this.getActiveSchoolYearId());
+    if (!schoolYearId) {
+      return {
+        schoolYearId: null,
+        attendance: this.emptyAttendanceMetrics(),
+        academic: this.emptyAcademicMetrics(),
+        teacherCourses: [],
+      };
+    }
+
+    const teacherCourses =
+      user.role === 'teacher'
+        ? await this.getTeacherCourses(user.nationalId, schoolYearId)
+        : [];
+
+    if (user.role === 'teacher' && teacherCourses.length === 0) {
+      return {
+        schoolYearId,
+        attendance: this.emptyAttendanceMetrics(),
+        academic: this.emptyAcademicMetrics(),
+        teacherCourses,
+      };
+    }
+
+    const [attendance, academic] = await Promise.all([
+      user.role === 'teacher'
+        ? this.getTeacherAttendanceMetrics(schoolYearId, user.nationalId, query)
+        : this.getAdminAttendanceMetrics(schoolYearId, query),
+      user.role === 'teacher'
+        ? this.getTeacherAcademicMetrics(schoolYearId, user.nationalId, query)
+        : this.getAdminAcademicMetrics(schoolYearId, query),
+    ]);
+
+    return {
+      schoolYearId,
+      attendance,
+      academic,
+      teacherCourses,
+    };
+  }
 
   async getWeeklyAttendance(query: {
     grade?: number;
@@ -201,6 +253,309 @@ export class DashboardsService {
     return {
       termId: Number(row.term_id),
       schoolYearId: Number(row.school_year_id),
+    };
+  }
+
+  private async getActiveSchoolYearId(): Promise<number | null> {
+    const rows = await this.dataSource.query(
+      `SELECT school_year_id FROM school_years WHERE is_active = true ORDER BY year_start DESC LIMIT 1`,
+    );
+    const value = rows[0]?.school_year_id;
+    return value === undefined ? null : Number(value);
+  }
+
+  private async getTeacherCourses(teacherId: string, schoolYearId: number) {
+    const rows = await this.dataSource.query(
+      `
+        SELECT
+          c.course_id,
+          c.class_group_id,
+          cg.grade_level,
+          cg.section,
+          s.name AS subject_name,
+          s.subject_code
+        FROM courses c
+        JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+        JOIN subjects s ON s.subject_id = ci.subject_id
+        JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+        WHERE c.teacher_id = $1
+          AND ci.school_year_id = $2
+        ORDER BY s.name, cg.grade_level, cg.section
+      `,
+      [teacherId, schoolYearId],
+    );
+    return rows.map((row: SqlRow) => ({
+      courseId: Number(row.course_id),
+      classGroupId: Number(row.class_group_id),
+      gradeLevel: Number(row.grade_level),
+      section: row.section,
+      subjectCode: row.subject_code,
+      subjectName: row.subject_name,
+    }));
+  }
+
+  private async getAdminAttendanceMetrics(
+    schoolYearId: number,
+    query: { gradeLevel?: number; classGroupId?: number },
+  ) {
+    const params: Array<number | string> = [schoolYearId];
+    const clauses = [`ci.school_year_id = $1`];
+    if (query.gradeLevel) {
+      params.push(query.gradeLevel);
+      clauses.push(`cg.grade_level = $${params.length}`);
+    }
+    if (query.classGroupId) {
+      params.push(query.classGroupId);
+      clauses.push(`cg.class_group_id = $${params.length}`);
+    }
+    return this.getAttendanceMetrics(clauses, params);
+  }
+
+  private async getTeacherAttendanceMetrics(
+    schoolYearId: number,
+    teacherId: string,
+    query: { gradeLevel?: number; classGroupId?: number; courseId?: number },
+  ) {
+    const params: Array<number | string> = [schoolYearId, teacherId];
+    const clauses = [`ci.school_year_id = $1`, `c.teacher_id = $2`];
+    if (query.gradeLevel) {
+      params.push(query.gradeLevel);
+      clauses.push(`cg.grade_level = $${params.length}`);
+    }
+    if (query.classGroupId) {
+      params.push(query.classGroupId);
+      clauses.push(`cg.class_group_id = $${params.length}`);
+    }
+    if (query.courseId) {
+      params.push(query.courseId);
+      clauses.push(`c.course_id = $${params.length}`);
+    }
+    return this.getAttendanceMetrics(clauses, params);
+  }
+
+  private async getAttendanceMetrics(
+    clauses: string[],
+    params: Array<number | string>,
+  ) {
+    const where = clauses.join(' AND ');
+    const [summaryRows, groupRows] = await Promise.all([
+      this.dataSource.query(
+        `
+          SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE att.status = 'P')::int AS present,
+            COUNT(*) FILTER (WHERE att.status = 'A')::int AS absent,
+            COUNT(*) FILTER (WHERE att.status = 'AE')::int AS excused
+          FROM attendance att
+          JOIN courses c ON c.course_id = att.course_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+        `,
+        params,
+      ),
+      this.dataSource.query(
+        `
+          SELECT
+            cg.class_group_id,
+            cg.grade_level,
+            cg.section,
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE att.status = 'P')::int AS present,
+            COUNT(*) FILTER (WHERE att.status = 'A')::int AS absent,
+            COUNT(*) FILTER (WHERE att.status = 'AE')::int AS excused
+          FROM attendance att
+          JOIN courses c ON c.course_id = att.course_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+          GROUP BY cg.class_group_id, cg.grade_level, cg.section
+          ORDER BY cg.grade_level, cg.section
+          LIMIT 8
+        `,
+        params,
+      ),
+    ]);
+    const summary = this.toAttendanceSummary(summaryRows[0]);
+    return {
+      ...summary,
+      byClassGroup: groupRows.map((row: SqlRow) => ({
+        classGroupId: Number(row.class_group_id),
+        label: `${row.grade_level}${row.section}`,
+        ...this.toAttendanceSummary(row),
+      })),
+    };
+  }
+
+  private async getAdminAcademicMetrics(
+    schoolYearId: number,
+    query: { gradeLevel?: number; classGroupId?: number; courseId?: number },
+  ) {
+    const params: Array<number | string> = [schoolYearId];
+    const clauses = [`ci.school_year_id = $1`];
+    if (query.gradeLevel) {
+      params.push(query.gradeLevel);
+      clauses.push(`cg.grade_level = $${params.length}`);
+    }
+    if (query.classGroupId) {
+      params.push(query.classGroupId);
+      clauses.push(`cg.class_group_id = $${params.length}`);
+    }
+    if (query.courseId) {
+      params.push(query.courseId);
+      clauses.push(`c.course_id = $${params.length}`);
+    }
+    return this.getAcademicMetrics(clauses, params);
+  }
+
+  private async getTeacherAcademicMetrics(
+    schoolYearId: number,
+    teacherId: string,
+    query: { gradeLevel?: number; classGroupId?: number; courseId?: number },
+  ) {
+    const params: Array<number | string> = [schoolYearId, teacherId];
+    const clauses = [`ci.school_year_id = $1`, `c.teacher_id = $2`];
+    if (query.gradeLevel) {
+      params.push(query.gradeLevel);
+      clauses.push(`cg.grade_level = $${params.length}`);
+    }
+    if (query.classGroupId) {
+      params.push(query.classGroupId);
+      clauses.push(`cg.class_group_id = $${params.length}`);
+    }
+    if (query.courseId) {
+      params.push(query.courseId);
+      clauses.push(`c.course_id = $${params.length}`);
+    }
+    return this.getAcademicMetrics(clauses, params);
+  }
+
+  private async getAcademicMetrics(
+    clauses: string[],
+    params: Array<number | string>,
+  ) {
+    const where = clauses.join(' AND ');
+    const [summaryRows, courseRows, subjectRows] = await Promise.all([
+      this.dataSource.query(
+        `
+          SELECT
+            COUNT(*)::int AS total,
+            AVG(grade.mark)::float AS average,
+            COUNT(*) FILTER (WHERE grade.mark = 1)::int AS low,
+            COUNT(DISTINCT grade.student_id)::int AS students
+          FROM grades grade
+          JOIN courses c ON c.course_id = grade.course_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+        `,
+        params,
+      ),
+      this.dataSource.query(
+        `
+          SELECT
+            c.course_id,
+            cg.class_group_id,
+            cg.grade_level,
+            cg.section,
+            s.name AS subject_name,
+            COUNT(*)::int AS total,
+            AVG(grade.mark)::float AS average,
+            COUNT(*) FILTER (WHERE grade.mark = 1)::int AS low
+          FROM grades grade
+          JOIN courses c ON c.course_id = grade.course_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN subjects s ON s.subject_id = ci.subject_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+          GROUP BY c.course_id, cg.class_group_id, cg.grade_level, cg.section, s.name
+          ORDER BY low DESC, average ASC NULLS LAST, s.name
+          LIMIT 8
+        `,
+        params,
+      ),
+      this.dataSource.query(
+        `
+          SELECT
+            s.subject_code,
+            s.name AS subject_name,
+            COUNT(*)::int AS total,
+            AVG(grade.mark)::float AS average,
+            COUNT(*) FILTER (WHERE grade.mark = 1)::int AS low
+          FROM grades grade
+          JOIN courses c ON c.course_id = grade.course_id
+          JOIN course_instances ci ON ci.course_instance_id = c.course_instance_id
+          JOIN subjects s ON s.subject_id = ci.subject_id
+          JOIN class_groups cg ON cg.class_group_id = c.class_group_id
+          WHERE ${where}
+          GROUP BY s.subject_code, s.name
+          ORDER BY s.name
+          LIMIT 8
+        `,
+        params,
+      ),
+    ]);
+    return {
+      ...this.toAcademicSummary(summaryRows[0]),
+      byCourse: courseRows.map((row: SqlRow) => ({
+        courseId: Number(row.course_id),
+        classGroupId: Number(row.class_group_id),
+        label: `${row.subject_name} · ${row.grade_level}${row.section}`,
+        ...this.toAcademicSummary(row),
+      })),
+      bySubject: subjectRows.map((row: SqlRow) => ({
+        subjectCode: row.subject_code,
+        label: row.subject_name,
+        ...this.toAcademicSummary(row),
+      })),
+    };
+  }
+
+  private emptyAttendanceMetrics() {
+    return {
+      total: 0,
+      present: 0,
+      absent: 0,
+      excused: 0,
+      absenceRate: 0,
+      byClassGroup: [],
+    };
+  }
+
+  private emptyAcademicMetrics() {
+    return {
+      total: 0,
+      average: 0,
+      low: 0,
+      students: 0,
+      lowRate: 0,
+      byCourse: [],
+      bySubject: [],
+    };
+  }
+
+  private toAttendanceSummary(row: SqlRow = {}) {
+    const total = Number(row.total ?? 0);
+    const absent = Number(row.absent ?? 0);
+    const excused = Number(row.excused ?? 0);
+    return {
+      total,
+      present: Number(row.present ?? 0),
+      absent,
+      excused,
+      absenceRate: total === 0 ? 0 : (absent + excused) / total,
+    };
+  }
+
+  private toAcademicSummary(row: SqlRow = {}) {
+    const total = Number(row.total ?? 0);
+    const low = Number(row.low ?? 0);
+    return {
+      total,
+      average: Number(row.average ?? 0),
+      low,
+      students: Number(row.students ?? 0),
+      lowRate: total === 0 ? 0 : low / total,
     };
   }
 
