@@ -14,6 +14,7 @@ import { TimetableSlot } from '../timetable_slots/timetable_slots.entity';
 import { Users } from '../users/users.entity';
 import type {
   ScannedCurriculumScheduleCurriculum,
+  ScannedTimetableClassGroup,
   ScannedTimetableAssignment,
   ScannedTimetableResponse,
 } from '../scanner/timetable-scanner.types';
@@ -24,6 +25,7 @@ type ConfirmTimetableImportPayload = {
 };
 
 type ConfirmCurriculumScheduleImportPayload = {
+  schoolYearId?: unknown;
   scan?: unknown;
 };
 
@@ -109,6 +111,24 @@ const getSpecializationTrack = (
     return null;
   }
   return assignment.section.padStart(2, '0');
+};
+
+const parseGroupCode = (
+  groupCode: string,
+  fallbackGradeLevel: number,
+): { gradeLevel: number; section: string } => {
+  const normalized = groupCode.trim();
+  const match = normalized.match(/^(\d{1,2})(\d{2})$/);
+  if (!match) {
+    return {
+      gradeLevel: fallbackGradeLevel,
+      section: normalized.replace(String(fallbackGradeLevel), '').padStart(2, '0') || '01',
+    };
+  }
+  return {
+    gradeLevel: Number(match[1]),
+    section: match[2],
+  };
 };
 
 const getSlotKey = (assignment: ScannedTimetableAssignment): string =>
@@ -259,7 +279,11 @@ export class TimetableImportService {
       throw new BadRequestException('Invalid curriculum schedule import payload.');
     }
 
-    const { scan } = payload as ConfirmCurriculumScheduleImportPayload;
+    const { schoolYearId, scan } = payload as ConfirmCurriculumScheduleImportPayload;
+    const parsedSchoolYearId = toPositiveNumber(schoolYearId);
+    if (!parsedSchoolYearId) {
+      throw new BadRequestException('schoolYearId is required.');
+    }
     if (!isRecord(scan) || !Array.isArray(scan.curricula)) {
       throw new BadRequestException('A scanned curriculum schedule payload is required.');
     }
@@ -287,6 +311,15 @@ export class TimetableImportService {
       throw new BadRequestException('No valid curricula were provided.');
     }
 
+    const scannedClassGroups = Array.isArray(scan.classGroups)
+      ? (scan.classGroups as ScannedTimetableClassGroup[]).filter(
+          (group) =>
+            group.groupCode &&
+            group.gradeLevel > 0 &&
+            toTrimmedString(group.section),
+        )
+      : [];
+
     const missingSpecializationNames = scannedCurricula
       .filter((curriculum) => curriculum.trackName && !toTrimmedString(curriculum.specializationName))
       .map((curriculum) => `Grado ${curriculum.gradeLevel} · ${curriculum.trackName}`);
@@ -299,9 +332,26 @@ export class TimetableImportService {
 
     const counts = this.emptyCounts();
     await this.dataSource.transaction(async (manager) => {
+      const schoolYear = await manager.findOne(SchoolYears, {
+        where: { schoolYearId: String(parsedSchoolYearId) },
+      });
+      if (!schoolYear) {
+        throw new NotFoundException('School year not found.');
+      }
+
       const subjectArea = await this.getOrCreateCurriculumScheduleSubjectArea(manager, counts);
       const specializationAreaByTrack = new Map<string, SubjectAreas>();
       const subjectByCode = new Map<string, Subjects>();
+      const groupByCode = new Map<string, ClassGroups>();
+      for (const scannedClassGroup of scannedClassGroups) {
+        await this.getOrCreateScheduleClassGroup(
+          manager,
+          parsedSchoolYearId,
+          scannedClassGroup,
+          groupByCode,
+          counts,
+        );
+      }
 
       for (const scannedCurriculum of scannedCurricula) {
         const specializationArea = scannedCurriculum.trackName
@@ -329,11 +379,20 @@ export class TimetableImportService {
             subjectByCode,
             counts,
           );
-          await this.upsertScheduleCurriculumItem(
+          const curriculumItem = await this.upsertScheduleCurriculumItem(
             manager,
             curriculum,
             subject,
             item.weeklyHours,
+            counts,
+          );
+          await this.getOrCreateScheduleCourseInstances(
+            manager,
+            parsedSchoolYearId,
+            scannedCurriculum,
+            subject,
+            curriculumItem,
+            groupByCode,
             counts,
           );
         }
@@ -342,7 +401,7 @@ export class TimetableImportService {
 
     return {
       imported: counts,
-      message: `Imported ${counts.curricula} curricula and ${counts.curriculumItems} curriculum items from class schedules.`,
+      message: `Imported ${counts.classGroups} class groups, ${counts.curricula} curricula, ${counts.curriculumItems} curriculum items and ${counts.courseInstances} course definitions from class schedules.`,
     };
   }
 
@@ -479,7 +538,7 @@ export class TimetableImportService {
       subject = repo.create({
         subjectCode,
         name: subjectName,
-        description: 'Imported from class schedule PDF.',
+        description: null,
         areaId: area.areaId,
       });
       subject = await repo.save(subject);
@@ -522,7 +581,7 @@ export class TimetableImportService {
       counts.curricula += 1;
     } else if (
       specializationArea &&
-      curriculum.specializationAreaId !== specializationArea.areaId
+      !curriculum.specializationAreaId
     ) {
       await repo.update(
         { curriculumId: curriculum.curriculumId },
@@ -550,14 +609,10 @@ export class TimetableImportService {
         subjectId: subject.subjectId,
         weeklyHours,
         doubleSessionRequired: weeklyHours > 1,
-        notes: 'Imported from class schedule PDF.',
+        notes: null,
       });
       item = await repo.save(item);
       counts.curriculumItems += 1;
-    } else if (item.weeklyHours !== weeklyHours) {
-      item.weeklyHours = weeklyHours;
-      item.doubleSessionRequired = weeklyHours > 1;
-      item = await repo.save(item);
     }
     return item;
   }
@@ -609,7 +664,7 @@ export class TimetableImportService {
       subject = repo.create({
         subjectCode: key,
         name: assignment.subjectName,
-        description: 'Imported from teacher timetable PDF.',
+        description: null,
         areaId: area.areaId,
       });
       subject = await repo.save(subject);
@@ -651,6 +706,67 @@ export class TimetableImportService {
     }
     cache.set(key, group);
     return group;
+  }
+
+  private async getOrCreateScheduleClassGroup(
+    manager: any,
+    schoolYearId: number,
+    scannedGroup: ScannedTimetableClassGroup,
+    cache: Map<string, ClassGroups>,
+    counts: ImportCounts,
+  ): Promise<ClassGroups> {
+    const key = `${schoolYearId}:${scannedGroup.groupCode}`;
+    const cached = cache.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const repo = manager.getRepository(ClassGroups);
+    let group = await repo.findOne({
+      where: {
+        schoolYearId: String(schoolYearId),
+        gradeLevel: scannedGroup.gradeLevel,
+        section: scannedGroup.section,
+      },
+    });
+    if (!group) {
+      group = repo.create({
+        schoolYearId: String(schoolYearId),
+        gradeLevel: scannedGroup.gradeLevel,
+        section: scannedGroup.section,
+      });
+      group = await repo.save(group);
+      counts.classGroups += 1;
+    }
+    cache.set(key, group);
+    return group;
+  }
+
+  private async getOrCreateScheduleClassGroupByCode(
+    manager: any,
+    schoolYearId: number,
+    groupCode: string,
+    fallbackGradeLevel: number,
+    cache: Map<string, ClassGroups>,
+    counts: ImportCounts,
+  ): Promise<ClassGroups> {
+    const key = `${schoolYearId}:${groupCode}`;
+    const cached = cache.get(key);
+    if (cached) {
+      return cached;
+    }
+    const parsed = parseGroupCode(groupCode, fallbackGradeLevel);
+    return this.getOrCreateScheduleClassGroup(
+      manager,
+      schoolYearId,
+      {
+        groupCode,
+        gradeLevel: parsed.gradeLevel,
+        section: parsed.section,
+      },
+      cache,
+      counts,
+    );
   }
 
   private async getOrCreateCurriculum(
@@ -707,7 +823,7 @@ export class TimetableImportService {
     } else if (
       trackName &&
       specializationArea &&
-      curriculum.specializationAreaId !== specializationArea.areaId
+      !curriculum.specializationAreaId
     ) {
       await repo.update(
         { curriculumId: curriculum.curriculumId },
@@ -746,14 +862,12 @@ export class TimetableImportService {
       });
       area = await repo.save(area);
       counts.subjectAreas += 1;
-    } else if (!area.isSpecialization || area.code !== code || area.name !== areaName) {
+    } else if (!area.isSpecialization) {
       await repo.update(
         { areaId: area.areaId },
-        { isSpecialization: true, code: area.code ?? code, name: areaName },
+        { isSpecialization: true },
       );
       area.isSpecialization = true;
-      area.code = area.code ?? code;
-      area.name = areaName;
     }
     cache.set(trackName, area);
     return area;
@@ -784,7 +898,7 @@ export class TimetableImportService {
         subjectId: subject.subjectId,
         weeklyHours,
         doubleSessionRequired: false,
-        notes: 'Imported from teacher timetable PDF.',
+        notes: null,
       });
       item = await repo.save(item);
       counts.curriculumItems += 1;
@@ -827,6 +941,78 @@ export class TimetableImportService {
         ),
       ).size,
     );
+  }
+
+  private async getOrCreateScheduleCourseInstances(
+    manager: any,
+    schoolYearId: number,
+    scannedCurriculum: ScannedCurriculumScheduleCurriculum,
+    subject: Subjects,
+    curriculumItem: CurriculumItems,
+    groupCache: Map<string, ClassGroups>,
+    counts: ImportCounts,
+  ): Promise<CourseInstances[]> {
+    const repo = manager.getRepository(CourseInstances);
+    const createdOrFound: CourseInstances[] = [];
+    const isTrackCurriculum = Boolean(scannedCurriculum.trackName);
+    const groups = isTrackCurriculum
+      ? await Promise.all(
+          scannedCurriculum.groupCodes.map((groupCode) =>
+            this.getOrCreateScheduleClassGroupByCode(
+              manager,
+              schoolYearId,
+              groupCode,
+              scannedCurriculum.gradeLevel,
+              groupCache,
+              counts,
+            ),
+          ),
+        )
+      : [null];
+
+    for (const group of groups) {
+      let instance = await repo.findOne({
+        where: {
+          schoolYearId: String(schoolYearId),
+          gradeLevel: scannedCurriculum.gradeLevel,
+          subjectId: subject.subjectId,
+          scopeType: isTrackCurriculum ? 'CLASS_GROUP' : 'GRADE',
+          ...(isTrackCurriculum && group
+            ? { classGroupId: group.classGroupId }
+            : { classGroupId: IsNull() }),
+        },
+      });
+
+      if (!instance) {
+        const groupSuffix = isTrackCurriculum && group ? `-${group.gradeLevel}${group.section}` : '';
+        instance = repo.create({
+          subjectId: subject.subjectId,
+          gradeLevel: scannedCurriculum.gradeLevel,
+          schoolYearId: String(schoolYearId),
+          classGroupId: isTrackCurriculum && group ? group.classGroupId : null,
+          scopeType: isTrackCurriculum ? 'CLASS_GROUP' : 'GRADE',
+          curriculumItemId: curriculumItem.curriculumItemId,
+          weeklyHours: curriculumItem.weeklyHours,
+          doubleSessionRequired: curriculumItem.doubleSessionRequired,
+          courseCode: `${subject.subjectCode}-G${scannedCurriculum.gradeLevel}${groupSuffix}`.slice(0, 50),
+          courseName: isTrackCurriculum && group
+            ? `${subject.name} ${group.gradeLevel}${group.section}`
+            : `${subject.name} grado ${scannedCurriculum.gradeLevel}`,
+          description: null,
+          isActive: true,
+        });
+        instance = await repo.save(instance);
+        counts.courseInstances += 1;
+      } else if (!instance.curriculumItemId) {
+        instance.curriculumItemId = curriculumItem.curriculumItemId;
+        instance.weeklyHours = curriculumItem.weeklyHours;
+        instance.doubleSessionRequired = curriculumItem.doubleSessionRequired;
+        instance = await repo.save(instance);
+      }
+      createdOrFound.push(instance);
+    }
+
+    return createdOrFound;
   }
 
   private async getOrCreateCourseInstance(
@@ -876,7 +1062,7 @@ export class TimetableImportService {
         courseName: trackName
           ? `${assignment.subjectName} ${assignment.groupCode}`
           : `${assignment.subjectName} grado ${assignment.gradeLevel}`,
-        description: 'Imported from teacher timetable PDF.',
+        description: null,
         isActive: true,
       });
       instance = await repo.save(instance);
