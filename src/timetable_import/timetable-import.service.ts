@@ -66,6 +66,14 @@ const toPositiveNumber = (value: unknown): number | null => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
+const toTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 const normalizeText = (value: string): string =>
   value
     .normalize('NFD')
@@ -279,6 +287,16 @@ export class TimetableImportService {
       throw new BadRequestException('No valid curricula were provided.');
     }
 
+    const missingSpecializationNames = scannedCurricula
+      .filter((curriculum) => curriculum.trackName && !toTrimmedString(curriculum.specializationName))
+      .map((curriculum) => `Grado ${curriculum.gradeLevel} · ${curriculum.trackName}`);
+    if (missingSpecializationNames.length > 0) {
+      throw new BadRequestException({
+        message: 'Every grade 10-11 track must include a specialization name before importing.',
+        tracks: missingSpecializationNames,
+      });
+    }
+
     const counts = this.emptyCounts();
     await this.dataSource.transaction(async (manager) => {
       const subjectArea = await this.getOrCreateCurriculumScheduleSubjectArea(manager, counts);
@@ -290,6 +308,7 @@ export class TimetableImportService {
           ? await this.getOrCreateSpecializationArea(
               manager,
               scannedCurriculum.trackName,
+              scannedCurriculum.specializationName,
               specializationAreaByTrack,
               counts,
             )
@@ -493,7 +512,7 @@ export class TimetableImportService {
       curriculum = repo.create({
         gradeLevel: scannedCurriculum.gradeLevel,
         name: scannedCurriculum.trackName
-          ? `${scannedCurriculum.trackName} grado ${scannedCurriculum.gradeLevel}`
+          ? `${specializationArea?.name ?? scannedCurriculum.trackName} grado ${scannedCurriculum.gradeLevel}`
           : `Currículo grado ${scannedCurriculum.gradeLevel}`,
         trackName: scannedCurriculum.trackName,
         specializationAreaId: specializationArea?.areaId ?? null,
@@ -655,6 +674,7 @@ export class TimetableImportService {
       ? await this.getOrCreateSpecializationArea(
           manager,
           trackName,
+          trackName,
           specializationAreaCache,
           counts,
         )
@@ -702,6 +722,7 @@ export class TimetableImportService {
   private async getOrCreateSpecializationArea(
     manager: any,
     trackName: string,
+    specializationName: unknown,
     cache: Map<string, SubjectAreas>,
     counts: ImportCounts,
   ): Promise<SubjectAreas> {
@@ -711,26 +732,28 @@ export class TimetableImportService {
     }
 
     const repo = manager.getRepository(SubjectAreas);
-    const code = `SPEC-${trackName}`;
+    const areaName = toTrimmedString(specializationName) ?? trackName;
+    const code = makeCode(areaName, 'SPEC');
     let area = await repo.findOne({ where: { code } });
     if (!area) {
-      area = await repo.findOne({ where: { name: trackName } });
+      area = await repo.findOne({ where: { name: areaName } });
     }
     if (!area) {
       area = repo.create({
         code,
-        name: trackName,
+        name: areaName,
         isSpecialization: true,
       });
       area = await repo.save(area);
       counts.subjectAreas += 1;
-    } else if (!area.isSpecialization || area.code !== code) {
+    } else if (!area.isSpecialization || area.code !== code || area.name !== areaName) {
       await repo.update(
         { areaId: area.areaId },
-        { isSpecialization: true, code: area.code ?? code },
+        { isSpecialization: true, code: area.code ?? code, name: areaName },
       );
       area.isSpecialization = true;
       area.code = area.code ?? code;
+      area.name = areaName;
     }
     cache.set(trackName, area);
     return area;
