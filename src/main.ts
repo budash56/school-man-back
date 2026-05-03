@@ -9,6 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
   const configService = app.get(ConfigService);
   app.use('/timetable/import/confirm', json({ limit: '512kb' }));
+  app.use('/timetable/import/curriculum-schedule/confirm', json({ limit: '512kb' }));
   app.use(json({ limit: '100kb' }));
   app.use(urlencoded({ extended: true, limit: '100kb' }));
   app.useGlobalPipes(
