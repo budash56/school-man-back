@@ -45,4 +45,23 @@ export class ScannerController {
   scanPlanilla(@UploadedFile() file: Express.Multer.File) {
     return this.scannerService.scanPlanilla(file);
   }
+
+  @Post('timetable')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiForbiddenResponse({
+    description: `Forbidden: requires role ${WRITE_ROLES.join(', ')}`,
+  })
+  scanTimetable(@UploadedFile() file: Express.Multer.File) {
+    return this.scannerService.scanTimetable(file);
+  }
 }

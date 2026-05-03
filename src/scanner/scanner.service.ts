@@ -9,6 +9,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Express } from 'express';
 import type { ScannedPlanillaResponse, ScannedPlanillaRow } from './scanner.types';
+import type {
+  ScannedTimetableAssignment,
+  ScannedTimetableClassGroup,
+  ScannedTimetableResponse,
+  ScannedTimetableSlot,
+  ScannedTimetableSubject,
+  ScannedTimetableTeacher,
+} from './timetable-scanner.types';
 
 type ScannerRawFile = {
   filename?: unknown;
@@ -39,6 +47,37 @@ type ScannerRawResponse = {
   rows?: unknown;
   warnings?: unknown;
 };
+
+type ScannerRawTimetableTeacher = {
+  teacher_id?: unknown;
+  full_name?: unknown;
+};
+
+type ScannerRawTimetableClassGroup = {
+  group_code?: unknown;
+  grade_level?: unknown;
+  section?: unknown;
+};
+
+type ScannerRawTimetableSubject = {
+  subject_code?: unknown;
+  name?: unknown;
+};
+
+type ScannerRawTimetableSlot = {
+  period?: unknown;
+  day_of_week?: unknown;
+  start_time?: unknown;
+  end_time?: unknown;
+};
+
+type ScannerRawTimetableAssignment = ScannerRawTimetableSlot &
+  ScannerRawTimetableClassGroup &
+  ScannerRawTimetableSubject &
+  ScannerRawTimetableTeacher & {
+    teacher_name?: unknown;
+    subject_name?: unknown;
+  };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -164,6 +203,142 @@ const mapScannerResponse = (payload: unknown): ScannedPlanillaResponse => {
   };
 };
 
+const mapTimetableTeacher = (value: unknown): ScannedTimetableTeacher | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const teacher = value as ScannerRawTimetableTeacher;
+  return {
+    teacherId: toStringValue(teacher.teacher_id),
+    fullName: toStringValue(teacher.full_name),
+  };
+};
+
+const mapTimetableClassGroup = (
+  value: unknown,
+): ScannedTimetableClassGroup | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const group = value as ScannerRawTimetableClassGroup;
+  return {
+    groupCode: toStringValue(group.group_code),
+    gradeLevel: toNullableNumber(group.grade_level) ?? 0,
+    section: toStringValue(group.section),
+  };
+};
+
+const mapTimetableSubject = (value: unknown): ScannedTimetableSubject | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const subject = value as ScannerRawTimetableSubject;
+  return {
+    subjectCode: toStringValue(subject.subject_code),
+    name: toStringValue(subject.name),
+  };
+};
+
+const mapTimetableSlot = (value: unknown): ScannedTimetableSlot | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const slot = value as ScannerRawTimetableSlot;
+  return {
+    period: toNullableNumber(slot.period) ?? 0,
+    dayOfWeek: toNullableNumber(slot.day_of_week) ?? 0,
+    startTime: toStringValue(slot.start_time),
+    endTime: toStringValue(slot.end_time),
+  };
+};
+
+const mapTimetableAssignment = (
+  value: unknown,
+): ScannedTimetableAssignment | null => {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const assignment = value as ScannerRawTimetableAssignment;
+  return {
+    teacherId: toStringValue(assignment.teacher_id),
+    teacherName: toStringValue(assignment.teacher_name),
+    subjectCode: toStringValue(assignment.subject_code),
+    subjectName: toStringValue(assignment.subject_name),
+    groupCode: toStringValue(assignment.group_code),
+    gradeLevel: toNullableNumber(assignment.grade_level) ?? 0,
+    section: toStringValue(assignment.section),
+    period: toNullableNumber(assignment.period) ?? 0,
+    dayOfWeek: toNullableNumber(assignment.day_of_week) ?? 0,
+    startTime: toStringValue(assignment.start_time),
+    endTime: toStringValue(assignment.end_time),
+  };
+};
+
+const mapTimetableScannerResponse = (
+  payload: unknown,
+): ScannedTimetableResponse => {
+  if (!isRecord(payload)) {
+    throw new BadGatewayException(
+      'SchoolScanner returned an invalid response payload.',
+    );
+  }
+
+  const response = payload as ScannerRawResponse & {
+    teachers?: unknown;
+    class_groups?: unknown;
+    subjects?: unknown;
+    slots?: unknown;
+    assignments?: unknown;
+  };
+  const uploadedFile = isRecord(response.uploaded_file)
+    ? (response.uploaded_file as ScannerRawFile)
+    : {};
+
+  return {
+    status: toStringValue(response.status, 'unknown'),
+    message: toStringValue(
+      response.message,
+      'Scanner response received without a message.',
+    ),
+    uploadedFile: {
+      filename: toStringValue(uploadedFile.filename, 'unknown'),
+      contentType: toStringValue(
+        uploadedFile.content_type,
+        'application/octet-stream',
+      ),
+      sizeBytes: toNullableNumber(uploadedFile.size_bytes) ?? 0,
+    },
+    teachers: Array.isArray(response.teachers)
+      ? response.teachers
+          .map(mapTimetableTeacher)
+          .filter((item): item is ScannedTimetableTeacher => item !== null)
+      : [],
+    classGroups: Array.isArray(response.class_groups)
+      ? response.class_groups
+          .map(mapTimetableClassGroup)
+          .filter((item): item is ScannedTimetableClassGroup => item !== null)
+      : [],
+    subjects: Array.isArray(response.subjects)
+      ? response.subjects
+          .map(mapTimetableSubject)
+          .filter((item): item is ScannedTimetableSubject => item !== null)
+      : [],
+    slots: Array.isArray(response.slots)
+      ? response.slots
+          .map(mapTimetableSlot)
+          .filter((item): item is ScannedTimetableSlot => item !== null)
+      : [],
+    assignments: Array.isArray(response.assignments)
+      ? response.assignments
+          .map(mapTimetableAssignment)
+          .filter((item): item is ScannedTimetableAssignment => item !== null)
+      : [],
+    warnings: Array.isArray(response.warnings)
+      ? response.warnings.map((warning) => toStringValue(warning)).filter(Boolean)
+      : [],
+  };
+};
+
 @Injectable()
 export class ScannerService {
   private readonly logger = new Logger(ScannerService.name);
@@ -190,7 +365,58 @@ export class ScannerService {
 
     const timeoutMs =
       this.configService.get<number>('scanner.timeoutMs') ?? 120000;
-    const url = `${baseUrl.replace(/\/$/, '')}/scan/planilla`;
+    const body = await this.postFileToScanner({
+      baseUrl,
+      timeoutMs,
+      path: '/scan/planilla',
+      file,
+    });
+
+    return mapScannerResponse(body);
+  }
+
+  async scanTimetable(
+    file: Express.Multer.File | undefined,
+  ): Promise<ScannedTimetableResponse> {
+    if (!file) {
+      throw new BadRequestException('A file upload is required.');
+    }
+
+    if (!file.buffer || file.buffer.length === 0) {
+      throw new BadRequestException('Uploaded file is empty.');
+    }
+
+    const baseUrl = this.configService.get<string>('scanner.baseUrl')?.trim();
+    if (!baseUrl) {
+      throw new ServiceUnavailableException(
+        'SchoolScanner is not configured for this environment.',
+      );
+    }
+
+    const timeoutMs =
+      this.configService.get<number>('scanner.timeoutMs') ?? 120000;
+    const body = await this.postFileToScanner({
+      baseUrl,
+      timeoutMs,
+      path: '/scan/timetable',
+      file,
+    });
+
+    return mapTimetableScannerResponse(body);
+  }
+
+  private async postFileToScanner({
+    baseUrl,
+    timeoutMs,
+    path,
+    file,
+  }: {
+    baseUrl: string;
+    timeoutMs: number;
+    path: string;
+    file: Express.Multer.File;
+  }): Promise<unknown> {
+    const url = `${baseUrl.replace(/\/$/, '')}${path}`;
     const formData = new FormData();
     const bytes = Uint8Array.from(file.buffer);
     const blob = new Blob([bytes], {
@@ -230,7 +456,7 @@ export class ScannerService {
       );
     }
 
-    return mapScannerResponse(body);
+    return body;
   }
 
   private async parseResponse(response: Response): Promise<unknown> {
